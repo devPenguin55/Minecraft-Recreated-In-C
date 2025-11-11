@@ -1,0 +1,12 @@
+CC = gcc
+CFLAGS = -Iinclude
+LIBS = -lglfw3 -lopengl32 -lgdi32 -lfreeglut
+TARGET = main.exe
+
+all: $(TARGET)
+
+$(TARGET): main.c
+	$(CC) main.c -o $(TARGET) $(CFLAGS) $(LIBS)
+
+clean:
+	del $(TARGET)
