@@ -13,7 +13,7 @@ typedef struct Block
 
 typedef struct Chunk
 {
-    Block blocks[2*2*5];
+    Block blocks[16 * 16 * 10];
 } Chunk;
 
 typedef struct PlayerChunks
@@ -26,10 +26,10 @@ extern int ChunkWidthX;
 extern int ChunkLengthZ;
 extern int ChunkHeightY;
 extern float BlockWidthX;
-extern float BlockLengthY;
-extern float BlockHeightZ;
+extern float BlockLengthZ;
+extern float BlockHeightY;
 
-void createChunk(Chunk *chunk, int xAdd, int zAdd);
+void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd);
 void initWorld(PlayerChunks *world);
 
 #endif
