@@ -46,12 +46,12 @@ void initWorld(PlayerChunks *world)
 
 void generateChunkMesh(Chunk *chunk)
 {
-    int    tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
-    int bottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
-    int   lefts[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
-    int  rights[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
-    int  fronts[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
-    int   backs[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
+    int tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY]    = {0}; // X-Z plane, y fixed
+    int bottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0}; // X-Z plane, y fixed
+    int lefts[ChunkHeightY][ChunkLengthZ][ChunkWidthX]   = {0}; // Y-Z plane, x fixed
+    int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX]  = {0}; // Y-Z plane, x fixed
+    int fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ]  = {0}; // X-Y plane, z fixed
+    int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ]   = {0}; // X-Y plane, z fixed
 
     // mask generation step (for top, bottom, left, right, front, back)
     for (int y = 0; y<ChunkHeightY; y++) {
@@ -89,36 +89,36 @@ void generateChunkMesh(Chunk *chunk)
                    (!chunk->blocks[blockIndex].isAir && x == 0)
                 ) {
                     // existing block
-                    lefts[x][z][y] = 1;
+                    lefts[y][z][x] = 1;
                 } else {
-                    lefts[x][z][y] = 0;
+                    lefts[y][z][x] = 0;
                 }
 
                 if ((x < (ChunkWidthX-1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[rightBlockIndex].isAir)) ||
                    (!chunk->blocks[blockIndex].isAir && x == (ChunkWidthX-1))
                 ) {
                     // existing block
-                    rights[x][z][y] = 1;
+                    rights[y][z][x] = 1;
                 } else {
-                    rights[x][z][y] = 0;
+                    rights[y][z][x] = 0;
                 }
                 
                 if ((z > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[frontBlockIndex].isAir)) ||
                     (!chunk->blocks[blockIndex].isAir && z == 0)
                 ) {
                     // existing block
-                    fronts[x][z][y] = 1;
+                    fronts[x][y][z] = 1;
                 } else {
-                    fronts[x][z][y] = 0;
+                    fronts[x][y][z] = 0;
                 }
            
                 if ((z < (ChunkLengthZ-1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[backBlockIndex].isAir)) ||
                     (!chunk->blocks[blockIndex].isAir && z == (ChunkLengthZ-1))
                 ) {
                     // existing block
-                    backs[x][z][y] = 1;
+                    backs[x][y][z] = 1;
                 } else {
-                    backs[x][z][y] = 0;
+                    backs[x][y][z] = 0;
                 }   
             }
         }
