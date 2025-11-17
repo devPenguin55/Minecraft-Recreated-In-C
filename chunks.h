@@ -8,12 +8,12 @@ typedef struct Block
     GLfloat x;
     GLfloat y;
     GLfloat z;
-
+    int isAir;
 } Block;
 
 typedef struct Chunk
 {
-    Block blocks[16 * 16 * 10];
+    Block blocks[16 * 16 * 64];
 } Chunk;
 
 typedef struct PlayerChunks
@@ -31,5 +31,6 @@ extern float BlockHeightY;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd);
 void initWorld(PlayerChunks *world);
+void generateChunkMesh(Chunk *chunk);
 
 #endif

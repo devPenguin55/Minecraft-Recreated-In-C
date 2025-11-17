@@ -100,12 +100,12 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
     glScalef(BlockWidthX, BlockLengthZ, BlockHeightY);
 
     glBindTexture(GL_TEXTURE_2D, atlasTexture);
-    // if (pressedKeys['z']) {
-    //     glBegin(GL_LINE_LOOP);
-    // } else {
-    //     glBegin(GL_POLYGON);
-    // }
-    glBegin(GL_QUADS);
+    if (pressedKeys['z']) {
+        glBegin(GL_LINE_LOOP);
+    } else {
+        glBegin(GL_QUADS);
+    }
+    
     
     UV uv;
     uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
@@ -191,6 +191,8 @@ void drawGraphics()
             minZ = (curBlock->z < minZ) ? curBlock->z : minZ;
             maxZ = (curBlock->z > maxZ) ? curBlock->z : maxZ;
 
+            if (curBlock->isAir) { continue; }
+            
             GLfloat translation[3] = {curBlock->x, curBlock->y, curBlock->z};
             cube(Vertices, translation);
         }
