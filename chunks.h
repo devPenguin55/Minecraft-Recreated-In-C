@@ -21,8 +21,32 @@ typedef struct PlayerChunks
     Chunk chunks[16];
 } PlayerChunks;
 
+typedef struct MeshQuad 
+{
+    GLfloat      x;
+    GLfloat      y;
+    GLfloat      z;
+    GLfloat  width;
+    GLfloat height;
+    int   faceType; // these are listed below!
+} MeshQuad;
+
+typedef struct ChunkMeshQuads {
+    MeshQuad *quads;
+    int capacity;
+    int amtQuads;
+} ChunkMeshQuads;
+
+// these are the face types
+#define FACE_TOP    1
+#define FACE_BOTTOM 2
+#define FACE_LEFT   3
+#define FACE_RIGHT  4
+#define FACE_FRONT  5
+#define FACE_BACK   6
+
 extern PlayerChunks world;
-#define ChunkWidthX 16
+#define ChunkWidthX  16
 #define ChunkLengthZ 16
 #define ChunkHeightY 5
 extern float BlockWidthX;

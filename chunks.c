@@ -53,6 +53,7 @@ void generateChunkMesh(Chunk *chunk)
     int  fronts[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
     int   backs[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
 
+    // mask generation step (for top, bottom, left, right, front, back)
     for (int y = 0; y<ChunkHeightY; y++) {
         for (int x = 0; x<ChunkWidthX; x++) {
             for (int z = 0; z<ChunkLengthZ; z++) {
@@ -111,24 +112,28 @@ void generateChunkMesh(Chunk *chunk)
                     fronts[x][z][y] = 0;
                 }
            
-            if ((z < (ChunkLengthZ-1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[backBlockIndex].isAir)) ||
-                (!chunk->blocks[blockIndex].isAir && z == (ChunkLengthZ-1))
-            ) {
-                // existing block
-                backs[x][z][y] = 1;
-            } else {
-                backs[x][z][y] = 0;
-            }   
-        }
-    }
-    for (int i = 0; i < ChunkWidthX; i++)
-    {
-            for (int j = 0; j < ChunkLengthZ; j++)
-            {
-                printf("%d ", backs[i][j][y]);
+                if ((z < (ChunkLengthZ-1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[backBlockIndex].isAir)) ||
+                    (!chunk->blocks[blockIndex].isAir && z == (ChunkLengthZ-1))
+                ) {
+                    // existing block
+                    backs[x][z][y] = 1;
+                } else {
+                    backs[x][z][y] = 0;
+                }   
             }
-            printf("\n");
         }
-        printf(" ---  new y layer of %d\n", y); 
+    
     }
+
+    // greedy algorithm
+    ChunkMeshQuads chunkMeshQuads;
+    chunkMeshQuads.capacity = 16;
+    chunkMeshQuads.amtQuads =  0;
+    chunkMeshQuads.quads = malloc(sizeof(MeshQuad)*chunkMeshQuads.capacity);
+
+    // if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity) {
+    //     chunkMeshQuads.capacity *= 2;
+    //     chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad)*chunkMeshQuads.capacity);
+    // }
+    
 }
