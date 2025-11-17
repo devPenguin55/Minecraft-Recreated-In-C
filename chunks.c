@@ -7,9 +7,9 @@ PlayerChunks world;
 // int ChunkWidthX = 1;
 // int ChunkLengthZ = 1; 
 // int ChunkHeightY = 10;
-int ChunkWidthX = 16;
-int ChunkLengthZ = 16; 
-int ChunkHeightY = 5;
+#define ChunkWidthX 16
+#define ChunkLengthZ 16
+#define ChunkHeightY 5
 
 float BlockWidthX = 0.15;
 float BlockHeightY = 0.15;
@@ -48,12 +48,11 @@ void initWorld(PlayerChunks *world)
 
 void generateChunkMesh(Chunk *chunk)
 {
-    // +Y direction, check upwards
+    int    tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
+    int bottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
+    int   lefts[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
+    int  rights[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
     for (int y = 0; y<ChunkHeightY; y++) {
-        int tops[16][16] = {0};
-        int bottoms[16][16] = {0};
-        int lefts[16][16] = {0};
-        int rights[16][16] = {0};
         for (int x = 0; x<ChunkWidthX; x++) {
             for (int z = 0; z<ChunkLengthZ; z++) {
                 int blockIndex = x + z*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ);
@@ -66,9 +65,9 @@ void generateChunkMesh(Chunk *chunk)
                     (!chunk->blocks[blockIndex].isAir && topBlockIndex < 0)    
                 ) {
                     // existing block
-                    tops[x][z] = 1;
+                    tops[x][z][y] = 1;
                 } else {
-                    tops[x][z] = 0;
+                    tops[x][z][y] = 0;
                 }
 
                 if (
@@ -76,33 +75,33 @@ void generateChunkMesh(Chunk *chunk)
                     (!chunk->blocks[blockIndex].isAir && bottomBlockIndex >= ChunkWidthX*ChunkLengthZ*ChunkHeightY)    
                 ) {
                     // existing block
-                    bottoms[x][z] = 1;
+                    bottoms[x][z][y] = 1;
                 } else {
-                    bottoms[x][z] = 0;
+                    bottoms[x][z][y] = 0;
                 }
 
                 if ((x > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[leftBlockIndex].isAir)) ||
                    (!chunk->blocks[blockIndex].isAir && x == 0)
                 ) {
                     // existing block
-                    lefts[x][z] = 1;
+                    lefts[x][z][y] = 1;
                 } else {
-                    lefts[x][z] = 0;
+                    lefts[x][z][y] = 0;
                 }
 
                 if ((x < (ChunkWidthX-1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[rightBlockIndex].isAir)) ||
                    (!chunk->blocks[blockIndex].isAir && x == (ChunkWidthX-1))
                 ) {
                     // existing block
-                    rights[x][z] = 1;
+                    rights[x][z][y] = 1;
                 } else {
-                    rights[x][z] = 0;
+                    rights[x][z][y] = 0;
                 }
             }        
         }
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < ChunkWidthX; i++)
         {
-            for (int j = 0; j < 16; j++)
+            for (int j = 0; j < ChunkLengthZ; j++)
             {
                 printf("%d ", rights[i][j]);
             }
