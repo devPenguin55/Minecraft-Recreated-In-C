@@ -52,14 +52,16 @@ void generateChunkMesh(Chunk *chunk)
     for (int y = 0; y<ChunkHeightY; y++) {
         int tops[16][16] = {0};
         int bottoms[16][16] = {0};
+        int lefts[16][16] = {0};
         for (int x = 0; x<ChunkWidthX; x++) {
             for (int z = 0; z<ChunkLengthZ; z++) {
                 int blockIndex = x + z*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ);
-                int aboveBlockIndex = blockIndex - ChunkWidthX*ChunkLengthZ;
-                int belowBlockIndex = blockIndex + ChunkWidthX*ChunkLengthZ;
+                int topBlockIndex = blockIndex - ChunkWidthX*ChunkLengthZ;
+                int bottomBlockIndex = blockIndex + ChunkWidthX*ChunkLengthZ;
+                int leftBlockIndex = blockIndex - 1;
                 if (
-                    (aboveBlockIndex >= 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[aboveBlockIndex].isAir)) ||                    
-                    (!chunk->blocks[blockIndex].isAir && aboveBlockIndex < 0)    
+                    (topBlockIndex >= 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[topBlockIndex].isAir)) ||                    
+                    (!chunk->blocks[blockIndex].isAir && topBlockIndex < 0)    
                 ) {
                     // existing block
                     tops[x][z] = 1;
@@ -68,13 +70,22 @@ void generateChunkMesh(Chunk *chunk)
                 }
 
                 if (
-                    (belowBlockIndex < ChunkWidthX*ChunkLengthZ*ChunkHeightY && (!chunk->blocks[blockIndex].isAir && chunk->blocks[belowBlockIndex].isAir)) ||                    
-                    (!chunk->blocks[blockIndex].isAir && belowBlockIndex >= ChunkWidthX*ChunkLengthZ*ChunkHeightY)    
+                    (bottomBlockIndex < ChunkWidthX*ChunkLengthZ*ChunkHeightY && (!chunk->blocks[blockIndex].isAir && chunk->blocks[bottomBlockIndex].isAir)) ||                    
+                    (!chunk->blocks[blockIndex].isAir && bottomBlockIndex >= ChunkWidthX*ChunkLengthZ*ChunkHeightY)    
                 ) {
                     // existing block
                     bottoms[x][z] = 1;
                 } else {
                     bottoms[x][z] = 0;
+                }
+
+                if ((x > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[leftBlockIndex].isAir)) ||
+                   (!chunk->blocks[blockIndex].isAir && x == 0)
+                ) {
+                    // existing block
+                    lefts[x][z] = 1;
+                } else {
+                    lefts[x][z] = 0;
                 }
             }        
         }
@@ -82,7 +93,7 @@ void generateChunkMesh(Chunk *chunk)
         {
             for (int j = 0; j < 16; j++)
             {
-                printf("%d ", bottoms[i][j]);
+                printf("%d ", lefts[i][j]);
             }
             printf("\n");
         }
