@@ -1,0 +1,61 @@
+[33md6207b1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32me[m[33m)[m HEAD@{0}: commit (amend): right face mask
+[33maa34aa1[m HEAD@{1}: checkout: moving from main to e
+[33m71ab0e0[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{2}: merge e: Merge made by the 'ort' strategy.
+[33m19acc43[m HEAD@{3}: checkout: moving from e to main
+[33maa34aa1[m HEAD@{4}: commit (amend): left face mask
+[33m19acc43[m HEAD@{5}: reset: moving to main
+[33m19acc43[m HEAD@{6}: checkout: moving from main to e
+[33m19acc43[m HEAD@{7}: merge e: Fast-forward
+[33mf7a01e4[m HEAD@{8}: checkout: moving from e to main
+[33m19acc43[m HEAD@{9}: commit: bottom face mask
+[33mf7a01e4[m HEAD@{10}: reset: moving to main
+[33mf7a01e4[m HEAD@{11}: checkout: moving from main to e
+[33mf7a01e4[m HEAD@{12}: merge e: Fast-forward
+[33mc4501ed[m HEAD@{13}: checkout: moving from e to main
+[33mf7a01e4[m HEAD@{14}: commit: bottom face mask
+[33mc4501ed[m HEAD@{15}: reset: moving to main
+[33mc4501ed[m HEAD@{16}: checkout: moving from main to e
+[33mc4501ed[m HEAD@{17}: merge e: Fast-forward
+[33m394bc81[m HEAD@{18}: checkout: moving from e to main
+[33mc4501ed[m HEAD@{19}: commit: top face mask
+[33m394bc81[m HEAD@{20}: reset: moving to main
+[33m394bc81[m HEAD@{21}: checkout: moving from main to e
+[33m394bc81[m HEAD@{22}: merge e: Fast-forward
+[33m6259d02[m HEAD@{23}: checkout: moving from e to main
+[33m394bc81[m HEAD@{24}: commit: Added textures
+[33m6259d02[m HEAD@{25}: reset: moving to main
+[33m6259d02[m HEAD@{26}: checkout: moving from main to e
+[33m6259d02[m HEAD@{27}: merge e: Fast-forward
+[33m424cddd[m HEAD@{28}: checkout: moving from e to main
+[33m6259d02[m HEAD@{29}: commit: fixed render cutoffs
+[33m424cddd[m HEAD@{30}: reset: moving to main
+[33m424cddd[m HEAD@{31}: checkout: moving from main to e
+[33m424cddd[m HEAD@{32}: merge e: Fast-forward
+[33m2d3c6e2[m HEAD@{33}: checkout: moving from e to main
+[33m424cddd[m HEAD@{34}: commit: fixed chunks
+[33m2d3c6e2[m HEAD@{35}: reset: moving to main
+[33m2d3c6e2[m HEAD@{36}: checkout: moving from main to e
+[33m2d3c6e2[m HEAD@{37}: merge e: Fast-forward
+[33me358887[m HEAD@{38}: checkout: moving from e to main
+[33m2d3c6e2[m HEAD@{39}: commit: chunks, weird pattern - some bug, added yaw + pitch
+[33me358887[m HEAD@{40}: reset: moving to main
+[33me358887[m HEAD@{41}: checkout: moving from main to e
+[33me358887[m HEAD@{42}: merge e: Fast-forward
+[33m5c85fb9[m HEAD@{43}: checkout: moving from e to main
+[33me358887[m HEAD@{44}: commit: Better player controls for 3d scene
+[33m5c85fb9[m HEAD@{45}: reset: moving to main
+[33m5c85fb9[m HEAD@{46}: checkout: moving from main to e
+[33m5c85fb9[m HEAD@{47}: merge e: Fast-forward
+[33me7a49d0[m HEAD@{48}: checkout: moving from e to main
+[33m5c85fb9[m HEAD@{49}: commit: Added camera to 3d scene
+[33me7a49d0[m HEAD@{50}: checkout: moving from e to e
+[33me7a49d0[m HEAD@{51}: checkout: moving from main to e
+[33me7a49d0[m HEAD@{52}: merge e: Fast-forward
+[33m4858a79[m HEAD@{53}: checkout: moving from e to main
+[33me7a49d0[m HEAD@{54}: commit: spinning 3d cube
+[33m4858a79[m HEAD@{55}: checkout: moving from main to e
+[33m4858a79[m HEAD@{56}: pull: Merge made by the 'ort' strategy.
+[33m052be52[m HEAD@{57}: checkout: moving from main to main
+[33m052be52[m HEAD@{58}: commit: Setup opengl libs, drew a square!
+[33m84c69d6[m HEAD@{59}: Branch: renamed refs/heads/master to refs/heads/main
+[33m84c69d6[m HEAD@{61}: commit (initial): first commit

@@ -53,12 +53,14 @@ void generateChunkMesh(Chunk *chunk)
         int tops[16][16] = {0};
         int bottoms[16][16] = {0};
         int lefts[16][16] = {0};
+        int rights[16][16] = {0};
         for (int x = 0; x<ChunkWidthX; x++) {
             for (int z = 0; z<ChunkLengthZ; z++) {
                 int blockIndex = x + z*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ);
                 int topBlockIndex = blockIndex - ChunkWidthX*ChunkLengthZ;
                 int bottomBlockIndex = blockIndex + ChunkWidthX*ChunkLengthZ;
                 int leftBlockIndex = blockIndex - 1;
+                int rightBlockIndex = blockIndex + 1;
                 if (
                     (topBlockIndex >= 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[topBlockIndex].isAir)) ||                    
                     (!chunk->blocks[blockIndex].isAir && topBlockIndex < 0)    
@@ -87,13 +89,22 @@ void generateChunkMesh(Chunk *chunk)
                 } else {
                     lefts[x][z] = 0;
                 }
+
+                if ((x < (ChunkWidthX-1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[rightBlockIndex].isAir)) ||
+                   (!chunk->blocks[blockIndex].isAir && x == (ChunkWidthX-1))
+                ) {
+                    // existing block
+                    rights[x][z] = 1;
+                } else {
+                    rights[x][z] = 0;
+                }
             }        
         }
         for (int i = 0; i < 16; i++)
         {
             for (int j = 0; j < 16; j++)
             {
-                printf("%d ", lefts[i][j]);
+                printf("%d ", rights[i][j]);
             }
             printf("\n");
         }
