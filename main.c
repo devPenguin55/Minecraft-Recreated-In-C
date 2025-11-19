@@ -10,6 +10,7 @@
 int main(int argc, char *argv[]) {
     initWorld(&world);
     generateChunkMesh(&(world.chunks[0]));
+    
     glutInit(&argc, argv);
     
     glutInitWindowSize(500, 500);

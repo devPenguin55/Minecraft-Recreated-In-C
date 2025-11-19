@@ -129,11 +129,62 @@ void generateChunkMesh(Chunk *chunk)
     ChunkMeshQuads chunkMeshQuads;
     chunkMeshQuads.capacity = 16;
     chunkMeshQuads.amtQuads =  0;
-    chunkMeshQuads.quads = malloc(sizeof(MeshQuad)*chunkMeshQuads.capacity);
+    chunkMeshQuads.quads = malloc(sizeof(MeshQuad)*chunkMeshQuads.capacity);    
 
-    // if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity) {
-    //     chunkMeshQuads.capacity *= 2;
-    //     chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad)*chunkMeshQuads.capacity);
-    // }
-    
+    // handle top mesh
+    int visited[ChunkHeightY][ChunkLengthZ][ChunkWidthX] = {0};
+    int width;
+    int height;
+    int done;
+    for (int y = 0; y < ChunkHeightY; y++) {
+        for (int x = 0; x < ChunkWidthX; x++) {
+            for (int z = 0; z < ChunkLengthZ; z++) {
+                if (tops[x][z][y] == 0 || visited[x][z][y]) { continue; }
+                
+                width = 1;
+                while (((x+width) < ChunkWidthX && tops[x+width][z][y] == 1) && !visited[x+width][z][y]) {
+                    width++;
+                }
+
+                height = 1;
+                done   = 0;
+                while ((z+height) < ChunkLengthZ && !done) {
+                    for (int dx = 0; dx < width; dx++) {
+                        if (tops[x+dx][z+height][y] == 0 || visited[x+dx][z+height][y]) {
+                            done = 1;
+                            break;
+                        }
+                    }
+                    
+                    if (!done) {
+                        height++;
+                    }                    
+                }
+
+                for (int dz = 0; dz<ChunkLengthZ; dz++) {
+                    for (int dx = 0; dx<ChunkWidthX; dx++) {
+                        visited[x+dx][z+dz][y] = 1;
+                    }
+                }
+
+                if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity) {
+                    chunkMeshQuads.capacity *= 2;
+                    chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad)*chunkMeshQuads.capacity);
+                }
+
+                MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
+                curQuad->x = x;
+                curQuad->y = y;
+                curQuad->z = z;
+                curQuad->width = width;
+                curQuad->height = height;
+                curQuad->faceType = FACE_TOP;
+
+                chunkMeshQuads.amtQuads++;
+                printf("[CREATED QUAD] x %d, y %d, z %d, width %d, height %d, faceType %d\n", x, y, z, width, height, FACE_TOP);
+            }        
+        }    
+    }
+
+    free(chunkMeshQuads.quads);
 }

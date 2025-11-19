@@ -45,16 +45,23 @@ typedef struct ChunkMeshQuads {
 #define FACE_FRONT  5
 #define FACE_BACK   6
 
+#define PLANE_X 1
+#define PLANE_Y 2
+#define PLANE_Z 3
+
+
 extern PlayerChunks world;
 #define ChunkWidthX  16
 #define ChunkLengthZ 16
 #define ChunkHeightY 5
+#define MASK_INDEX(x,y,z)  ((y)*ChunkLengthZ*ChunkWidthX + (z)*ChunkWidthX + (x))
 extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd);
 void initWorld(PlayerChunks *world);
+void generateFaceMaskQuads(ChunkMeshQuads *chunkMeshQuads, int *faceMask, int firstPlane, int secondPlane, int constantPlane);
 void generateChunkMesh(Chunk *chunk);
 
 #endif
