@@ -4,10 +4,10 @@
 #include "chunks.h"
 
 PlayerChunks world;
+ChunkMeshQuads chunkMeshQuads;
 // int ChunkWidthX = 1;
 // int ChunkLengthZ = 1; 
 // int ChunkHeightY = 10;
-
 
 float BlockWidthX = 0.15;
 float BlockHeightY = 0.15;
@@ -42,6 +42,17 @@ void initWorld(PlayerChunks *world)
         z = (int)(i / (4));
         createChunk(&(world->chunks[i]), x * ChunkWidthX * BlockWidthX, z * ChunkLengthZ * BlockLengthZ);
     }
+}
+
+void initChunkMeshingSystem() {
+    chunkMeshQuads.capacity = 16;
+    chunkMeshQuads.amtQuads =  0;
+    chunkMeshQuads.quads = malloc(sizeof(MeshQuad)*chunkMeshQuads.capacity);    
+}
+
+void handleProgramClose() {
+    printf("\n\n\nProgram closing -> freeing chunk quad memory");
+    free(chunkMeshQuads.quads);
 }
 
 void generateChunkMesh(Chunk *chunk)
@@ -134,13 +145,8 @@ void generateChunkMesh(Chunk *chunk)
         printf(" ---  new y layer of %d\n", y); 
     }
 
-    // greedy algorithm
-    ChunkMeshQuads chunkMeshQuads;
-    chunkMeshQuads.capacity = 16;
-    chunkMeshQuads.amtQuads =  0;
-    chunkMeshQuads.quads = malloc(sizeof(MeshQuad)*chunkMeshQuads.capacity);    
+    // greedy algorithm steps
 
-    // handle top mesh
     int visitedTops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
     int width;
     int height;
@@ -450,5 +456,4 @@ void generateChunkMesh(Chunk *chunk)
         }    
     }
 
-    free(chunkMeshQuads.quads);
 }

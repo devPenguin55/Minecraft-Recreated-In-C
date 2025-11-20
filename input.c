@@ -9,7 +9,7 @@ GLfloat CameraZ = 1;
 GLfloat PlayerDirX = 0;
 GLfloat PlayerDirY = -3;
 GLfloat PlayerDirZ = -1;
-float PLAYER_SPEED = 0.1;
+float PLAYER_SPEED = 0.01;
 
 float yaw   = 132.0f; // horizontal rotation
 float pitch = -56.0f; // vertical   rotation
@@ -91,6 +91,5 @@ void handleUserMovement() {
     }   
     if (pressedKeys['f']) {
         CameraY -= PLAYER_SPEED;
-
     }
 }

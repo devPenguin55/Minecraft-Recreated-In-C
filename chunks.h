@@ -23,12 +23,12 @@ typedef struct PlayerChunks
 
 typedef struct MeshQuad 
 {
-    GLfloat      x;
-    GLfloat      y;
-    GLfloat      z;
-    GLfloat  width;
-    GLfloat height;
-    int   faceType; // these are listed below!
+    GLfloat        x;
+    GLfloat        y;
+    GLfloat        z;
+    GLfloat    width;
+    GLfloat   height;
+    int     faceType; // these are listed below!
 } MeshQuad;
 
 typedef struct ChunkMeshQuads {
@@ -58,10 +58,11 @@ extern PlayerChunks world;
 extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
-
+extern ChunkMeshQuads chunkMeshQuads;
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd);
 void initWorld(PlayerChunks *world);
-void generateFaceMaskQuads(ChunkMeshQuads *chunkMeshQuads, int *faceMask, int firstPlane, int secondPlane, int constantPlane);
+void initChunkMeshingSystem();
+void handleProgramClose();
 void generateChunkMesh(Chunk *chunk);
 
 #endif

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 #include <math.h>
 #include "input.h"
 #include "render.h"
@@ -9,8 +10,9 @@
 
 int main(int argc, char *argv[]) {
     initWorld(&world);
+    initChunkMeshingSystem();
     generateChunkMesh(&(world.chunks[0]));
-    
+
     glutInit(&argc, argv);
     
     glutInitWindowSize(500, 500);
@@ -28,6 +30,7 @@ int main(int argc, char *argv[]) {
     glutIdleFunc(spinObject);
     glutMouseFunc(handleMouse);
     glutMotionFunc(handleMovingMouse);
+    glutCloseFunc(handleProgramClose);
     glutMainLoop();
 
     return 0;

@@ -123,7 +123,7 @@ void cube(GLfloat Vertices[8][3], GLfloat transformation[3])
 {
     // FRONT (0, 1, 2, 3)
     face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, 0);
-    return;
+
     // BACK (4, 5, 6, 7)
     face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, 0);
 
