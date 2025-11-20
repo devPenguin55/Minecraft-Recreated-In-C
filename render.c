@@ -93,11 +93,11 @@ void uvCoordinatesFromTextureIndex(int textureIndex, UV *uv, int amtHorizTexture
     uv->v1 = y + vertLen;
 }
 
-void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex)
+void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[3])
 {
     glPushMatrix();
     glTranslatef(transformation[0], transformation[1], transformation[2]); // move it up
-    glScalef(BlockWidthX, BlockLengthZ, BlockHeightY);
+    glScalef(size[0], size[1], size[2]);
 
     glBindTexture(GL_TEXTURE_2D, atlasTexture);
     if (pressedKeys['z']) {
@@ -119,32 +119,32 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
     glPopMatrix();
 }
 
-void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType)
+void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[3], int faceType)
 {   
     switch (faceType) {
         case FACE_FRONT:
             // FRONT (0, 1, 2, 3)
-            face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, 0);
+            face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, 0, size);
             break;
         case FACE_BACK:
             // BACK (4, 5, 6, 7)
-            face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, 0);
+            face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, 0, size);
             break;
         case FACE_LEFT:
             // LEFT (0, 3, 7, 4)
-            face(Vertices[4], Vertices[0], Vertices[3], Vertices[7], transformation, 0);
+            face(Vertices[4], Vertices[0], Vertices[3], Vertices[7], transformation, 0, size);
             break;
         case FACE_RIGHT:
             // RIGHT (1, 2, 6, 5)
-            face(Vertices[1], Vertices[5], Vertices[6], Vertices[2], transformation, 0);
+            face(Vertices[1], Vertices[5], Vertices[6], Vertices[2], transformation, 0, size);
             break;
         case FACE_TOP:
             // TOP (0, 1, 5, 4)
-            face(Vertices[4], Vertices[5], Vertices[1], Vertices[0], transformation, 6);
+            face(Vertices[4], Vertices[5], Vertices[1], Vertices[0], transformation, 6, size);
             break;
         case FACE_BOTTOM:
             // BOTTOM (3, 2, 6, 7)
-            face(Vertices[3], Vertices[2], Vertices[6], Vertices[7], transformation, 1);
+            face(Vertices[3], Vertices[2], Vertices[6], Vertices[7], transformation, 1, size);
             break;
     }
 }
@@ -191,7 +191,7 @@ void drawGraphics()
 
             
         GLfloat translation[3] = {curQuad->x, curQuad->y, curQuad->z};
-        GLfloat size[2] = {curQuad->width, curQuad->height};
+        GLfloat size[3] = {curQuad->width*BlockWidthX, curQuad->height*BlockLengthZ, BlockHeightY};
         cubeFace(Vertices, translation, size, curQuad->faceType);
 
 

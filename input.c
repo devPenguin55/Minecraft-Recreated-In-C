@@ -9,7 +9,7 @@ GLfloat CameraZ = 1;
 GLfloat PlayerDirX = 0;
 GLfloat PlayerDirY = -3;
 GLfloat PlayerDirZ = -1;
-float PLAYER_SPEED = 0.01;
+float PLAYER_SPEED = 0.0005;
 
 float yaw   = 132.0f; // horizontal rotation
 float pitch = -56.0f; // vertical   rotation
