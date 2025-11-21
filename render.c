@@ -201,7 +201,7 @@ void drawGraphics()
                 zLength = curQuad->height;
                 yHeight = 1;
                 break;
-            case FACE_BOTTOM:
+            case FACE_BOTTOM: 
                 xWidth = curQuad->width;
                 zLength = curQuad->height;
                 yHeight = 1;
