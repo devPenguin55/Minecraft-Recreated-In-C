@@ -184,14 +184,51 @@ void drawGraphics()
 
     glPointSize(5);
 
-    for (int quadIndex = 0; quadIndex < 1; quadIndex++)
+    for (int quadIndex = 0; quadIndex < chunkMeshQuads.amtQuads; quadIndex++)
     {
         MeshQuad *curQuad = &(chunkMeshQuads.quads[quadIndex]);
         
 
             
         GLfloat translation[3] = {curQuad->x, curQuad->y, curQuad->z};
-        GLfloat size[3] = {curQuad->width*BlockWidthX, curQuad->height*BlockLengthZ, BlockHeightY};
+
+        GLfloat xWidth;
+        GLfloat zLength;
+        GLfloat yHeight;
+        switch (curQuad->faceType) {
+            case FACE_TOP:
+                xWidth = curQuad->width;
+                zLength = curQuad->height;
+                yHeight = 1;
+                break;
+            case FACE_BOTTOM:
+                xWidth = curQuad->width;
+                zLength = curQuad->height;
+                yHeight = 1;
+                break;
+            case FACE_LEFT:
+                xWidth = 1;
+                zLength = curQuad->height;
+                yHeight = curQuad->width;
+                break;
+            case FACE_RIGHT:
+                xWidth = 1;
+                zLength = curQuad->height;
+                yHeight = curQuad->width;
+                break;
+            case FACE_FRONT:
+                xWidth = curQuad->width;
+                zLength = 1;
+                yHeight = curQuad->height;
+                break;
+            case FACE_BACK:
+                xWidth = curQuad->width;
+                zLength = 1;
+                yHeight = curQuad->height;
+                break;
+        }
+        GLfloat size[3] = {xWidth*BlockWidthX, yHeight*BlockHeightY, zLength*BlockLengthZ};
+
         cubeFace(Vertices, translation, size, curQuad->faceType);
 
 
