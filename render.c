@@ -117,18 +117,19 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
     float du = uv.u1 - uv.u;
     float dv = uv.v1 - uv.v;
 
-    // float repeatX = size[0]/BlockWidthX;
-    // float repeatY = size[1]/BlockHeightY;
+    float repeatU = size[0];
+    float repeatV = size[1];
 
     float U0 = uv.u;
     float V0 = uv.v;
-    float U1 = uv.u + (du) /  BlockWidthX;
-    float V1 = uv.v + (dv) / BlockHeightY;
+    float U1 = uv.u + du * repeatU;
+    float V1 = uv.v + dv * repeatV;
 
-    glTexCoord2f(U0, V0); glVertex3fv(A);
-    glTexCoord2f(U1, V0); glVertex3fv(B);
-    glTexCoord2f(U1, V1); glVertex3fv(C);
-    glTexCoord2f(U0, V1); glVertex3fv(D);
+    glBegin(pressedKeys['z'] ? GL_LINE_LOOP : GL_QUADS);
+        glTexCoord2f(U0, V0); glVertex3fv(A);
+        glTexCoord2f(U1, V0); glVertex3fv(B);
+        glTexCoord2f(U1, V1); glVertex3fv(C);
+        glTexCoord2f(U0, V1); glVertex3fv(D);
     glEnd();
 
     glPopMatrix();
