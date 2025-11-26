@@ -24,7 +24,7 @@ void initGraphics();
 void reshape(int width, int height);
 void spinObject();
 void uvCoordinatesFromTextureIndex(int textureIndex, UV *uv, int amtHorizTextures, int amtVertTextures);
-void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[3]);
+void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[2]);
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType);
 void drawGraphics();
 

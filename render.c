@@ -93,13 +93,12 @@ void uvCoordinatesFromTextureIndex(int textureIndex, UV *uv, int amtHorizTexture
     uv->v1 = y + vertLen;
 }
 
-void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[3])
+void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[2])
 {
     glPushMatrix();
+
     // glScalef(size[0], size[1], size[2]);
     glTranslatef(transformation[0], transformation[1], transformation[2]); // move it up
-    // glTranslatef(1, 1, 1); // move it up
-    // printf("Translation is %f %f %f\n", transformation[0], transformation[1], transformation[2]);
 
     glBindTexture(GL_TEXTURE_2D, atlasTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -115,16 +114,27 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
     UV uv;
     uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
 
-    glTexCoord2f(uv.u,  uv.v);  glVertex3fv(A);
-    glTexCoord2f(uv.u1, uv.v);  glVertex3fv(B);
-    glTexCoord2f(uv.u1, uv.v1); glVertex3fv(C);
-    glTexCoord2f(uv.u,  uv.v1); glVertex3fv(D);
+    float du = uv.u1 - uv.u;
+    float dv = uv.v1 - uv.v;
+
+    // float repeatX = size[0]/BlockWidthX;
+    // float repeatY = size[1]/BlockHeightY;
+
+    float U0 = uv.u;
+    float V0 = uv.v;
+    float U1 = uv.u + (du) /  BlockWidthX;
+    float V1 = uv.v + (dv) / BlockHeightY;
+
+    glTexCoord2f(U0, V0); glVertex3fv(A);
+    glTexCoord2f(U1, V0); glVertex3fv(B);
+    glTexCoord2f(U1, V1); glVertex3fv(C);
+    glTexCoord2f(U0, V1); glVertex3fv(D);
     glEnd();
 
     glPopMatrix();
 }
 
-void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[3], int faceType)
+void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType)
 {   
     switch (faceType) {
         case FACE_FRONT:
@@ -237,8 +247,30 @@ void drawGraphics()
                 translation[2] -= curQuad->width-1;
                 break;
         }
-        GLfloat size[3] = {xWidth*BlockWidthX, yHeight*BlockHeightY, zLength*BlockLengthZ};
+        // GLfloat size[3] = {xWidth, yHeight, zLength};
+        
+        float repeatU, repeatV;
 
+        switch (curQuad->faceType) {
+            case FACE_TOP:
+            case FACE_BOTTOM:
+                repeatU = xWidth  / BlockWidthX;
+                repeatV = zLength / BlockLengthZ;
+                break;
+
+            case FACE_FRONT:
+            case FACE_BACK:
+                repeatU = xWidth  / BlockWidthX;
+                repeatV = yHeight / BlockHeightY;
+                break;
+
+            case FACE_LEFT:
+            case FACE_RIGHT:
+                repeatU = zLength / BlockLengthZ;
+                repeatV = yHeight / BlockHeightY;
+                break;
+        }
+        GLfloat size[2] = {repeatU, repeatV};
         cubeFace(Vertices, translation, size, curQuad->faceType);
 
 
