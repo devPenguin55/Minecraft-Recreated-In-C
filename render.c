@@ -10,6 +10,11 @@
 
 GLfloat T = 0;
 GLuint atlasTexture;
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MAX4(a, b, c, d) (MAX(MAX(a, b), MAX(c, d)))
+
 
 GLuint loadTexture(const char *filename)
 {
@@ -95,49 +100,130 @@ void uvCoordinatesFromTextureIndex(int textureIndex, UV *uv, int amtHorizTexture
 
 void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[2])
 {
-    glPushMatrix();
+    float minX = MIN4(A[0], B[0], C[0], D[0]);
+    float maxX = MAX4(A[0], B[0], C[0], D[0]);
 
-    // glScalef(size[0], size[1], size[2]);
-    // printf("%f %f %f\n", transformation[0], transformation[1], transformation[2]);
-    // glTranslatef(transformation[0], transformation[1], transformation[2]);
-    glTranslatef(
-        transformation[0]/ChunkWidthX/BlockWidthX, 
-        transformation[1]/ChunkHeightY/BlockHeightY, 
-        transformation[2]/ChunkLengthZ/BlockLengthZ
-    );
+    float minY = MIN4(A[1], B[1], C[1], D[1]);
+    float maxY = MAX4(A[1], B[1], C[1], D[1]);
 
-    glBindTexture(GL_TEXTURE_2D, atlasTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    float minZ = MIN4(A[2], B[2], C[2], D[2]);
+    float maxZ = MAX4(A[2], B[2], C[2], D[2]);
 
-    if (pressedKeys['z']) {
-        glBegin(GL_LINE_LOOP);
-    } else {
-        glBegin(GL_QUADS);
+    // these differences help determine which axes are used to then create the sub faces
+    float amtDx = maxX - minX;
+    float amtDy = maxY - minY;
+    float amtDz = maxZ - minZ;
+
+    // iterate for 2 of the 3 axes, but we do not know which one is the right one until the function is called
+    if (amtDy == 0) {
+        for (float dx = 0; dx < size[0]; dx++) {
+            for (float dz = 0; dz < size[1]; dz++) {
+                glPushMatrix();
+                glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
+                glTranslatef(
+                    transformation[0], 
+                    transformation[1], 
+                    transformation[2]
+                );
+                glBindTexture(GL_TEXTURE_2D, atlasTexture);
+                if (pressedKeys['z']) {
+                    glBegin(GL_LINE_LOOP);
+                } else {
+                    glBegin(GL_QUADS);
+                }
+    
+                UV uv;
+                uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
+                float du = uv.u1 - uv.u;
+                float dv = uv.v1 - uv.v;
+                float U0 = uv.u;
+                float V0 = uv.v;
+                float U1 = uv.u + du;
+                float V1 = uv.v + dv;
+                
+                // dx
+                A[0] += dx;
+                B[0] += dx;
+                C[0] += dx;
+                D[0] += dx;
+                // dz
+                A[2] += dz;
+                B[2] += dz;
+                C[2] += dz;
+                D[2] += dz;
+                glTexCoord2f(U0, V0); glVertex3fv(A);
+                glTexCoord2f(U1, V0); glVertex3fv(B);
+                glTexCoord2f(U1, V1); glVertex3fv(C);
+                glTexCoord2f(U0, V1); glVertex3fv(D);
+                glEnd();
+                glPopMatrix();
+                // dx
+                A[0] -= dx;
+                B[0] -= dx;
+                C[0] -= dx;
+                D[0] -= dx;
+                // dz
+                A[2] -= dz;
+                B[2] -= dz;
+                C[2] -= dz;
+                D[2] -= dz;
+            }
+        }
+    } else if (amtDx == 0) {
+        for (float dy = 0; dy < size[0]; dy++) {
+            for (float dz = 0; dz < size[1]; dz++) {
+                glPushMatrix();
+                glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
+                glTranslatef(
+                    transformation[0], 
+                    transformation[1], 
+                    transformation[2]
+                );
+                glBindTexture(GL_TEXTURE_2D, atlasTexture);
+                if (pressedKeys['z']) {
+                    glBegin(GL_LINE_LOOP);
+                } else {
+                    glBegin(GL_QUADS);
+                }
+
+                UV uv;
+                uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
+                float du = uv.u1 - uv.u;
+                float dv = uv.v1 - uv.v;
+                float U0 = uv.u;
+                float V0 = uv.v;
+                float U1 = uv.u + du;
+                float V1 = uv.v + dv;
+        
+                // dy
+                A[1] -= dy;
+                B[1] -= dy;
+                C[1] -= dy;
+                D[1] -= dy;
+                // dz
+                A[2] += dz;
+                B[2] += dz;
+                C[2] += dz;
+                D[2] += dz;
+                glTexCoord2f(U0, V0); glVertex3fv(A);
+                glTexCoord2f(U1, V0); glVertex3fv(B);
+                glTexCoord2f(U1, V1); glVertex3fv(C);
+                glTexCoord2f(U0, V1); glVertex3fv(D);
+                glEnd();
+                glPopMatrix();
+                // dy
+                A[1] += dy;
+                B[1] += dy;
+                C[1] += dy;
+                D[1] += dy;
+                // dz
+                A[2] -= dz;
+                B[2] -= dz;
+                C[2] -= dz;
+                D[2] -= dz;
+            }
+        }
     }
-    
-    
-    UV uv;
-    uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
-
-    float du = uv.u1 - uv.u;
-    float dv = uv.v1 - uv.v;
-
-    // float repeatX = size[0]/BlockWidthX;
-    // float repeatY = size[1]/BlockHeightY;
-
-    float U0 = uv.u;
-    float V0 = uv.v;
-    float U1 = uv.u + du;
-    float V1 = uv.v + dv;
-    // printf("%f, %f, %f, %f\n", U0, V0, U1, V1);
-    glTexCoord2f(U0, V0); glVertex3fv(A);
-    glTexCoord2f(U1, V0); glVertex3fv(B);
-    glTexCoord2f(U1, V1); glVertex3fv(C);
-    glTexCoord2f(U0, V1); glVertex3fv(D);
-    glEnd();
-
-    glPopMatrix();
 }
 
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType)
@@ -239,7 +325,7 @@ void drawGraphics()
                 xWidth = 1;
                 zLength = curQuad->height;
                 yHeight = curQuad->width;
-                translation[0] -= curQuad->height-1;
+                // translation[0] += curQuad->height-1;
                 break;
             case FACE_FRONT:
                 xWidth = curQuad->width;
@@ -254,28 +340,7 @@ void drawGraphics()
                 break;
         }
 
-        float repeatU, repeatV;
-
-        switch (curQuad->faceType) {
-            case FACE_TOP:
-            case FACE_BOTTOM:
-                repeatU = xWidth  / BlockWidthX;
-                repeatV = zLength / BlockLengthZ;
-                break;
-
-            case FACE_FRONT:
-            case FACE_BACK:
-                repeatU = xWidth  / BlockWidthX;
-                repeatV = yHeight / BlockHeightY;
-                break;
-
-            case FACE_LEFT:
-            case FACE_RIGHT:
-                repeatU = zLength / BlockLengthZ;
-                repeatV = yHeight / BlockHeightY;
-                break;
-        }
-        GLfloat size[2] = {repeatU, repeatV};
+        GLfloat size[2] = {curQuad->width, curQuad->height};
         cubeFace(Vertices, translation, size, curQuad->faceType);
 
 
@@ -301,3 +366,9 @@ void drawGraphics()
     // switch the content of color and depth buffers
     glutSwapBuffers();
 }
+
+/*
+? idea 
+* the block w and h must fit into the quad right
+* so if thats the case then the quad's 0 to 1 could js be like made
+*/

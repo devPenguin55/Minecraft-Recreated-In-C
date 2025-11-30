@@ -21,6 +21,7 @@ typedef struct Chunk
 typedef struct PlayerChunks
 {
     Chunk chunks[16];
+    int amtChunks;
 } PlayerChunks;
 
 typedef struct MeshQuad 
