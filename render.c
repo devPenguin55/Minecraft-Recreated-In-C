@@ -223,6 +223,61 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 D[2] -= dz;
             }
         }
+    } else {
+        // dz == 0
+        for (float dx = 0; dx < size[0]; dx++) {
+            for (float dy = 0; dy < size[1]; dy++) {
+                glPushMatrix();
+                glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
+                glTranslatef(
+                    transformation[0], 
+                    transformation[1], 
+                    transformation[2]
+                );
+                glBindTexture(GL_TEXTURE_2D, atlasTexture);
+                if (pressedKeys['z']) {
+                    glBegin(GL_LINE_LOOP);
+                } else {
+                    glBegin(GL_QUADS);
+                }
+    
+                UV uv;
+                uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
+                float du = uv.u1 - uv.u;
+                float dv = uv.v1 - uv.v;
+                float U0 = uv.u;
+                float V0 = uv.v;
+                float U1 = uv.u + du;
+                float V1 = uv.v + dv;
+                
+                // dx
+                A[0] += dx;
+                B[0] += dx;
+                C[0] += dx;
+                D[0] += dx;
+                // dy
+                A[1] += dy;
+                B[1] += dy;
+                C[1] += dy;
+                D[1] += dy;
+                glTexCoord2f(U0, V0); glVertex3fv(A);
+                glTexCoord2f(U1, V0); glVertex3fv(B);
+                glTexCoord2f(U1, V1); glVertex3fv(C);
+                glTexCoord2f(U0, V1); glVertex3fv(D);
+                glEnd();
+                glPopMatrix();
+                // dx
+                A[0] -= dx;
+                B[0] -= dx;
+                C[0] -= dx;
+                D[0] -= dx;
+                // dy
+                A[1] -= dy;
+                B[1] -= dy;
+                C[1] -= dy;
+                D[1] -= dy;
+            }
+        }
     }
 }
 
