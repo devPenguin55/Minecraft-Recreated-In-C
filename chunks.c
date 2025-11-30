@@ -40,11 +40,11 @@ void initWorld(PlayerChunks *world)
     int x = 0;
     int z = 0;
     world->amtChunks = 0;
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 16; i++)
     {
         x = i % (4);
         z = (int)(i / (4));
-        createChunk(&(world->chunks[i]), x * ChunkWidthX * BlockWidthX, z * ChunkLengthZ * BlockLengthZ);
+        createChunk(&(world->chunks[i]), x * ChunkWidthX, z * ChunkLengthZ);
         world->amtChunks++;
     }
 }
@@ -401,7 +401,7 @@ void generateChunkMesh(Chunk *chunk)
                 MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
                 curQuad->x = x+chunk->chunkStartX;
                 curQuad->y = y;
-                curQuad->z = z+chunk->chunkStartZ;
+                curQuad->z = z+chunk->chunkStartZ-1;
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_FRONT;
@@ -452,7 +452,7 @@ void generateChunkMesh(Chunk *chunk)
                 MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
                 curQuad->x = x+chunk->chunkStartX;
                 curQuad->y = y;
-                curQuad->z = z+chunk->chunkStartZ;
+                curQuad->z = z+chunk->chunkStartZ+1;
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_BACK;
