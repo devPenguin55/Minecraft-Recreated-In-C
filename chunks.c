@@ -40,10 +40,10 @@ void initWorld(PlayerChunks *world)
     int x = 0;
     int z = 0;
     world->amtChunks = 0;
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < WORLD_HORIZONTAL_CHUNK_AMT*WORLD_VERTICAL_CHUNK_AMT; i++)
     {
-        x = i % (4);
-        z = (int)(i / (4));
+        x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
+        z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
         createChunk(&(world->chunks[i]), x * ChunkWidthX, z * ChunkLengthZ);
         world->amtChunks++;
     }
@@ -60,7 +60,7 @@ void handleProgramClose() {
     free(chunkMeshQuads.quads);
 }
 
-void generateChunkMesh(Chunk *chunk)
+void generateChunkMesh(Chunk *chunk, int chunkIdx)
 {
     printf("mesh amts %d\n", chunkMeshQuads.amtQuads);
     int    tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0}; // * X-Z plane, y fixed
@@ -69,6 +69,36 @@ void generateChunkMesh(Chunk *chunk)
     int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX]  = {0}; // ? Y-Z plane, x fixed
     int  fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0}; // * X-Y plane, z fixed
     int   backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0}; // * X-Y plane, z fixed
+
+    int upChunkNeighborIndex = -1;
+    int downChunkNeighborIndex = -1;
+    int rightChunkNeighborIndex = -1;
+    int leftChunkNeighborIndex = -1;
+
+    int chunkX = chunkIdx % WORLD_HORIZONTAL_CHUNK_AMT;
+    int chunkY = chunkIdx / WORLD_VERTICAL_CHUNK_AMT;
+
+    if (chunkX > 0) {
+        leftChunkNeighborIndex = (chunkX - 1) + chunkY * WORLD_VERTICAL_CHUNK_AMT;
+    }
+    if (chunkX < (WORLD_HORIZONTAL_CHUNK_AMT-1)) {
+        rightChunkNeighborIndex = (chunkX + 1) + chunkY * WORLD_VERTICAL_CHUNK_AMT;
+    }
+    
+    if (chunkY > 0) {
+        upChunkNeighborIndex = chunkX + (chunkY - 1) * WORLD_VERTICAL_CHUNK_AMT;
+    } 
+
+    if (chunkY < (WORLD_VERTICAL_CHUNK_AMT-1)) {
+        downChunkNeighborIndex = chunkX + (chunkY + 1) * WORLD_VERTICAL_CHUNK_AMT;
+    } 
+    
+    printf("Chunk %d's\n", chunkIdx);
+    printf("X %d and Y %d and Idx %d\n", chunkX, chunkY, chunkIdx);
+    printf("Up neighbor is %d\n", upChunkNeighborIndex);
+    printf("Down neighbor is %d\n", downChunkNeighborIndex);
+    printf("Left neighbor is %d\n", leftChunkNeighborIndex);
+    printf("Right neighbor is %d\n", rightChunkNeighborIndex);
 
     // mask generation step (for top, bottom, left, right, front, back)
     for (int y = 0; y<ChunkHeightY; y++) {
@@ -346,7 +376,6 @@ void generateChunkMesh(Chunk *chunk)
                     chunkMeshQuads.capacity *= 2;
                     chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad)*chunkMeshQuads.capacity);
                 }
-
                 MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
                 curQuad->x = x+chunk->chunkStartX;
                 curQuad->y = y;

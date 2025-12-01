@@ -52,6 +52,8 @@ typedef struct ChunkMeshQuads {
 #define PLANE_Y 2
 #define PLANE_Z 3
 
+#define WORLD_HORIZONTAL_CHUNK_AMT 2
+#define WORLD_VERTICAL_CHUNK_AMT   2
 
 extern PlayerChunks world;
 #define ChunkWidthX  16
@@ -66,6 +68,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd);
 void initWorld(PlayerChunks *world);
 void initChunkMeshingSystem();
 void handleProgramClose();
-void generateChunkMesh(Chunk *chunk);
+void generateChunkMesh(Chunk *chunk, int chunkIdx);
 
 #endif
