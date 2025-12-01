@@ -9,9 +9,9 @@ ChunkMeshQuads chunkMeshQuads;
 // int ChunkLengthZ = 1; 
 // int ChunkHeightY = 10;
 
-float BlockWidthX = 0.15;
-float BlockHeightY = 0.15;
-float BlockLengthZ = 0.15;
+float BlockWidthX = 1;
+float BlockHeightY = 1;
+float BlockLengthZ = 1;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
 {

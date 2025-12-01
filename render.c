@@ -209,10 +209,10 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 B[2] += dz;
                 C[2] += dz;
                 D[2] += dz;
-                glTexCoord2f(U0, V0); glVertex3fv(A);
-                glTexCoord2f(U1, V0); glVertex3fv(B);
-                glTexCoord2f(U1, V1); glVertex3fv(C);
-                glTexCoord2f(U0, V1); glVertex3fv(D);
+                glTexCoord2f(U0, V1); glVertex3fv(A);
+                glTexCoord2f(U1, V1); glVertex3fv(B);
+                glTexCoord2f(U1, V0); glVertex3fv(C);
+                glTexCoord2f(U0, V0); glVertex3fv(D);
                 glEnd();
                 glPopMatrix();
                 // dy
