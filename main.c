@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
     }
 
      
-    free(chunkMeshQuads.quads);
-    return 1;
+    // free(chunkMeshQuads.quads);
+    // return 1;
 
     glutInit(&argc, argv);
     

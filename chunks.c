@@ -211,8 +211,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     }                    
                 }
 
-                for (int dz = 0; dz<ChunkLengthZ; dz++) {
-                    for (int dx = 0; dx<ChunkWidthX; dx++) {
+                for (int dz = 0; dz<height; dz++) {
+                    for (int dx = 0; dx<width; dx++) {
                         visitedTops[x+dx][z+dz][y] = 1;
                     }
                 }
@@ -263,8 +263,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     }                    
                 }
 
-                for (int dz = 0; dz<ChunkLengthZ; dz++) {
-                    for (int dx = 0; dx<ChunkWidthX; dx++) {
+                for (int dz = 0; dz<height; dz++) {
+                    for (int dx = 0; dx<width; dx++) {
                         visitedBottoms[x+dx][z+dz][y+1] = 1;
                     }
                 }
@@ -294,8 +294,22 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (lefts[y][z][x] == 0 || visitedLeft[y][z][x]) { continue; }
                 
+                if (leftChunkNeighborIndex != -1) {
+                    // use ChunkWidthX-1 for the x because need to scan the right side for the left computations
+                    // if the block on the left chunk's right side is solid then we don't need a face here!
+                    if (!world.chunks[leftChunkNeighborIndex].blocks[ChunkWidthX-1 + z*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                        continue;
+                    }
+                }
+
+
                 width = 1;
-                while (((y+width) < ChunkHeightY && lefts[y+width][z][x] == 1) && !visitedLeft[y+width][z][x]) {
+                while ((((y+width) < ChunkHeightY && lefts[y+width][z][x] == 1) && !visitedLeft[y+width][z][x])) {
+                    if (leftChunkNeighborIndex != -1) {
+                        if (!world.chunks[leftChunkNeighborIndex].blocks[ChunkWidthX-1 + z*ChunkWidthX + (y+width)*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                            break;
+                        }
+                    }
                     width++;
                 }
 
@@ -303,9 +317,16 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((z+height) < ChunkLengthZ && !done) {
                     for (int dy = 0; dy < width; dy++) {
-                        if (lefts[y+dy][z+height][x] == 0 || visitedLeft[y+dy][z+height][x]) {
+                        if ((lefts[y+dy][z+height][x] == 0 || visitedLeft[y+dy][z+height][x])) {
                             done = 1;
                             break;
+                        }
+
+                        if (leftChunkNeighborIndex != -1) {
+                            if (!world.chunks[leftChunkNeighborIndex].blocks[ChunkWidthX-1 + (z+height)*ChunkWidthX + (y+dy)*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                                done = 1;
+                                break;
+                            }
                         }
                     }
                     
@@ -314,8 +335,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     }                    
                 }
 
-                for (int dz = 0; dz<ChunkLengthZ; dz++) {
-                    for (int dy = 0; dy<ChunkHeightY; dy++) {
+                for (int dz = 0; dz<height; dz++) {
+                    for (int dy = 0; dy<width; dy++) {
                         visitedLeft[y+dy][z+dz][x] = 1;
                     }
                 }
@@ -346,8 +367,21 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (rights[y][z][x] == 0 || visitedRight[y][z][x]) { continue; }
                 
+                if (rightChunkNeighborIndex != -1) {
+                    // use 0 for the x because need to scan the left side for the right computations
+                    // if the block on the right chunk's left side is solid then we don't need a face here!
+                    if (!world.chunks[rightChunkNeighborIndex].blocks[0 + z*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                        continue;
+                    }
+                }
+
                 width = 1;
                 while (((y+width) < ChunkHeightY && rights[y+width][z][x] == 1) && !visitedRight[y+width][z][x]) {
+                    if (rightChunkNeighborIndex != -1) {
+                        if (!world.chunks[rightChunkNeighborIndex].blocks[0 + z*ChunkWidthX + (y+width)*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                            break;
+                        }
+                    }
                     width++;
                 }
 
@@ -359,15 +393,23 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                             done = 1;
                             break;
                         }
+
+                        if (rightChunkNeighborIndex != -1) {
+                            if (!world.chunks[rightChunkNeighborIndex].blocks[0 + (z+height)*ChunkWidthX + (y+dy)*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                                done = 1;
+                                break;
+                            }
+                        }
                     }
+
                     
                     if (!done) {
                         height++;
                     }                    
                 }
 
-                for (int dz = 0; dz<ChunkLengthZ; dz++) {
-                    for (int dy = 0; dy<ChunkHeightY; dy++) {
+                for (int dz = 0; dz<height; dz++) {
+                    for (int dy = 0; dy<width; dy++) {
                         visitedRight[y+dy][z+dz][x] = 1;
                     }
                 }
@@ -396,8 +438,21 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (fronts[x][y][z] == 0 || visitedFronts[x][y][z]) { continue; }
                 
+                if (upChunkNeighborIndex != -1) {
+                    // use ChunkLengthZ-1 for the z because need to scan the bottom side for the up computations
+                    // if the block on the up chunk's bottom side is solid then we don't need a face here!
+                    if (!world.chunks[upChunkNeighborIndex].blocks[x + (ChunkLengthZ-1)*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                        continue;
+                    }
+                }
+
                 width = 1;
                 while (((x+width) < ChunkWidthX && fronts[x+width][y][z] == 1) && !visitedFronts[x+width][y][z]) {
+                    if (upChunkNeighborIndex != -1) {
+                        if (!world.chunks[upChunkNeighborIndex].blocks[(x+width) + (ChunkLengthZ-1)*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                            break;
+                        }
+                    }
                     width++;
                 }
 
@@ -409,6 +464,13 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                             done = 1;
                             break;
                         }
+
+                        if (upChunkNeighborIndex != -1) {
+                            if (!world.chunks[upChunkNeighborIndex].blocks[(x+dx) + (ChunkLengthZ-1)*ChunkWidthX + (y+height)*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                                done = 1;
+                                break;
+                            }
+                        }
                     }
                     
                     if (!done) {
@@ -416,8 +478,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     }                    
                 }
 
-                for (int dy = 0; dy<ChunkHeightY; dy++) {
-                    for (int dx = 0; dx<ChunkWidthX; dx++) {
+                for (int dy = 0; dy<height; dy++) {
+                    for (int dx = 0; dx<width; dx++) {
                         visitedFronts[x+dx][y+dy][z] = 1;
                     }
                 }
@@ -447,8 +509,21 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (backs[x][y][z] == 0 || visitedBacks[x][y][z]) { continue; }
                 
+                if (downChunkNeighborIndex != -1) {
+                    // use 0 for the z because need to scan the top side for the bottom computations
+                    // if the block on the bottom chunk's up side is solid then we don't need a face here!
+                    if (!world.chunks[downChunkNeighborIndex].blocks[x + (0)*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                        continue;
+                    }
+                }
+
                 width = 1;
                 while (((x+width) < ChunkWidthX && backs[x+width][y][z] == 1) && !visitedBacks[x+width][y][z]) {
+                    if (downChunkNeighborIndex != -1) {
+                        if (!world.chunks[downChunkNeighborIndex].blocks[(x+width) + (0)*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                            break;
+                        }
+                    }
                     width++;
                 }
 
@@ -460,6 +535,13 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                             done = 1;
                             break;
                         }
+
+                        if (downChunkNeighborIndex != -1) {
+                            if (!world.chunks[downChunkNeighborIndex].blocks[(x+dx) + (0)*ChunkWidthX + (y+height)*(ChunkWidthX*ChunkLengthZ)].isAir) {
+                                done = 1;
+                                break;
+                            }
+                        }
                     }
                     
                     if (!done) {
@@ -467,8 +549,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     }                    
                 }
 
-                for (int dy = 0; dy<ChunkHeightY; dy++) {
-                    for (int dx = 0; dx<ChunkWidthX; dx++) {
+                for (int dy = 0; dy<height; dy++) {
+                    for (int dx = 0; dx<width; dx++) {
                         visitedBacks[x+dx][y+dy][z] = 1;
                     }
                 }
