@@ -10,6 +10,11 @@
 
 GLfloat T = 0;
 GLuint atlasTexture;
+
+double lastTime = 0.0;
+double fps = 0.0;
+int frameCount = 0;
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -321,6 +326,16 @@ void drawText(const char *text, float x, float y) {
 
 void drawGraphics()
 {
+    frameCount++;
+    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;  // seconds
+
+    // update FPS every 0.25 seconds
+    if (currentTime - lastTime >= 0.25) {
+        fps = frameCount / (currentTime - lastTime);
+        frameCount = 0;
+        lastTime = currentTime;
+    }
+
     handleUserMovement();
 
     GLfloat Vertices[8][3] = {
@@ -424,8 +439,15 @@ void drawGraphics()
     }
 
 
+
+    char text[64];
+    snprintf(text, sizeof(text), "FPS: %.1f, Quads: %d", fps, chunkMeshQuads.amtQuads);
+
+    // begin2D(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
     glColor3f(1, 1, 1);
-    drawText("Hello world", 10, 10);
+    drawText(text, 50, 0);
+    // end2D();
+
 
 
     // switch the content of color and depth buffers
