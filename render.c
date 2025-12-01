@@ -50,14 +50,13 @@ GLuint loadTexture(const char *filename)
     return textureID;
 }
 
-
-
-
 void initGraphics()
 {
     glClearColor(0, 0, 0, 1);
     glColor3f(1, 1, 1);
     glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
 
     atlasTexture = loadTexture("atlas.png");
     glEnable(GL_TEXTURE_2D);
@@ -290,30 +289,30 @@ void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2]
 {   
     switch (faceType) {
         case FACE_FRONT:
-            // FRONT (0, 1, 2, 3)
             face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, 0, size);
             break;
+
         case FACE_BACK:
-            // BACK (4, 5, 6, 7)
             face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, 0, size);
             break;
+
         case FACE_LEFT:
-            // LEFT (0, 3, 7, 4)
-            face(Vertices[4], Vertices[0], Vertices[3], Vertices[7], transformation, 0, size);
+            face(Vertices[7], Vertices[3], Vertices[0], Vertices[4], transformation, 0, size);
             break;
+
         case FACE_RIGHT:
-            // RIGHT (1, 2, 6, 5)
-            face(Vertices[1], Vertices[5], Vertices[6], Vertices[2], transformation, 0, size);
+            face(Vertices[2], Vertices[6], Vertices[5], Vertices[1], transformation, 0, size);
             break;
+
         case FACE_TOP:
-            // TOP (0, 1, 5, 4)
-            face(Vertices[4], Vertices[5], Vertices[1], Vertices[0], transformation, 6, size);
+            face(Vertices[0], Vertices[1], Vertices[5], Vertices[4], transformation, 6, size);
             break;
+
         case FACE_BOTTOM:
-            // BOTTOM (3, 2, 6, 7)
             face(Vertices[3], Vertices[2], Vertices[6], Vertices[7], transformation, 1, size);
             break;
     }
+
 }
 
 void drawText(const char *text, float x, float y) {

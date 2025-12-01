@@ -14,14 +14,14 @@ typedef struct Block
 typedef struct Chunk
 {
     Block blocks[16 * 16 * 64];
-    GLfloat chunkStartX;
-    GLfloat chunkStartZ;
+    GLfloat        chunkStartX;
+    GLfloat        chunkStartZ;
 } Chunk;
 
 typedef struct PlayerChunks
 {
     Chunk chunks[16];
-    int amtChunks;
+    int    amtChunks;
 } PlayerChunks;
 
 typedef struct MeshQuad 
@@ -36,8 +36,8 @@ typedef struct MeshQuad
 
 typedef struct ChunkMeshQuads {
     MeshQuad *quads;
-    int capacity;
-    int amtQuads;
+    int    capacity;
+    int    amtQuads;
 } ChunkMeshQuads;
 
 // these are the face types
@@ -59,7 +59,7 @@ extern PlayerChunks world;
 #define ChunkWidthX  16
 #define ChunkLengthZ 16
 #define ChunkHeightY 5
-#define MASK_INDEX(x,y,z)  ((y)*ChunkLengthZ*ChunkWidthX + (z)*ChunkWidthX + (x))
+
 extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
