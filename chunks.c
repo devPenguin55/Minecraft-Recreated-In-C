@@ -51,7 +51,7 @@ void initWorld(PlayerChunks *world)
     int x = 0;
     int z = 0;
     world->amtChunks = 0;
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 4; i++)
     {
         x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
         z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
@@ -89,20 +89,20 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
     int chunkX = chunkIdx % WORLD_HORIZONTAL_CHUNK_AMT;
     int chunkY = chunkIdx / WORLD_HORIZONTAL_CHUNK_AMT;
 
-    // if (chunkX > 0) {
-    //     leftChunkNeighborIndex = (chunkX - 1) + chunkY * WORLD_HORIZONTAL_CHUNK_AMT;
-    // }
-    // if (chunkX < (WORLD_HORIZONTAL_CHUNK_AMT-1)) {
-    //     rightChunkNeighborIndex = (chunkX + 1) + chunkY * WORLD_HORIZONTAL_CHUNK_AMT;
-    // }
+    if (chunkX > 0) {
+        leftChunkNeighborIndex = (chunkX - 1) + chunkY * WORLD_HORIZONTAL_CHUNK_AMT;
+    }
+    if (chunkX < (WORLD_HORIZONTAL_CHUNK_AMT-1)) {
+        rightChunkNeighborIndex = (chunkX + 1) + chunkY * WORLD_HORIZONTAL_CHUNK_AMT;
+    }
     
-    // if (chunkY > 0) {
-    //     upChunkNeighborIndex = chunkX + (chunkY - 1) * WORLD_HORIZONTAL_CHUNK_AMT;
-    // } 
+    if (chunkY > 0) {
+        upChunkNeighborIndex = chunkX + (chunkY - 1) * WORLD_HORIZONTAL_CHUNK_AMT;
+    } 
 
-    // if (chunkY < (WORLD_VERTICAL_CHUNK_AMT-1)) {
-    //     downChunkNeighborIndex = chunkX + (chunkY + 1) * WORLD_HORIZONTAL_CHUNK_AMT;
-    // } 
+    if (chunkY < (WORLD_VERTICAL_CHUNK_AMT-1)) {
+        downChunkNeighborIndex = chunkX + (chunkY + 1) * WORLD_HORIZONTAL_CHUNK_AMT;
+    } 
     
     printf("Chunk %d's\n", chunkIdx);
     printf("X %d and Y %d and Idx %d\n", chunkX, chunkY, chunkIdx);
