@@ -23,12 +23,12 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
-            // int baseHeight = 2;
-            // int stairHeight = baseHeight + x + z; 
-            // if (stairHeight >= ChunkHeightY) {
-            //     stairHeight = ChunkHeightY - 1;
-            // }
-            // printf("Stair height at %d\n", stairHeight);
+            int baseHeight = 2;
+            int stairHeight = baseHeight + x + z; 
+            if (stairHeight >= ChunkHeightY) {
+                stairHeight = ChunkHeightY - 1;
+            }
+            printf("Stair height at %d\n", stairHeight);
             for (int y = 0; y < ChunkHeightY; y++)
             {
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
@@ -38,8 +38,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
                 curBlock->y = BlockHeightY * (y);
 
                 // fill everything below the staircase height 
-                // curBlock->isAir = (y > stairHeight);
-                curBlock->isAir = (y >= 3);
+                curBlock->isAir = (y > stairHeight);
+                // curBlock->isAir = (y >= 3);
             }
         }
     }
