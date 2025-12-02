@@ -56,7 +56,7 @@ void initGraphics()
     glColor3f(1, 1, 1);
     glEnable(GL_DEPTH_TEST);
 
-    glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
+    // glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
 
     atlasTexture = loadTexture("atlas.png");
     glEnable(GL_TEXTURE_2D);
@@ -200,10 +200,10 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 float V1 = uv.v + dv;
         
                 // dy
-                A[1] -= dy;
-                B[1] -= dy;
-                C[1] -= dy;
-                D[1] -= dy;
+                A[1] += dy;
+                B[1] += dy;
+                C[1] += dy;
+                D[1] += dy;
                 // dz
                 A[2] += dz;
                 B[2] += dz;
@@ -216,10 +216,10 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 glEnd();
                 glPopMatrix();
                 // dy
-                A[1] += dy;
-                B[1] += dy;
-                C[1] += dy;
-                D[1] += dy;
+                A[1] -= dy;
+                B[1] -= dy;
+                C[1] -= dy;
+                D[1] -= dy;
                 // dz
                 A[2] -= dz;
                 B[2] -= dz;
@@ -260,10 +260,10 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 C[0] += dx;
                 D[0] += dx;
                 // dy
-                A[1] -= dy;
-                B[1] -= dy;
-                C[1] -= dy;
-                D[1] -= dy;
+                A[1] += dy;
+                B[1] += dy;
+                C[1] += dy;
+                D[1] += dy;
                 glTexCoord2f(U0, V0); glVertex3fv(A);
                 glTexCoord2f(U1, V0); glVertex3fv(B);
                 glTexCoord2f(U1, V1); glVertex3fv(C);
@@ -276,10 +276,10 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 C[0] -= dx;
                 D[0] -= dx;
                 // dy
-                A[1] += dy;
-                B[1] += dy;
-                C[1] += dy;
-                D[1] += dy;
+                A[1] -= dy;
+                B[1] -= dy;
+                C[1] -= dy;
+                D[1] -= dy;
             }
         }
     }

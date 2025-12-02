@@ -9,6 +9,7 @@ ChunkMeshQuads chunkMeshQuads;
 // int ChunkLengthZ = 1; 
 // int ChunkHeightY = 10;
 
+
 float BlockWidthX = 1;
 float BlockHeightY = 1;
 float BlockLengthZ = 1;
@@ -17,30 +18,40 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
 {
     chunk->chunkStartX = xAdd;
     chunk->chunkStartZ = zAdd;
-    printf("new chunk made with %f and %f\n", xAdd, zAdd);
+
     for (int x = 0; x < ChunkWidthX; x++)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
+            // int baseHeight = 2;
+            // int stairHeight = baseHeight + x + z; 
+            // if (stairHeight >= ChunkHeightY) {
+            //     stairHeight = ChunkHeightY - 1;
+            // }
+            // printf("Stair height at %d\n", stairHeight);
             for (int y = 0; y < ChunkHeightY; y++)
             {
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
 
-                curBlock->x = BlockWidthX * x + xAdd;
+                curBlock->x = BlockWidthX  * x + xAdd;
                 curBlock->z = BlockLengthZ * z + zAdd;
-                curBlock->y = BlockHeightY * (-y);
-                curBlock->isAir = (y <= 2);
+                curBlock->y = BlockHeightY * (y);
+
+                // fill everything below the staircase height 
+                // curBlock->isAir = (y > stairHeight);
+                curBlock->isAir = (y >= 3);
             }
         }
     }
 }
+
 
 void initWorld(PlayerChunks *world)
 {
     int x = 0;
     int z = 0;
     world->amtChunks = 0;
-    for (int i = 0; i < WORLD_HORIZONTAL_CHUNK_AMT*WORLD_VERTICAL_CHUNK_AMT; i++)
+    for (int i = 0; i < 1; i++)
     {
         x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
         z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
@@ -76,22 +87,22 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
     int leftChunkNeighborIndex = -1;
 
     int chunkX = chunkIdx % WORLD_HORIZONTAL_CHUNK_AMT;
-    int chunkY = chunkIdx / WORLD_VERTICAL_CHUNK_AMT;
+    int chunkY = chunkIdx / WORLD_HORIZONTAL_CHUNK_AMT;
 
-    if (chunkX > 0) {
-        leftChunkNeighborIndex = (chunkX - 1) + chunkY * WORLD_VERTICAL_CHUNK_AMT;
-    }
-    if (chunkX < (WORLD_HORIZONTAL_CHUNK_AMT-1)) {
-        rightChunkNeighborIndex = (chunkX + 1) + chunkY * WORLD_VERTICAL_CHUNK_AMT;
-    }
+    // if (chunkX > 0) {
+    //     leftChunkNeighborIndex = (chunkX - 1) + chunkY * WORLD_HORIZONTAL_CHUNK_AMT;
+    // }
+    // if (chunkX < (WORLD_HORIZONTAL_CHUNK_AMT-1)) {
+    //     rightChunkNeighborIndex = (chunkX + 1) + chunkY * WORLD_HORIZONTAL_CHUNK_AMT;
+    // }
     
-    if (chunkY > 0) {
-        upChunkNeighborIndex = chunkX + (chunkY - 1) * WORLD_VERTICAL_CHUNK_AMT;
-    } 
+    // if (chunkY > 0) {
+    //     upChunkNeighborIndex = chunkX + (chunkY - 1) * WORLD_HORIZONTAL_CHUNK_AMT;
+    // } 
 
-    if (chunkY < (WORLD_VERTICAL_CHUNK_AMT-1)) {
-        downChunkNeighborIndex = chunkX + (chunkY + 1) * WORLD_VERTICAL_CHUNK_AMT;
-    } 
+    // if (chunkY < (WORLD_VERTICAL_CHUNK_AMT-1)) {
+    //     downChunkNeighborIndex = chunkX + (chunkY + 1) * WORLD_HORIZONTAL_CHUNK_AMT;
+    // } 
     
     printf("Chunk %d's\n", chunkIdx);
     printf("X %d and Y %d and Idx %d\n", chunkX, chunkY, chunkIdx);
@@ -105,16 +116,16 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
         for (int x = 0; x<ChunkWidthX; x++) {
             for (int z = 0; z<ChunkLengthZ; z++) {
                 int blockIndex       = x + z*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ);
-                int topBlockIndex    = blockIndex - ChunkWidthX*ChunkLengthZ;
-                int bottomBlockIndex = blockIndex + ChunkWidthX*ChunkLengthZ;
+                int topBlockIndex    = blockIndex + ChunkWidthX*ChunkLengthZ;
+                int bottomBlockIndex = blockIndex - ChunkWidthX*ChunkLengthZ;
                 int leftBlockIndex   = blockIndex - 1;
                 int rightBlockIndex  = blockIndex + 1;
                 int frontBlockIndex  = blockIndex - ChunkWidthX;
                 int backBlockIndex   = blockIndex + ChunkWidthX;
 
                 if (
-                    (topBlockIndex >= 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[topBlockIndex].isAir)) ||                    
-                    (!chunk->blocks[blockIndex].isAir && topBlockIndex < 0)    
+                    (topBlockIndex < ChunkWidthX*ChunkLengthZ*ChunkHeightY && (!chunk->blocks[blockIndex].isAir && chunk->blocks[topBlockIndex].isAir)) ||                    
+                    (!chunk->blocks[blockIndex].isAir && topBlockIndex >= ChunkWidthX*ChunkLengthZ*ChunkHeightY)    
                 ) {
                     // existing block
                     tops[x][z][y] = 1;
@@ -123,14 +134,15 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 }
 
                 if (
-                    (bottomBlockIndex < ChunkWidthX*ChunkLengthZ*ChunkHeightY && (!chunk->blocks[blockIndex].isAir && chunk->blocks[bottomBlockIndex].isAir)) ||                    
-                    (!chunk->blocks[blockIndex].isAir && bottomBlockIndex >= ChunkWidthX*ChunkLengthZ*ChunkHeightY)    
+                    (bottomBlockIndex >= 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[bottomBlockIndex].isAir)) ||                    
+                    (!chunk->blocks[blockIndex].isAir && bottomBlockIndex < 0)    
                 ) {
                     // existing block
                     bottoms[x][z][y] = 1;
                 } else {
                     bottoms[x][z][y] = 0;
                 }
+
 
                 if ((x > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[leftBlockIndex].isAir)) ||
                    (!chunk->blocks[blockIndex].isAir && x == 0)
@@ -241,10 +253,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
     for (int y = 0; y < ChunkHeightY-1; y++) {
         for (int x = 0; x < ChunkWidthX; x++) {
             for (int z = 0; z < ChunkLengthZ; z++) {
-                if (bottoms[x][z][y+1] == 0 || visitedBottoms[x][z][y+1]) { continue; }
+                if (bottoms[x][z][y-1] == 0 || visitedBottoms[x][z][y-1]) { continue; }
                 
                 width = 1;
-                while (((x+width) < ChunkWidthX && bottoms[x+width][z][y+1] == 1) && !visitedBottoms[x+width][z][y+1]) {
+                while (((x+width) < ChunkWidthX && bottoms[x+width][z][y-1] == 1) && !visitedBottoms[x+width][z][y-1]) {
                     width++;
                 }
 
@@ -252,7 +264,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((z+height) < ChunkLengthZ && !done) {
                     for (int dx = 0; dx < width; dx++) {
-                        if (bottoms[x+dx][z+height][y+1] == 0 || visitedBottoms[x+dx][z+height][y+1]) {
+                        if (bottoms[x+dx][z+height][y-1] == 0 || visitedBottoms[x+dx][z+height][y-1]) {
                             done = 1;
                             break;
                         }
@@ -265,7 +277,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
 
                 for (int dz = 0; dz<height; dz++) {
                     for (int dx = 0; dx<width; dx++) {
-                        visitedBottoms[x+dx][z+dz][y+1] = 1;
+                        visitedBottoms[x+dx][z+dz][y-1] = 1;
                     }
                 }
 
@@ -573,5 +585,4 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             }        
         }    
     }
-
 }

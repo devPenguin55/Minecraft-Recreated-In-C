@@ -13,7 +13,7 @@ typedef struct Block
 
 typedef struct Chunk
 {
-    Block blocks[16 * 16 * 64];
+    Block blocks[16 * 16 * 10];
     GLfloat        chunkStartX;
     GLfloat        chunkStartZ;
 } Chunk;
@@ -58,7 +58,7 @@ typedef struct ChunkMeshQuads {
 extern PlayerChunks world;
 #define ChunkWidthX  16
 #define ChunkLengthZ 16
-#define ChunkHeightY 5
+#define ChunkHeightY 10
 
 extern float BlockWidthX;
 extern float BlockLengthZ;
