@@ -309,7 +309,7 @@ void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2]
             break;
 
         case FACE_BOTTOM:
-            face(Vertices[3], Vertices[2], Vertices[6], Vertices[7], transformation, 1, size);
+            face(Vertices[7], Vertices[6], Vertices[2], Vertices[3], transformation, 1, size);
             break;
     }
 
