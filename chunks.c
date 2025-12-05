@@ -11,7 +11,7 @@ ChunkMeshQuads chunkMeshQuads;
 
 
 float BlockWidthX = 1;
-float BlockHeightY = 1;
+float BlockHeightY = 1; 
 float BlockLengthZ = 1;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
@@ -28,7 +28,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
             if (stairHeight >= ChunkHeightY) {
                 stairHeight = ChunkHeightY - 1;
             }
-            // printf("Stair height at %d\n", stairHeight);
             for (int y = 0; y < ChunkHeightY; y++)
             {
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
@@ -39,7 +38,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
 
                 // fill everything below the staircase height 
                 curBlock->isAir = (y > stairHeight);
-                // curBlock->isAir = (y >= 3);
             }
         }
     }

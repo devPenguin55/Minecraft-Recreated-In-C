@@ -11,6 +11,7 @@
 GLfloat T = 0;
 GLuint atlasTexture;
 
+double lastFpsTime = 0.0;
 double lastTime = 0.0;
 double fps = 0.0;
 int frameCount = 0;
@@ -329,12 +330,13 @@ void drawGraphics()
     double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;  // seconds
 
     // update FPS every 0.25 seconds
-    if (currentTime - lastTime >= 0.25) {
-        fps = frameCount / (currentTime - lastTime);
+    if (currentTime - lastFpsTime >= 0.25) {
+        fps = frameCount / (currentTime - lastFpsTime);
         frameCount = 0;
-        lastTime = currentTime;
+        lastFpsTime = currentTime;
     }
-
+    PLAYER_SPEED = 10*(currentTime - lastTime);
+    lastTime = currentTime;
     handleUserMovement();
 
     GLfloat Vertices[8][3] = {

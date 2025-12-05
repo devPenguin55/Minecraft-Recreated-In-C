@@ -56,8 +56,8 @@ typedef struct ChunkMeshQuads {
 #define WORLD_VERTICAL_CHUNK_AMT   2
 
 extern PlayerChunks world;
-#define ChunkWidthX  16
-#define ChunkLengthZ 16
+#define ChunkWidthX  6
+#define ChunkLengthZ 6
 #define ChunkHeightY 10
 
 extern float BlockWidthX;
