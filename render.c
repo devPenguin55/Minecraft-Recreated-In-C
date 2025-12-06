@@ -286,31 +286,51 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
     }
 }
 
-void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType)
+void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType, int blockType)
 {   
+    int sideTextureIndex;
+    int topTextureIndex;
+    int bottomTextureIndex;
+
+    switch (blockType) {
+        case BLOCK_TYPE_GRASS:
+            sideTextureIndex   = 0;
+            topTextureIndex    = 6;
+            bottomTextureIndex = 1;
+            break;
+        case BLOCK_TYPE_DIRT:
+            sideTextureIndex   = 2;
+            topTextureIndex    = 2;
+            bottomTextureIndex = 2;
+            break;
+        default:
+            printf("No correct block type entered!\n");
+            break;
+    }
+
     switch (faceType) {
         case FACE_FRONT:
-            face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, 0, size);
+            face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, sideTextureIndex, size);
             break;
 
         case FACE_BACK:
-            face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, 0, size);
+            face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, sideTextureIndex, size);
             break;
 
         case FACE_LEFT:
-            face(Vertices[7], Vertices[3], Vertices[0], Vertices[4], transformation, 0, size);
+            face(Vertices[7], Vertices[3], Vertices[0], Vertices[4], transformation, sideTextureIndex, size);
             break;
 
         case FACE_RIGHT:
-            face(Vertices[2], Vertices[6], Vertices[5], Vertices[1], transformation, 0, size);
+            face(Vertices[2], Vertices[6], Vertices[5], Vertices[1], transformation, sideTextureIndex, size);
             break;
 
         case FACE_TOP:
-            face(Vertices[0], Vertices[1], Vertices[5], Vertices[4], transformation, 6, size);
+            face(Vertices[0], Vertices[1], Vertices[5], Vertices[4], transformation, topTextureIndex, size);
             break;
 
         case FACE_BOTTOM:
-            face(Vertices[7], Vertices[6], Vertices[2], Vertices[3], transformation, 1, size);
+            face(Vertices[7], Vertices[6], Vertices[2], Vertices[3], transformation, bottomTextureIndex, size);
             break;
     }
 
@@ -380,9 +400,10 @@ void drawGraphics()
         translation[1] = curQuad->y;
         translation[2] = curQuad->z;
         
-        GLfloat xWidth;
-        GLfloat zLength;
-        GLfloat yHeight;
+        /*
+
+        * FACE GUIDE
+
         switch (curQuad->faceType) {
             case FACE_TOP:
                 xWidth = curQuad->width;
@@ -414,10 +435,10 @@ void drawGraphics()
                 zLength = 1;
                 yHeight = curQuad->height;
                 break;
-        }
+        } */
 
         GLfloat size[2] = {curQuad->width, curQuad->height};
-        cubeFace(Vertices, translation, size, curQuad->faceType);
+        cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
 
 
         // glPushMatrix();
@@ -444,10 +465,19 @@ void drawGraphics()
     char text[64];
     snprintf(text, sizeof(text), "FPS: %.1f, Quads: %d", fps, chunkMeshQuads.amtQuads);
 
-    // begin2D(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
     glColor3f(1, 1, 1);
     drawText(text, 50, 0);
-    // end2D();
+    
+    
+    glBegin(GL_POINTS);
+        glColor3f(1, 0, 0);
+        glVertex3f(-1, 0, -1);
+        glColor3f(0, 1, 0);
+        glVertex3f(2, 0, -1);
+        glColor3f(1, 0, 0);
+        glVertex3f(-1, 3, -1);
+        glColor3f(1, 1, 1);
+    glEnd();
 
 
 

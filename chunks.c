@@ -24,7 +24,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
         for (int z = 0; z < ChunkLengthZ; z++)
         {
             int baseHeight = 2;
-            int stairHeight = baseHeight + x + z; 
+            int stairHeight = baseHeight  + z; 
             if (stairHeight >= ChunkHeightY) {
                 stairHeight = ChunkHeightY - 1;
             }
@@ -38,6 +38,13 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
 
                 // fill everything below the staircase height 
                 curBlock->isAir = (y > stairHeight);
+
+                if (y%2==0) {
+                    curBlock->blockType = BLOCK_TYPE_GRASS;  
+                } else {
+                    curBlock->blockType = BLOCK_TYPE_DIRT;  
+                } 
+
             }
         }
     }
@@ -48,8 +55,8 @@ void initWorld(PlayerChunks *world)
 {
     int x = 0;
     int z = 0;
-    world->amtChunks = 0;
-    for (int i = 0; i < 4; i++)
+    world->amtChunks = 0; 
+    for (int i = 0; i < 1; i++)
     {
         x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
         z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
@@ -126,7 +133,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     (!chunk->blocks[blockIndex].isAir && topBlockIndex >= ChunkWidthX*ChunkLengthZ*ChunkHeightY)    
                 ) {
                     // existing block
-                    tops[x][z][y] = 1;
+                    tops[x][z][y] = chunk->blocks[blockIndex].blockType;
                 } else {
                     tops[x][z][y] = 0;
                 }
@@ -136,7 +143,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     (!chunk->blocks[blockIndex].isAir && bottomBlockIndex < 0)    
                 ) {
                     // existing block
-                    bottoms[x][z][y] = 1;
+                    bottoms[x][z][y] = chunk->blocks[blockIndex].blockType;
                 } else {
                     bottoms[x][z][y] = 0;
                 }
@@ -146,7 +153,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                    (!chunk->blocks[blockIndex].isAir && x == 0)
                 ) {
                     // existing block
-                    lefts[y][z][x] = 1;
+                    lefts[y][z][x] = chunk->blocks[blockIndex].blockType;
                 } else {
                     lefts[y][z][x] = 0;
                 }
@@ -155,7 +162,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                    (!chunk->blocks[blockIndex].isAir && x == (ChunkWidthX-1))
                 ) {
                     // existing block
-                    rights[y][z][x] = 1;
+                    rights[y][z][x] = chunk->blocks[blockIndex].blockType;
                 } else {
                     rights[y][z][x] = 0;
                 }
@@ -164,7 +171,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     (!chunk->blocks[blockIndex].isAir && z == 0)
                 ) {
                     // existing block
-                    fronts[x][y][z] = 1;
+                    fronts[x][y][z] = chunk->blocks[blockIndex].blockType;
                 } else {
                     fronts[x][y][z] = 0;
                 }
@@ -173,7 +180,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                     (!chunk->blocks[blockIndex].isAir && z == (ChunkLengthZ-1))
                 ) {
                     // existing block
-                    backs[x][y][z] = 1;
+                    backs[x][y][z] = chunk->blocks[blockIndex].blockType;
                 } else {
                     backs[x][y][z] = 0;
                 }   
@@ -196,13 +203,16 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
     int width;
     int height;
     int done;
+    int curBlockType;
     for (int y = 0; y < ChunkHeightY; y++) {
         for (int x = 0; x < ChunkWidthX; x++) {
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (tops[x][z][y] == 0 || visitedTops[x][z][y]) { continue; }
                 
+                curBlockType = tops[x][z][y];
+
                 width = 1;
-                while (((x+width) < ChunkWidthX && tops[x+width][z][y] == 1) && !visitedTops[x+width][z][y]) {
+                while (((x+width) < ChunkWidthX && tops[x+width][z][y] == curBlockType) && !visitedTops[x+width][z][y]) {
                     width++;
                 }
 
@@ -210,7 +220,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((z+height) < ChunkLengthZ && !done) {
                     for (int dx = 0; dx < width; dx++) {
-                        if (tops[x+dx][z+height][y] == 0 || visitedTops[x+dx][z+height][y]) {
+                        if ((tops[x+dx][z+height][y] == 0 || visitedTops[x+dx][z+height][y]) || tops[x+dx][z+height][y] != curBlockType) {
                             done = 1;
                             break;
                         }
@@ -239,10 +249,11 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_TOP;
+                curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
                 // printf("  -> %f, %f\n", x, chunk->chunkStartX);
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType);
+                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
             }        
         }    
     }
@@ -253,8 +264,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (bottoms[x][z][y-1] == 0 || visitedBottoms[x][z][y-1]) { continue; }
                 
+                curBlockType = bottoms[x][z][y-1];
+
                 width = 1;
-                while (((x+width) < ChunkWidthX && bottoms[x+width][z][y-1] == 1) && !visitedBottoms[x+width][z][y-1]) {
+                while (((x+width) < ChunkWidthX && bottoms[x+width][z][y-1] == curBlockType) && !visitedBottoms[x+width][z][y-1]) {
                     width++;
                 }
 
@@ -262,7 +275,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((z+height) < ChunkLengthZ && !done) {
                     for (int dx = 0; dx < width; dx++) {
-                        if (bottoms[x+dx][z+height][y-1] == 0 || visitedBottoms[x+dx][z+height][y-1]) {
+                        if ((bottoms[x+dx][z+height][y-1] == 0 || visitedBottoms[x+dx][z+height][y-1]) || bottoms[x+dx][z+height][y-1] != curBlockType) {
                             done = 1;
                             break;
                         }
@@ -291,9 +304,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_BOTTOM;
+                curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType);
+                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
             }        
         }    
     }
@@ -304,6 +318,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (lefts[y][z][x] == 0 || visitedLeft[y][z][x]) { continue; }
                 
+                curBlockType = lefts[y][z][x];
+
                 if (leftChunkNeighborIndex != -1 && (x == 0)) {
                     // use ChunkWidthX-1 for the x because need to scan the right side for the left computations
                     // if the block on the left chunk's right side is solid then we don't need a face here!
@@ -314,7 +330,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
 
 
                 width = 1;
-                while ((((y+width) < ChunkHeightY && lefts[y+width][z][x] == 1) && !visitedLeft[y+width][z][x])) {
+                while ((((y+width) < ChunkHeightY && lefts[y+width][z][x] == curBlockType) && !visitedLeft[y+width][z][x])) {
                     if (leftChunkNeighborIndex != -1 && (x == 0)) {
                         if (!world.chunks[leftChunkNeighborIndex].blocks[ChunkWidthX-1 + z*ChunkWidthX + (y+width)*(ChunkWidthX*ChunkLengthZ)].isAir) {
                             break;
@@ -327,7 +343,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((z+height) < ChunkLengthZ && !done) {
                     for (int dy = 0; dy < width; dy++) {
-                        if ((lefts[y+dy][z+height][x] == 0 || visitedLeft[y+dy][z+height][x])) {
+                        if ((lefts[y+dy][z+height][x] == 0 || visitedLeft[y+dy][z+height][x]) || lefts[y+dy][z+height][x] != curBlockType) {
                             done = 1;
                             break;
                         }
@@ -364,9 +380,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_LEFT;
+                curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType);
+                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
             }        
         }    
     }
@@ -377,6 +394,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (rights[y][z][x] == 0 || visitedRight[y][z][x]) { continue; }
                 
+                curBlockType = rights[y][z][x];
+
                 if (rightChunkNeighborIndex != -1 && (x == (ChunkWidthX-1))) {
                     // use 0 for the x because need to scan the left side for the right computations
                     // if the block on the right chunk's left side is solid then we don't need a face here!
@@ -386,7 +405,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 }
 
                 width = 1;
-                while (((y+width) < ChunkHeightY && rights[y+width][z][x] == 1) && !visitedRight[y+width][z][x]) {
+                while (((y+width) < ChunkHeightY && rights[y+width][z][x] == curBlockType) && !visitedRight[y+width][z][x]) {
                     if (rightChunkNeighborIndex != -1 && (x == (ChunkWidthX-1))) {
                         if (!world.chunks[rightChunkNeighborIndex].blocks[0 + z*ChunkWidthX + (y+width)*(ChunkWidthX*ChunkLengthZ)].isAir) {
                             break;
@@ -399,7 +418,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((z+height) < ChunkLengthZ && !done) {
                     for (int dy = 0; dy < width; dy++) {
-                        if (rights[y+dy][z+height][x] == 0 || visitedRight[y+dy][z+height][x]) {
+                        if ((rights[y+dy][z+height][x] == 0 || visitedRight[y+dy][z+height][x]) || rights[y+dy][z+height][x] != curBlockType) {
                             done = 1;
                             break;
                         }
@@ -435,9 +454,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_RIGHT;
+                curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType);
+                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
             }        
         }    
     }
@@ -448,6 +468,9 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (fronts[x][y][z] == 0 || visitedFronts[x][y][z]) { continue; }
                 
+                curBlockType = fronts[x][y][z];
+                printf("Front block type is %d\n", curBlockType);
+
                 if (upChunkNeighborIndex != -1 && (z == 0)) {
                     // use ChunkLengthZ-1 for the z because need to scan the bottom side for the up computations
                     // if the block on the up chunk's bottom side is solid then we don't need a face here!
@@ -457,7 +480,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 }
 
                 width = 1;
-                while (((x+width) < ChunkWidthX && fronts[x+width][y][z] == 1) && !visitedFronts[x+width][y][z]) {
+                while (((x+width) < ChunkWidthX && fronts[x+width][y][z] == curBlockType) && !visitedFronts[x+width][y][z]) {
                     if (upChunkNeighborIndex != -1 && (z == 0)) {
                         if (!world.chunks[upChunkNeighborIndex].blocks[(x+width) + ((ChunkLengthZ-1))*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
                             break;
@@ -470,7 +493,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((y+height) < ChunkHeightY && !done) {
                     for (int dx = 0; dx < width; dx++) {
-                        if (fronts[x+dx][y+height][z] == 0 || visitedFronts[x+dx][y+height][z]) {
+                        if ((fronts[x+dx][y+height][z] == 0 || visitedFronts[x+dx][y+height][z]) || fronts[x+dx][y+height][z] != curBlockType) {
                             done = 1;
                             break;
                         }
@@ -506,9 +529,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_FRONT;
+                curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType);
+                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
             }        
         }    
     }
@@ -519,6 +543,8 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
             for (int z = 0; z < ChunkLengthZ; z++) {
                 if (backs[x][y][z] == 0 || visitedBacks[x][y][z]) { continue; }
                 
+                int curBlockType = backs[x][y][z];
+
                 if (downChunkNeighborIndex != -1 && (z == (ChunkLengthZ-1))) {
                     // use 0 for the z because need to scan the top side for the bottom computations
                     // if the block on the bottom chunk's up side is solid then we don't need a face here!
@@ -528,7 +554,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 }
 
                 width = 1;
-                while (((x+width) < ChunkWidthX && backs[x+width][y][z] == 1) && !visitedBacks[x+width][y][z]) {
+                while (((x+width) < ChunkWidthX && backs[x+width][y][z] == curBlockType) && !visitedBacks[x+width][y][z]) {
                     if (downChunkNeighborIndex != -1 && (z == (ChunkLengthZ-1))) {
                         if (!world.chunks[downChunkNeighborIndex].blocks[(x+width) + (0)*ChunkWidthX + y*(ChunkWidthX*ChunkLengthZ)].isAir) {
                             break;
@@ -541,7 +567,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 done   = 0;
                 while ((y+height) < ChunkHeightY && !done) {
                     for (int dx = 0; dx < width; dx++) {
-                        if (backs[x+dx][y+height][z] == 0 || visitedBacks[x+dx][y+height][z]) {
+                        if ((backs[x+dx][y+height][z] == 0 || visitedBacks[x+dx][y+height][z]) || backs[x+dx][y+height][z] != curBlockType) {
                             done = 1;
                             break;
                         }
@@ -577,9 +603,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->width = width;
                 curQuad->height = height;
                 curQuad->faceType = FACE_BACK;
+                curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType);
+                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
             }        
         }    
     }

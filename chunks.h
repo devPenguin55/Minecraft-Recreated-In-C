@@ -5,10 +5,11 @@
 
 typedef struct Block
 {
-    GLfloat x;
-    GLfloat y;
-    GLfloat z;
-    int isAir;
+    GLfloat     x;
+    GLfloat     y;
+    GLfloat     z;
+    int     isAir;
+    int blockType; // the block type for selecting the texture later
 } Block;
 
 typedef struct Chunk
@@ -32,6 +33,7 @@ typedef struct MeshQuad
     GLfloat    width;
     GLfloat   height;
     int     faceType; // these are listed below!
+    int    blockType; // these are listed below!
 } MeshQuad;
 
 typedef struct ChunkMeshQuads {
@@ -52,8 +54,11 @@ typedef struct ChunkMeshQuads {
 #define PLANE_Y 2
 #define PLANE_Z 3
 
-#define WORLD_HORIZONTAL_CHUNK_AMT 2
-#define WORLD_VERTICAL_CHUNK_AMT   2
+#define BLOCK_TYPE_GRASS 1
+#define BLOCK_TYPE_DIRT  2
+
+#define WORLD_HORIZONTAL_CHUNK_AMT 1
+#define WORLD_VERTICAL_CHUNK_AMT   1
 
 extern PlayerChunks world;
 #define ChunkWidthX  6
