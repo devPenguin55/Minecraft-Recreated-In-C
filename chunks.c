@@ -6,13 +6,15 @@
 PlayerChunks world;
 ChunkMeshQuads chunkMeshQuads;
 // int ChunkWidthX = 1;
-// int ChunkLengthZ = 1; 
+// int ChunkLengthZ = 1;  
 // int ChunkHeightY = 10;
 
 
 float BlockWidthX = 1;
 float BlockHeightY = 1; 
 float BlockLengthZ = 1;
+
+int DEBUG = 0;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
 {
@@ -24,7 +26,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
         for (int z = 0; z < ChunkLengthZ; z++)
         {
             int baseHeight = 2;
-            int stairHeight = baseHeight  + z; 
+            int stairHeight = baseHeight + x + z; 
             if (stairHeight >= ChunkHeightY) {
                 stairHeight = ChunkHeightY - 1;
             }
@@ -39,7 +41,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
                 // fill everything below the staircase height 
                 curBlock->isAir = (y > stairHeight);
 
-                if (y%2==0) {
+                if (y == stairHeight) {
                     curBlock->blockType = BLOCK_TYPE_GRASS;  
                 } else {
                     curBlock->blockType = BLOCK_TYPE_DIRT;  
@@ -56,7 +58,7 @@ void initWorld(PlayerChunks *world)
     int x = 0;
     int z = 0;
     world->amtChunks = 0; 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 16; i++)
     {
         x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
         z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
@@ -78,7 +80,7 @@ void handleProgramClose() {
 
 void generateChunkMesh(Chunk *chunk, int chunkIdx)
 {
-    printf("mesh amts %d\n", chunkMeshQuads.amtQuads);
+    printf("starting mesh amts %d\n", chunkMeshQuads.amtQuads);
     int    tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0}; // * X-Z plane, y fixed
     int bottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0}; // * X-Z plane, y fixed
     int  lefts[ChunkHeightY][ChunkLengthZ][ChunkWidthX]  = {0}; // ? Y-Z plane, x fixed
@@ -109,12 +111,14 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
         downChunkNeighborIndex = chunkX + (chunkY + 1) * WORLD_HORIZONTAL_CHUNK_AMT;
     } 
     
-    printf("Chunk %d's\n", chunkIdx);
-    printf("X %d and Y %d and Idx %d\n", chunkX, chunkY, chunkIdx);
-    printf("Up neighbor is %d\n", upChunkNeighborIndex);
-    printf("Down neighbor is %d\n", downChunkNeighborIndex);
-    printf("Left neighbor is %d\n", leftChunkNeighborIndex);
-    printf("Right neighbor is %d\n", rightChunkNeighborIndex);
+    if (DEBUG) {
+        printf("Chunk %d's\n", chunkIdx);
+        printf("X %d and Y %d and Idx %d\n", chunkX, chunkY, chunkIdx);
+        printf("Up neighbor is %d\n", upChunkNeighborIndex);
+        printf("Down neighbor is %d\n", downChunkNeighborIndex);
+        printf("Left neighbor is %d\n", leftChunkNeighborIndex);
+        printf("Right neighbor is %d\n", rightChunkNeighborIndex);
+    }
 
     // mask generation step (for top, bottom, left, right, front, back)
     for (int y = 0; y<ChunkHeightY; y++) {
@@ -186,16 +190,6 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 }   
             }
         }
-        
-        // for (int i = 0; i < 16; i++)
-        // {
-        //     for (int j = 0; j < 16; j++)
-        //     {
-        //         printf("%d ", tops[i][j][y]);
-        //     }
-        //     printf("\n");
-        // }
-        // printf(" ---  new y layer of %d\n", y); 
     }
 
     // greedy algorithm steps
@@ -253,7 +247,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
 
                 chunkMeshQuads.amtQuads++;
                 // printf("  -> %f, %f\n", x, chunk->chunkStartX);
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                if (DEBUG) {printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);}
             }        
         }    
     }
@@ -307,7 +301,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                if (DEBUG) {printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);}
             }        
         }    
     }
@@ -383,7 +377,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                if (DEBUG) {printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);}
             }        
         }    
     }
@@ -457,7 +451,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                if (DEBUG) {printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);}
             }        
         }    
     }
@@ -469,8 +463,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 if (fronts[x][y][z] == 0 || visitedFronts[x][y][z]) { continue; }
                 
                 curBlockType = fronts[x][y][z];
-                printf("Front block type is %d\n", curBlockType);
-
+            
                 if (upChunkNeighborIndex != -1 && (z == 0)) {
                     // use ChunkLengthZ-1 for the z because need to scan the bottom side for the up computations
                     // if the block on the up chunk's bottom side is solid then we don't need a face here!
@@ -532,7 +525,7 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                if (DEBUG) {printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);}
             }        
         }    
     }
@@ -606,8 +599,10 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
                 curQuad->blockType = curBlockType;
 
                 chunkMeshQuads.amtQuads++;
-                printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                if (DEBUG) {printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);}
             }        
         }    
     }
+
+    printf("   -> ending mesh amts %d\n", chunkMeshQuads.amtQuads);
 }

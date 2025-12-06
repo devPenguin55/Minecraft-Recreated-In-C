@@ -57,12 +57,12 @@ typedef struct ChunkMeshQuads {
 #define BLOCK_TYPE_GRASS 1
 #define BLOCK_TYPE_DIRT  2
 
-#define WORLD_HORIZONTAL_CHUNK_AMT 1
-#define WORLD_VERTICAL_CHUNK_AMT   1
+#define WORLD_HORIZONTAL_CHUNK_AMT 4
+#define WORLD_VERTICAL_CHUNK_AMT   4
 
 extern PlayerChunks world;
-#define ChunkWidthX  6
-#define ChunkLengthZ 6
+#define ChunkWidthX  16
+#define ChunkLengthZ 16
 #define ChunkHeightY 10
 
 extern float BlockWidthX;
