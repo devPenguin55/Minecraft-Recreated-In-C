@@ -299,6 +299,11 @@ void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2]
             bottomTextureIndex = 1;
             break;
         case BLOCK_TYPE_DIRT:
+            sideTextureIndex   = 1;
+            topTextureIndex    = 1;
+            bottomTextureIndex = 1;
+            break;
+        case BLOCK_TYPE_STONE:
             sideTextureIndex   = 2;
             topTextureIndex    = 2;
             bottomTextureIndex = 2;

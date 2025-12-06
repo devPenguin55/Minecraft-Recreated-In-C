@@ -25,7 +25,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
-            int baseHeight = 2;
+            int baseHeight = 60;
             int stairHeight = baseHeight + x + z; 
             if (stairHeight >= ChunkHeightY) {
                 stairHeight = ChunkHeightY - 1;
@@ -43,10 +43,11 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
 
                 if (y == stairHeight) {
                     curBlock->blockType = BLOCK_TYPE_GRASS;  
-                } else {
+                } else if (y < stairHeight && y >= (stairHeight-3)) {
                     curBlock->blockType = BLOCK_TYPE_DIRT;  
+                } else {
+                    curBlock->blockType = BLOCK_TYPE_STONE;  
                 } 
-
             }
         }
     }
