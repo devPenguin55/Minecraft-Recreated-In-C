@@ -17,6 +17,8 @@ typedef struct Chunk
     Block blocks[16 * 16 * 64];
     GLfloat        chunkStartX;
     GLfloat        chunkStartZ;
+    int         firstQuadIndex;
+    int        secondQuadIndex;
 } Chunk;
 
 typedef struct PlayerChunks
@@ -72,7 +74,7 @@ extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
-void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd);
+void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation);
 void initWorld(PlayerChunks *world);
 void initChunkMeshingSystem();
 void handleProgramClose();

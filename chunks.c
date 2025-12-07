@@ -17,10 +17,15 @@ float BlockLengthZ = 1;
 
 int DEBUG = 0;
 
-void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd)
+void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation)
 {
     chunk->chunkStartX = xAdd;
     chunk->chunkStartZ = zAdd;
+
+    if (isFirstCreation) {
+        chunk->firstQuadIndex  = -1;
+        chunk->secondQuadIndex = -1;
+    }
 
     for (int x = 0; x < ChunkWidthX; x++)
     {
@@ -64,7 +69,7 @@ void initWorld(PlayerChunks *world)
     {
         x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
         z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
-        createChunk(&(world->chunks[i]), x * ChunkWidthX, z * ChunkLengthZ);
+        createChunk(&(world->chunks[i]), x * ChunkWidthX, z * ChunkLengthZ,  1);
         world->amtChunks++;
     }
 }
@@ -120,6 +125,11 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
         printf("Down neighbor is %d\n", downChunkNeighborIndex);
         printf("Left neighbor is %d\n", leftChunkNeighborIndex);
         printf("Right neighbor is %d\n", rightChunkNeighborIndex);
+    }
+
+    int currentQuadIndex = chunkMeshQuads.amtQuads;
+    if (chunk->firstQuadIndex != -1) {
+        chunkMeshQuads.amtQuads = chunk->firstQuadIndex;
     }
 
     // mask generation step (for top, bottom, left, right, front, back)
@@ -607,6 +617,11 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
     }
 
     printf("   -> ending mesh amts %d\n", chunkMeshQuads.amtQuads);
+    if (chunk->firstQuadIndex != -1) {
+        chunkMeshQuads.amtQuads = currentQuadIndex;
+    } 
+    chunk->firstQuadIndex = currentQuadIndex;
+    chunk->secondQuadIndex = chunkMeshQuads.amtQuads;
 }
 
 void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
@@ -629,7 +644,7 @@ void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
             } else {
                 // this chunk must be regenerated
                 printf("Regenerated chunk %d\n", chunkIndex);
-                createChunk(&(world.chunks[chunkIndex]), chunkWorldX, chunkWorldY);
+                createChunk(&(world.chunks[chunkIndex]), chunkWorldX, chunkWorldY, 0);
                 generateChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
             }
         } else {
@@ -639,7 +654,7 @@ void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
             } else {
                 // this chunk must be regenerated
                 printf("Removed outside chunk %d\n", chunkIndex);
-                createChunk(&(world.chunks[chunkIndex]), 1000, 1000);
+                createChunk(&(world.chunks[chunkIndex]), 1000, 1000, 0);
                 generateChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
             }
         }
