@@ -364,6 +364,9 @@ void drawGraphics()
     lastTime = currentTime;
     handleUserMovement();
 
+    GLfloat playerCoords[2] = {CameraX, CameraZ};
+    loadChunksInPlayerRadius(playerCoords);
+
     GLfloat Vertices[8][3] = {
         // front face
         {-0.5, 0.5, 0.5},
@@ -483,7 +486,6 @@ void drawGraphics()
         glVertex3f(-1, 3, -1);
         glColor3f(1, 1, 1);
     glEnd();
-
 
 
     // switch the content of color and depth buffers

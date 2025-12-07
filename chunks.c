@@ -1,6 +1,7 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <stdio.h>
+#include <math.h>
 #include "chunks.h"
 
 PlayerChunks world;
@@ -72,7 +73,7 @@ void initChunkMeshingSystem() {
     chunkMeshQuads.capacity = 16;
     chunkMeshQuads.amtQuads =  0;
     chunkMeshQuads.quads = malloc(sizeof(MeshQuad)*chunkMeshQuads.capacity);    
-}
+} 
 
 void handleProgramClose() {
     printf("\n\n\n[MEMORY INFO] Program closing -> freeing chunk quad memory\n\n\n");
@@ -606,4 +607,41 @@ void generateChunkMesh(Chunk *chunk, int chunkIdx)
     }
 
     printf("   -> ending mesh amts %d\n", chunkMeshQuads.amtQuads);
+}
+
+void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
+    int playerChunkX = playerCoords[0] / (ChunkWidthX  * BlockWidthX);
+    int playerChunkY = playerCoords[1] / (ChunkLengthZ * BlockLengthZ);
+    int playerChunkIndex = playerChunkX + playerChunkY*WORLD_HORIZONTAL_CHUNK_AMT;
+
+    // use (x-x1)^2 + (y-y1)^2 <= playerViewChunkRadius
+    for (int chunkIndex = 0; chunkIndex < world.amtChunks; chunkIndex++) {
+        int chunkX = chunkIndex % WORLD_HORIZONTAL_CHUNK_AMT;
+        int chunkY = chunkIndex / WORLD_HORIZONTAL_CHUNK_AMT;
+        
+        float chunkWorldX = chunkX * (ChunkWidthX * BlockWidthX);
+        float chunkWorldY = chunkY * (ChunkLengthZ * BlockLengthZ);
+        if ((((chunkX - playerChunkX)*(chunkX - playerChunkX) + (chunkY - playerChunkY)*(chunkY - playerChunkY)) < PLAYER_CHUNK_RADIUS*PLAYER_CHUNK_RADIUS)) {
+            // this chunk is inside the player radius
+
+            if (world.chunks[chunkIndex].chunkStartX == chunkWorldX && world.chunks[chunkIndex].chunkStartZ == chunkWorldY) {
+                // this chunk is fine, can stay
+            } else {
+                // this chunk must be regenerated
+                printf("Regenerated chunk %d\n", chunkIndex);
+                createChunk(&(world.chunks[chunkIndex]), chunkWorldX, chunkWorldY);
+                generateChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
+            }
+        } else {
+            // this chunk is outside the player radius
+            if (world.chunks[chunkIndex].chunkStartX == 1000 && world.chunks[chunkIndex].chunkStartZ == 1000) {
+                // this chunk is fine, can stay
+            } else {
+                // this chunk must be regenerated
+                printf("Removed outside chunk %d\n", chunkIndex);
+                createChunk(&(world.chunks[chunkIndex]), 1000, 1000);
+                generateChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
+            }
+        }
+    }
 }
