@@ -16,7 +16,7 @@ float BlockLengthZ = 1;
 
 int DEBUG = 0;
 
-void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation)
+void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag)
 {
     chunk->chunkStartX = xAdd;
     chunk->chunkStartZ = zAdd;
@@ -74,7 +74,7 @@ void initWorld(PlayerChunks *world)
     {
         x = i % (WORLD_HORIZONTAL_CHUNK_AMT);
         z = (int)(i / (WORLD_VERTICAL_CHUNK_AMT));
-        createChunk(&(world->chunks[i]), x * ChunkWidthX, z * ChunkLengthZ, 1);
+        createChunk(&(world->chunks[i]), x * ChunkWidthX, z * ChunkLengthZ, 1, 0);
         world->amtChunks++;
     }
 }
@@ -806,45 +806,45 @@ void deleteChunkMesh(Chunk *chunk, int chunkIdx) {
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
 }
 
-void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
-    int playerChunkX = playerCoords[0] / (ChunkWidthX * BlockWidthX);
-    int playerChunkY = playerCoords[1] / (ChunkLengthZ * BlockLengthZ);
+// void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
+//     int playerChunkX = playerCoords[0] / (ChunkWidthX * BlockWidthX);
+//     int playerChunkY = playerCoords[1] / (ChunkLengthZ * BlockLengthZ);
 
-    for (int chunkIndex = 0; chunkIndex < world.amtChunks; chunkIndex++)
-    {
-        int chunkX = chunkIndex % WORLD_HORIZONTAL_CHUNK_AMT;
-        int chunkY = chunkIndex / WORLD_HORIZONTAL_CHUNK_AMT;
+//     for (int chunkIndex = 0; chunkIndex < world.amtChunks; chunkIndex++)
+//     {
+//         int chunkX = chunkIndex % WORLD_HORIZONTAL_CHUNK_AMT;
+//         int chunkY = chunkIndex / WORLD_HORIZONTAL_CHUNK_AMT;
 
-        float chunkWorldX = chunkX * (ChunkWidthX * BlockWidthX);
-        float chunkWorldY = chunkY * (ChunkLengthZ * BlockLengthZ);
+//         float chunkWorldX = chunkX * (ChunkWidthX * BlockWidthX);
+//         float chunkWorldY = chunkY * (ChunkLengthZ * BlockLengthZ);
      
         
-        int inside = (fabsf(chunkX - playerChunkX) < 2) && (fabsf(chunkY - playerChunkY) < 2);
+//         int inside = (fabsf(chunkX - playerChunkX) < 2) && (fabsf(chunkY - playerChunkY) < 2);
         
-        int alreadyCorrectPos = 
-            world.chunks[chunkIndex].chunkStartX == chunkWorldX &&
-            world.chunks[chunkIndex].chunkStartZ == chunkWorldY;
+//         int alreadyCorrectPos = 
+//             world.chunks[chunkIndex].chunkStartX == chunkWorldX &&
+//             world.chunks[chunkIndex].chunkStartZ == chunkWorldY;
 
-        if (inside)
-        {
-            // printf("%d is inside", chunkIndex);
-            if (!alreadyCorrectPos) {
-                deleteChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
-                createChunk(&(world.chunks[chunkIndex]), chunkWorldX, chunkWorldY, 0);
-                generateChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
-            }
-        }
-        else
-        {
-            int alreadyUnloaded =
-                world.chunks[chunkIndex].chunkStartX == 1000 &&
-                world.chunks[chunkIndex].chunkStartZ == 1000;
+//         if (inside)
+//         {
+//             // printf("%d is inside", chunkIndex);
+//             if (!alreadyCorrectPos) {
+//                 deleteChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
+//                 createChunk(&(world.chunks[chunkIndex]), chunkWorldX, chunkWorldY, 0, 0);
+//                 generateChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
+//             }
+//         }
+//         else
+//         {
+//             int alreadyUnloaded =
+//                 world.chunks[chunkIndex].chunkStartX == 1000 &&
+//                 world.chunks[chunkIndex].chunkStartZ == 1000;
 
-            if (!alreadyUnloaded) {
-                deleteChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
-                createChunk(&(world.chunks[chunkIndex]), 1000, 1000, 0);
-                // note: do NOT regenerate the mesh for unloaded chunks
-            }
-        }
-    }
-}
+//             if (!alreadyUnloaded) {
+//                 deleteChunkMesh(&(world.chunks[chunkIndex]), chunkIndex);
+//                 createChunk(&(world.chunks[chunkIndex]), 1000, 1000, 0, 0);
+//                 // note: do NOT regenerate the mesh for unloaded chunks
+//             }
+//         }
+//     }
+// }

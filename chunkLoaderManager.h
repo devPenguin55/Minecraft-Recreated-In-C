@@ -27,7 +27,7 @@ typedef struct ChunksToUnload {
 } ChunksToUnload;
 
 typedef struct BucketEntry {
-    int32_t              key;
+    uint64_t             key;
     Chunk        *chunkEntry;
     int               exists;
     struct BucketEntry *next;
@@ -54,7 +54,7 @@ void initChunkLoaderManager();
 uint64_t packChunkKey(int64_t chunkX, int64_t chunkZ);
 BucketEntry *getHashmapEntry(uint64_t key);
 void unpackChunkKey(uint64_t key, int64_t* chunkX, int64_t* chunkZ);
-void writeHashmapEntry(uint64_t key, Chunk *chunk, int exists);
+void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists);
 void deleteHashmapEntry(uint64_t key);
 void loadChunks(GLfloat playerCoords[2]);
 

@@ -78,12 +78,12 @@ extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
-void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation);
+void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag);
 void initWorld(PlayerChunks *world);
 void initChunkMeshingSystem();
 void handleProgramClose();
 void generateChunkMesh(Chunk *chunk, int chunkIdx);
 void deleteChunkMesh(Chunk *chunk, int chunkIdx);
-void loadChunksInPlayerRadius(GLfloat playerCoords[2]);
+// void loadChunksInPlayerRadius(GLfloat playerCoords[2]);
 
 #endif

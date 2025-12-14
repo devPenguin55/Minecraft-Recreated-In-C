@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "chunkLoaderManager.h"
 
 ChunkLoaderManager chunkLoaderManager;
@@ -19,6 +20,10 @@ void initChunkLoaderManager() {
     chunksToUnload->amtChunksToUnload = 0;
     chunksToUnload->capacity          = 16;
     chunksToUnload->chunksToUnload    = malloc(sizeof(Chunk)*chunksToUnload->capacity);
+
+    for (int i = 0; i < HASHMAP_AMOUNT_BUCKETS; i++) {
+        chunkLoaderManager.hashmap.buckets[i].head = NULL;
+    }
 }   
 
 // bucket->head = malloc(sizeof(BucketEntry));
@@ -53,30 +58,39 @@ BucketEntry *getHashmapEntry(uint64_t key) {
     return NULL; // not found
 }
 
-void writeHashmapEntry(uint64_t key, Chunk *chunk, int exists) {
+void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists) {
     Bucket *bucket = &(chunkLoaderManager.hashmap.buckets[key % HASHMAP_AMOUNT_BUCKETS]);
 
-    // traverse the linked list and gets the last value
+    if (bucket->head == NULL) {
+        bucket->head = malloc(sizeof(BucketEntry));
+        bucket->head->key = key;
+        bucket->head->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
+        createChunk(bucket->head->chunkEntry, chunkX * ChunkWidthX, chunkZ * ChunkLengthZ, 1, CHUNK_FLAG_LOADED);
+        bucket->head->exists = exists;
+        bucket->head->next = NULL;
+        return;
+    }
+
     BucketEntry *currentNode = bucket->head;
-    while (currentNode->next != NULL) {
+    while (currentNode != NULL) {
         if (currentNode->key == key) {
-            // no duplicates!
             return;
+        }
+        if (currentNode->next == NULL) {
+            break; 
         }
         currentNode = currentNode->next;
     }
 
-    if (currentNode->key == key) {
-        // no duplicates for the last entry too!
-        return;
-    }
-
     currentNode->next = malloc(sizeof(BucketEntry));
-    currentNode->next->key        = key;
-    currentNode->next->chunkEntry = chunk;
-    currentNode->next->exists     = exists;
-    currentNode->next->next       = NULL;
+    currentNode = currentNode->next; // move to the new node
+    currentNode->key = key;
+    currentNode->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
+    createChunk(currentNode->chunkEntry, chunkX * ChunkWidthX, chunkZ * ChunkLengthZ, 1, CHUNK_FLAG_LOADED);
+    currentNode->exists = exists;
+    currentNode->next = NULL;
 }
+
 
 void deleteHashmapEntry(uint64_t key) {
     Bucket *bucket = &(chunkLoaderManager.hashmap.buckets[key % HASHMAP_AMOUNT_BUCKETS]);
@@ -99,19 +113,30 @@ void deleteHashmapEntry(uint64_t key) {
     } else {
         prevNode->next = currentNode->next;
     }
+    free(currentNode->chunkEntry);
+    free(currentNode);
 }
 
 void loadChunks(GLfloat playerCoords[2]) {
     int playerChunkX = playerCoords[0] / (ChunkWidthX * BlockWidthX);
     int playerChunkZ = playerCoords[1] / (ChunkLengthZ * BlockLengthZ);
-
+    
+    // preload radius -> get all of the chunk data loaded first
     for (int dx = -CHUNK_PRELOAD_RADIUS; dx < CHUNK_PRELOAD_RADIUS+1; dx++) {
         for (int dz = -CHUNK_PRELOAD_RADIUS; dz < CHUNK_PRELOAD_RADIUS+1; dz++) {
             int chunkX, chunkZ;
             chunkX = playerChunkX + dx; 
             chunkZ = playerChunkZ + dz; 
 
-            // now lookup in hash table
+            uint64_t chunkKey  = packChunkKey(chunkX, chunkZ);
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            if (result == NULL) {
+                printf("Loading chunks for %d %d!\n", chunkX, chunkZ);
+                // * the chunk has not been loaded yet, must load it in and add to the hashmap
+                // ? chunks that are loaded are just skipped since their data is already there
+                writeHashmapEntry(chunkKey, chunkX, chunkZ, 1);
+                printf("Done loading chunks!\n");
+            }
         }
     }
 }

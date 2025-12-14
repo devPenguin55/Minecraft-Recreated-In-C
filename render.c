@@ -7,6 +7,7 @@
 #include "render.h"
 #include "input.h"
 #include "chunks.h"
+#include "chunkLoaderManager.h"
 
 GLfloat T = 0;
 GLuint atlasTexture;
@@ -365,7 +366,7 @@ void drawGraphics()
     handleUserMovement();
 
     GLfloat playerCoords[2] = {CameraX, CameraZ};
-    loadChunksInPlayerRadius(playerCoords);
+    loadChunks(playerCoords);
 
     GLfloat Vertices[8][3] = {
         // front face
