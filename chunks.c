@@ -95,12 +95,12 @@ void handleProgramClose()
 void generateChunkMesh(Chunk *chunk, int chunkIdx)
 {
     // printf("starting mesh amts %d\n", chunkMeshQuads.amtQuads);
-    int tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};    // * X-Z plane, y fixed
+    int tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY]    = {0}; // * X-Z plane, y fixed
     int bottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0}; // * X-Z plane, y fixed
-    int lefts[ChunkHeightY][ChunkLengthZ][ChunkWidthX] = {0};   // ? Y-Z plane, x fixed
-    int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX] = {0};  // ? Y-Z plane, x fixed
-    int fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0};  // * X-Y plane, z fixed
-    int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0};   // * X-Y plane, z fixed
+    int lefts[ChunkHeightY][ChunkLengthZ][ChunkWidthX]   = {0}; // ? Y-Z plane, x fixed
+    int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX]  = {0}; // ? Y-Z plane, x fixed
+    int fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ]  = {0}; // * X-Y plane, z fixed
+    int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ]   = {0}; // * X-Y plane, z fixed
 
     int upChunkNeighborIndex = -1;
     int downChunkNeighborIndex = -1;
