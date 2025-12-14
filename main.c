@@ -7,17 +7,15 @@
 #include "input.h"
 #include "render.h"
 #include "chunks.h"
+#include "chunkLoaderManager.h"
 
 int main(int argc, char *argv[]) {
+    initChunkLoaderManager(&chunkLoaderManager);
     initWorld(&world);
     initChunkMeshingSystem();
     for (int i = 0; i<world.amtChunks; i++) {
         generateChunkMesh(&(world.chunks[i]), i);
     }
-
-     
-    // free(chunkMeshQuads.quads);
-    // return 1;
 
     glutInit(&argc, argv);
     

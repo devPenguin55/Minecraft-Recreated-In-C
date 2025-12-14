@@ -819,9 +819,9 @@ void loadChunksInPlayerRadius(GLfloat playerCoords[2]) {
         float chunkWorldY = chunkY * (ChunkLengthZ * BlockLengthZ);
      
         
-        int inside = (fabsf(chunkX - playerChunkX) < PLAYER_CHUNK_RADIUS) && (fabsf(chunkY - playerChunkY) < PLAYER_CHUNK_RADIUS);
-
-        int  alreadyCorrectPos = 
+        int inside = (fabsf(chunkX - playerChunkX) < 2) && (fabsf(chunkY - playerChunkY) < 2);
+        
+        int alreadyCorrectPos = 
             world.chunks[chunkIndex].chunkStartX == chunkWorldX &&
             world.chunks[chunkIndex].chunkStartZ == chunkWorldY;
 

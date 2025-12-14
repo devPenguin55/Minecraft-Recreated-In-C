@@ -19,6 +19,7 @@ typedef struct Chunk
     GLfloat chunkStartZ;
     int firstQuadIndex;
     int lastQuadIndex;
+    int flag;
 } Chunk;
 
 typedef struct PlayerChunks
@@ -64,12 +65,14 @@ typedef struct ChunkMeshQuads
 #define WORLD_HORIZONTAL_CHUNK_AMT 4
 #define WORLD_VERTICAL_CHUNK_AMT 4
 
-#define PLAYER_CHUNK_RADIUS 2
-
 extern PlayerChunks world;
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
 #define ChunkHeightY 64
+
+#define CHUNK_FLAG_LOADED              1
+#define CHUNK_FLAG_RENDERED_AND_LOADED 2
+#define CHUNK_FLAG_TO_UNLOAD           3
 
 extern float BlockWidthX;
 extern float BlockLengthZ;

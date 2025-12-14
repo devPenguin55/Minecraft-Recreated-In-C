@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Iinclude
 LIBS = -lfreeglut -lopengl32 -lglu32 -lgdi32
 TARGET = main.exe
-SRC = main.c input.c render.c chunks.c
+SRC = main.c input.c render.c chunks.c chunkLoaderManager.c
 
 all: $(TARGET)
 
