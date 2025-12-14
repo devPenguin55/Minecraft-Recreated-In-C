@@ -1,0 +1,14 @@
+"filename", "language", "C", "C++", "Makefile", "Markdown", "comment", "blank", "total"
+"c:\AaravC-Projects\MinecraftRecreated\MakeFile", "Makefile", 0, 0, 10, 0, 0, 3, 13
+"c:\AaravC-Projects\MinecraftRecreated\README.md", "Markdown", 0, 0, 0, 1, 0, 1, 2
+"c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.c", "C", 133, 0, 0, 0, 16, 31, 180
+"c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.h", "C++", 0, 49, 0, 0, 0, 12, 61
+"c:\AaravC-Projects\MinecraftRecreated\chunks.c", "C", 663, 0, 0, 0, 28, 99, 790
+"c:\AaravC-Projects\MinecraftRecreated\chunks.h", "C", 67, 0, 0, 0, 1, 11, 79
+"c:\AaravC-Projects\MinecraftRecreated\input.c", "C", 75, 0, 0, 0, 3, 17, 95
+"c:\AaravC-Projects\MinecraftRecreated\input.h", "C", 20, 0, 0, 0, 0, 3, 23
+"c:\AaravC-Projects\MinecraftRecreated\main.c", "C", 31, 0, 0, 0, 0, 9, 40
+"c:\AaravC-Projects\MinecraftRecreated\render.c", "C", 346, 0, 0, 0, 78, 70, 494
+"c:\AaravC-Projects\MinecraftRecreated\render.h", "C", 28, 0, 0, 0, 0, 4, 32
+"c:\AaravC-Projects\MinecraftRecreated\stb_image.h", "C", 5833, 0, 0, 0, 1294, 862, 7989
+"Total", "-", 7196, 49, 10, 1, 1420, 1122, 9798

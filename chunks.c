@@ -2,6 +2,7 @@
 #include <GL/glut.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <math.h>
 #include "chunks.h"
 #include "chunkLoaderManager.h"
@@ -41,7 +42,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 stairHeight = ChunkHeightY - 1;
             }
             for (int y = 0; y < ChunkHeightY; y++)
-            {
+            { 
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
 
                 curBlock->x = BlockWidthX * x + xAdd;
@@ -90,31 +91,34 @@ void generateChunkMesh(Chunk *chunk)
     int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX]  = {0}; // ? Y-Z plane, x fixed
     int fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ]  = {0}; // * X-Y plane, z fixed
     int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ]   = {0}; // * X-Y plane, z fixed
-
-    uint64_t upChunkNeighborKey = -1;
-    uint64_t downChunkNeighborKey = -1;
-    uint64_t rightChunkNeighborKey = -1;
-    uint64_t leftChunkNeighborKey = -1;
-
-
-    chunk->flag = CHUNK_FLAG_RENDERED_AND_LOADED;
-
+    
     int64_t chunkX;
     int64_t chunkZ;
     unpackChunkKey(chunk->key, &chunkX, &chunkZ);
-
+    
+    uint64_t upChunkNeighborKey, downChunkNeighborKey, rightChunkNeighborKey, leftChunkNeighborKey;
     leftChunkNeighborKey  = packChunkKey((chunkX - 1), chunkZ);
     rightChunkNeighborKey = packChunkKey((chunkX + 1), chunkZ);
     upChunkNeighborKey    = packChunkKey(chunkX, (chunkZ - 1));
     downChunkNeighborKey  = packChunkKey(chunkX, (chunkZ + 1));
 
+    BucketEntry *leftNeighbor  = getHashmapEntry(leftChunkNeighborKey);
+    BucketEntry *rightNeighbor = getHashmapEntry(rightChunkNeighborKey);
+    BucketEntry *upNeighbor    = getHashmapEntry(upChunkNeighborKey);
+    BucketEntry *downNeighbor  = getHashmapEntry(downChunkNeighborKey);
+
+    // leftNeighbor  = NULL;
+    // rightNeighbor = NULL;
+    // upNeighbor    = NULL;
+    // downNeighbor  = NULL;   
+
     if (DEBUG)
     {
         printf("X %d and Y %d\n", chunkX, chunkZ);
-        printf("Up neighbor is %d\n", upChunkNeighborKey);
-        printf("Down neighbor is %d\n", downChunkNeighborKey);
-        printf("Left neighbor is %d\n", leftChunkNeighborKey);
-        printf("Right neighbor is %d\n", rightChunkNeighborKey);
+        printf("Up neighbor is chunkKey = %" PRIu64 "\n", upChunkNeighborKey);
+        printf("Down neighbor is chunkKey = %" PRIu64 "\n", downChunkNeighborKey);
+        printf("Left neighbor is chunkKey = %" PRIu64 "\n", leftChunkNeighborKey);
+        printf("Right neighbor is chunkKey = %" PRIu64 "\n", rightChunkNeighborKey);
     }
 
     int currentQuadIndex = chunkMeshQuads.amtQuads;
@@ -283,7 +287,7 @@ void generateChunkMesh(Chunk *chunk)
     }
 
     int visitedBottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY - 1] = {0};
-    for (int y = 0; y < ChunkHeightY - 1; y++)
+    for (int y = 1; y < ChunkHeightY; y++)
     {
         for (int x = 0; x < ChunkWidthX; x++)
         {
@@ -367,31 +371,24 @@ void generateChunkMesh(Chunk *chunk)
 
                 curBlockType = lefts[y][z][x];
 
-                if (leftChunkNeighborKey != -1 && (x == 0))
+                if (leftNeighbor != NULL && (x == 0))
                 {
                     // use ChunkWidthX-1 for the x because need to scan the right side for the left computations
                     // if the block on the left chunk's right side is solid then we don't need a face here!
-                    BucketEntry *leftNeighbor = getHashmapEntry(leftChunkNeighborKey);
-                    if (leftNeighbor != NULL) {
-                        // if the left neighbor chunk is loaded into memory then check
-                        if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
-                        {
-                            continue;
-                        }
+                    if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    {
+                        continue;
                     }
                 }
 
                 width = 1;
                 while ((((y + width) < ChunkHeightY && lefts[y + width][z][x] == curBlockType) && !visitedLeft[y + width][z][x]))
                 {
-                    if (leftChunkNeighborKey != -1 && (x == 0))
+                    if (leftNeighbor != NULL && (x == 0))
                     {
-                        BucketEntry *leftNeighbor = getHashmapEntry(leftChunkNeighborKey);
-                        if (leftNeighbor != NULL) {
-                            if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)].isAir)
-                            {
-                                break;
-                            }
+                        if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        {
+                            break;
                         }
                     }
                     width++;
@@ -409,15 +406,12 @@ void generateChunkMesh(Chunk *chunk)
                             break;
                         }
 
-                        if (leftChunkNeighborKey != -1 && (x == 0))
+                        if (leftNeighbor != NULL && (x == 0))
                         {
-                            BucketEntry *leftNeighbor = getHashmapEntry(leftChunkNeighborKey);
-                            if (leftNeighbor != NULL) {
-                                if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)].isAir)
-                                {
-                                    done = 1;
-                                    break;
-                                }
+                            if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            {
+                                done = 1;
+                                break;
                             }
                         }
                     }
@@ -475,30 +469,24 @@ void generateChunkMesh(Chunk *chunk)
 
                 curBlockType = rights[y][z][x];
 
-                if (rightChunkNeighborKey != -1 && (x == (ChunkWidthX - 1)))
+                if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                 {
                     // use 0 for the x because need to scan the left side for the right computations
                     // if the block on the right chunk's left side is solid then we don't need a face here!
-                    BucketEntry *rightNeighbor = getHashmapEntry(rightChunkNeighborKey);
-                    if (rightNeighbor != NULL) {
-                        if (!rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
-                        {
-                            continue;
-                        }
+                    if (!rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    {
+                        continue;
                     }
                 }
 
                 width = 1;
                 while (((y + width) < ChunkHeightY && rights[y + width][z][x] == curBlockType) && !visitedRight[y + width][z][x])
                 {
-                    if (rightChunkNeighborKey != -1 && (x == (ChunkWidthX - 1)))
+                    if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                     {
-                        BucketEntry *rightNeighbor = getHashmapEntry(rightChunkNeighborKey);
-                        if (rightNeighbor != NULL) {
-                            if (!rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)].isAir)
-                            {
-                                break;
-                            }
+                        if (!rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        {
+                            break;
                         }
                     }
                     width++;
@@ -516,15 +504,12 @@ void generateChunkMesh(Chunk *chunk)
                             break;
                         }
 
-                        if (rightChunkNeighborKey != -1 && (x == (ChunkWidthX - 1)))
+                        if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                         {
-                            BucketEntry *rightNeighbor = getHashmapEntry(rightChunkNeighborKey);
-                            if (rightNeighbor != NULL) {
-                                if (!rightNeighbor->chunkEntry->blocks[0 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)].isAir)
-                                {
-                                    done = 1;
-                                    break;
-                                }
+                            if (!rightNeighbor->chunkEntry->blocks[0 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            {
+                                done = 1;
+                                break;
                             }
                         }
                     }
@@ -580,30 +565,24 @@ void generateChunkMesh(Chunk *chunk)
 
                 curBlockType = fronts[x][y][z];
 
-                if (upChunkNeighborKey != -1 && (z == 0))
+                if (upNeighbor != NULL && (z == 0))
                 {
                     // use ChunkLengthZ-1 for the z because need to scan the bottom side for the up computations
                     // if the block on the up chunk's bottom side is solid then we don't need a face here!
-                    BucketEntry *upNeighbor = getHashmapEntry(upChunkNeighborKey);
-                    if (upNeighbor != NULL) {
-                        if (!upNeighbor->chunkEntry->blocks[x + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
-                        {
-                            continue;
-                        }
+                    if (!upNeighbor->chunkEntry->blocks[x + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    {
+                        continue;
                     }
                 }
 
                 width = 1;
                 while (((x + width) < ChunkWidthX && fronts[x + width][y][z] == curBlockType) && !visitedFronts[x + width][y][z])
                 {
-                    if (upChunkNeighborKey != -1 && (z == 0))
+                    if (upNeighbor != NULL && (z == 0))
                     {
-                        BucketEntry *upNeighbor = getHashmapEntry(upChunkNeighborKey);
-                        if (upNeighbor != NULL) {
-                            if (!upNeighbor->chunkEntry->blocks[(x + width) + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
-                            {
-                                break;
-                            }
+                        if (!upNeighbor->chunkEntry->blocks[(x + width) + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        {
+                            break;
                         }
                     }
                     width++;
@@ -621,15 +600,12 @@ void generateChunkMesh(Chunk *chunk)
                             break;
                         }
 
-                        if (upChunkNeighborKey != -1 && (z == 0))
+                        if (upNeighbor != NULL && (z == 0))
                         {
-                            BucketEntry *upNeighbor = getHashmapEntry(upChunkNeighborKey);
-                            if (upNeighbor != NULL) {
-                                if (!upNeighbor->chunkEntry->blocks[(x + dx) + ((ChunkLengthZ - 1)) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)].isAir)
-                                {
-                                    done = 1;
-                                    break;
-                                }
+                            if (!upNeighbor->chunkEntry->blocks[(x + dx) + ((ChunkLengthZ - 1)) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            {
+                                done = 1;
+                                break;
                             }
                         }
                     }
@@ -686,30 +662,24 @@ void generateChunkMesh(Chunk *chunk)
 
                 int curBlockType = backs[x][y][z];
 
-                if (downChunkNeighborKey != -1 && (z == (ChunkLengthZ - 1)))
+                if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                 {
                     // use 0 for the z because need to scan the top side for the bottom computations
                     // if the block on the bottom chunk's up side is solid then we don't need a face here!
-                    BucketEntry *downNeighbor = getHashmapEntry(downChunkNeighborKey);
-                    if (downNeighbor != NULL) {
-                        if (!downNeighbor->chunkEntry->blocks[x + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
-                        {
-                            continue;
-                        }
+                    if (!downNeighbor->chunkEntry->blocks[x + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    {
+                        continue;
                     }
                 }
 
                 width = 1;
                 while (((x + width) < ChunkWidthX && backs[x + width][y][z] == curBlockType) && !visitedBacks[x + width][y][z])
                 {
-                    if (downChunkNeighborKey != -1 && (z == (ChunkLengthZ - 1)))
+                    if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                     {
-                        BucketEntry *downNeighbor = getHashmapEntry(downChunkNeighborKey);
-                        if (downNeighbor != NULL) {
-                            if (!downNeighbor->chunkEntry->blocks[(x + width) + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
-                            {
-                                break;
-                            }
+                        if (!downNeighbor->chunkEntry->blocks[(x + width) + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        {
+                            break;
                         }
                     }
                     width++;
@@ -727,15 +697,12 @@ void generateChunkMesh(Chunk *chunk)
                             break;
                         }
 
-                        if (downChunkNeighborKey != -1 && (z == (ChunkLengthZ - 1)))
+                        if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                         {
-                            BucketEntry *downNeighbor = getHashmapEntry(downChunkNeighborKey);
-                            if (downNeighbor != NULL) {
-                                if (!downNeighbor->chunkEntry->blocks[(x + dx) + (0) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)].isAir)
-                                {
-                                    done = 1;
-                                    break;
-                                }
+                            if (!downNeighbor->chunkEntry->blocks[(x + dx) + (0) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            {
+                                done = 1;
+                                break;
                             }
                         }
                     }
@@ -782,6 +749,7 @@ void generateChunkMesh(Chunk *chunk)
 
     chunk->firstQuadIndex = currentQuadIndex;
     chunk->lastQuadIndex = chunkMeshQuads.amtQuads-1;
+    chunk->flag = CHUNK_FLAG_RENDERED_AND_LOADED;
 }
 
 void deleteChunkMesh(Chunk *chunk, int chunkIdx) {

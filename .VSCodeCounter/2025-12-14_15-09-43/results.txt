@@ -1,0 +1,39 @@
+Date : 2025-12-14 15:09:43
+Directory : c:\AaravC-Projects\MinecraftRecreated
+Total : 12 files,  7256 codes, 1420 comments, 1122 blanks, all 9798 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C        |          9 |      7,196 |      1,420 |      1,106 |      9,722 |
+| C++      |          1 |         49 |          0 |         12 |         61 |
+| Makefile |          1 |         10 |          0 |          3 |         13 |
+| Markdown |          1 |          1 |          0 |          1 |          2 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                       | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                          |         12 |      7,256 |      1,420 |      1,122 |      9,798 |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                   | language | code       | comment    | blank      | total      |
++------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\AaravC-Projects\MinecraftRecreated\MakeFile             | Makefile |         10 |          0 |          3 |         13 |
+| c:\AaravC-Projects\MinecraftRecreated\README.md            | Markdown |          1 |          0 |          1 |          2 |
+| c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.c | C        |        133 |         16 |         31 |        180 |
+| c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.h | C++      |         49 |          0 |         12 |         61 |
+| c:\AaravC-Projects\MinecraftRecreated\chunks.c             | C        |        663 |         28 |         99 |        790 |
+| c:\AaravC-Projects\MinecraftRecreated\chunks.h             | C        |         67 |          1 |         11 |         79 |
+| c:\AaravC-Projects\MinecraftRecreated\input.c              | C        |         75 |          3 |         17 |         95 |
+| c:\AaravC-Projects\MinecraftRecreated\input.h              | C        |         20 |          0 |          3 |         23 |
+| c:\AaravC-Projects\MinecraftRecreated\main.c               | C        |         31 |          0 |          9 |         40 |
+| c:\AaravC-Projects\MinecraftRecreated\render.c             | C        |        346 |         78 |         70 |        494 |
+| c:\AaravC-Projects\MinecraftRecreated\render.h             | C        |         28 |          0 |          4 |         32 |
+| c:\AaravC-Projects\MinecraftRecreated\stb_image.h          | C        |      5,833 |      1,294 |        862 |      7,989 |
+| Total                                                      |          |      7,256 |      1,420 |      1,122 |      9,798 |
++------------------------------------------------------------+----------+------------+------------+------------+------------+
