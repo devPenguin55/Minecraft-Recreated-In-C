@@ -12,11 +12,8 @@
 int main(int argc, char *argv[]) {
     initChunkLoaderManager();
 
-    initWorld(&world);
     initChunkMeshingSystem();
-    for (int i = 0; i<world.amtChunks; i++) {
-        generateChunkMesh(&(world.chunks[i]), i);
-    }
+
     
 
     glutInit(&argc, argv);

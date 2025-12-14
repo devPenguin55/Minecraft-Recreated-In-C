@@ -65,7 +65,7 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists) {
         bucket->head = malloc(sizeof(BucketEntry));
         bucket->head->key = key;
         bucket->head->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
-        createChunk(bucket->head->chunkEntry, chunkX * (ChunkWidthX * BlockWidthX), chunkX * (ChunkWidthX * BlockWidthX), 1, CHUNK_FLAG_LOADED);
+        createChunk(bucket->head->chunkEntry, chunkX * (ChunkWidthX * BlockWidthX), chunkX * (ChunkWidthX * BlockWidthX), 1, CHUNK_FLAG_LOADED, key);
         bucket->head->exists = exists;
         bucket->head->next = NULL;
         return;
@@ -86,7 +86,7 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists) {
     currentNode = currentNode->next; // move to the new node
     currentNode->key = key;
     currentNode->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
-    createChunk(currentNode->chunkEntry, chunkX * ChunkWidthX, chunkZ * ChunkLengthZ, 1, CHUNK_FLAG_LOADED);
+    createChunk(currentNode->chunkEntry, chunkX * ChunkWidthX, chunkZ * ChunkLengthZ, 1, CHUNK_FLAG_LOADED, key);
     currentNode->exists = exists;
     currentNode->next = NULL;
 }
@@ -163,8 +163,8 @@ void loadChunks(GLfloat playerCoords[2]) {
     }
 
     for (int renderChunkIdx = 0; renderChunkIdx<(renderChunks->amtRenderChunks); renderChunkIdx++) {
-        Chunk *curChunkToRender = &(renderChunks->renderChunks[renderChunkIdx]);
+        Chunk *curChunkToRender = renderChunks->renderChunks[renderChunkIdx];
         if (curChunkToRender->flag == CHUNK_FLAG_RENDERED_AND_LOADED) { continue; }
-        generateChunkMesh(curChunkToRender, chunkIndex);
+        generateChunkMesh(curChunkToRender);
     }       
 }

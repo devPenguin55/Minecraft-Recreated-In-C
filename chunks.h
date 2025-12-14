@@ -2,6 +2,7 @@
 #define CHUNKS_H
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include <stdint.h>
 
 typedef struct Block
 {
@@ -20,13 +21,8 @@ typedef struct Chunk
     int firstQuadIndex;
     int lastQuadIndex;
     int flag;
+    uint64_t key;
 } Chunk;
-
-typedef struct PlayerChunks
-{
-    Chunk chunks[16];
-    int amtChunks;
-} PlayerChunks;
 
 typedef struct MeshQuad
 {
@@ -62,27 +58,22 @@ typedef struct ChunkMeshQuads
 #define BLOCK_TYPE_DIRT 2
 #define BLOCK_TYPE_STONE 3
 
-#define WORLD_HORIZONTAL_CHUNK_AMT 4
-#define WORLD_VERTICAL_CHUNK_AMT 4
-
-extern PlayerChunks world;
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
 #define ChunkHeightY 64
 
-#define CHUNK_FLAG_LOADED              1
+#define CHUNK_FLAG_LOADED 1
 #define CHUNK_FLAG_RENDERED_AND_LOADED 2
-#define CHUNK_FLAG_TO_UNLOAD           3
+#define CHUNK_FLAG_TO_UNLOAD 3
 
 extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
-void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag);
-void initWorld(PlayerChunks *world);
+void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key);
 void initChunkMeshingSystem();
 void handleProgramClose();
-void generateChunkMesh(Chunk *chunk, int chunkIdx);
+void generateChunkMesh(Chunk *chunk);
 void deleteChunkMesh(Chunk *chunk, int chunkIdx);
 
 #endif
