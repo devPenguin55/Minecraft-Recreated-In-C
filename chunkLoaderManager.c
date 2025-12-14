@@ -7,19 +7,19 @@ void initChunkLoaderManager() {
     LoadedChunks *loadedChunks    = &(chunkLoaderManager.loadedChunks);
     loadedChunks->amtLoadedChunks = 0;
     loadedChunks->capacity        = 16;                   
-    loadedChunks->loadedChunks    = malloc(sizeof(Chunk)*loadedChunks->capacity);
+    loadedChunks->loadedChunks    = malloc(sizeof(Chunk *)*loadedChunks->capacity);
 
 
     RenderChunks *renderChunks    = &(chunkLoaderManager.renderChunks);
     renderChunks->amtRenderChunks = 0;
     renderChunks->capacity        = 16;
-    renderChunks->renderChunks    = malloc(sizeof(Chunk)*renderChunks->capacity);
+    renderChunks->renderChunks    = malloc(sizeof(Chunk *)*renderChunks->capacity);
 
 
     ChunksToUnload *chunksToUnload    = &(chunkLoaderManager.chunksToUnload);
     chunksToUnload->amtChunksToUnload = 0;
     chunksToUnload->capacity          = 16;
-    chunksToUnload->chunksToUnload    = malloc(sizeof(Chunk)*chunksToUnload->capacity);
+    chunksToUnload->chunksToUnload    = malloc(sizeof(Chunk *)*chunksToUnload->capacity);
 
     for (int i = 0; i < HASHMAP_AMOUNT_BUCKETS; i++) {
         chunkLoaderManager.hashmap.buckets[i].head = NULL;
@@ -136,7 +136,16 @@ void loadChunks(GLfloat playerCoords[2]) {
                 // ? chunks that are loaded are just skipped since their data is already there
                 writeHashmapEntry(chunkKey, chunkX, chunkZ, 1);
                 printf("Done loading chunks!\n");
+                result = getHashmapEntry(chunkKey);
             }
+
+            LoadedChunks *loadedChunks = &(chunkLoaderManager.loadedChunks);
+            if (loadedChunks->amtLoadedChunks >= loadedChunks->capacity) {
+                loadedChunks->capacity *= 2;
+                loadedChunks->loadedChunks = realloc(loadedChunks->loadedChunks, loadedChunks->capacity*sizeof(Chunk));
+            }
+
+            loadedChunks->loadedChunks[(loadedChunks->amtLoadedChunks)++] = result->chunkEntry;
         }
     }
 }

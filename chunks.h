@@ -84,6 +84,5 @@ void initChunkMeshingSystem();
 void handleProgramClose();
 void generateChunkMesh(Chunk *chunk, int chunkIdx);
 void deleteChunkMesh(Chunk *chunk, int chunkIdx);
-// void loadChunksInPlayerRadius(GLfloat playerCoords[2]);
 
 #endif

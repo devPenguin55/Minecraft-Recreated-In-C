@@ -9,19 +9,19 @@
 #define HASHMAP_AMOUNT_BUCKETS 2048
 
 typedef struct LoadedChunks {
-    Chunk *loadedChunks;
+    Chunk **loadedChunks;
     int amtLoadedChunks;
     int        capacity;
 } LoadedChunks;
 
 typedef struct RenderChunks {
-    Chunk *renderChunks;
+    Chunk **renderChunks;
     int amtRenderChunks;
     int        capacity;
 } RenderChunks;
 
 typedef struct ChunksToUnload {
-    Chunk *chunksToUnload;
+    Chunk **chunksToUnload;
     int amtChunksToUnload;
     int          capacity;
 } ChunksToUnload;
