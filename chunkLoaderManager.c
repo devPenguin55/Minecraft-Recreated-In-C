@@ -8,19 +8,24 @@ void initChunkLoaderManager() {
     LoadedChunks *loadedChunks    = &(chunkLoaderManager.loadedChunks);
     loadedChunks->amtLoadedChunks = 0;
     loadedChunks->capacity        = 16;                   
-    loadedChunks->loadedChunks    = malloc(sizeof(Chunk *)*loadedChunks->capacity);
+    loadedChunks->loadedChunks    = malloc(loadedChunks->capacity*sizeof(Chunk *));
 
 
     RenderChunks *renderChunks    = &(chunkLoaderManager.renderChunks);
     renderChunks->amtRenderChunks = 0;
     renderChunks->capacity        = 16;
-    renderChunks->renderChunks    = malloc(sizeof(Chunk *)*renderChunks->capacity);
+    renderChunks->renderChunks    = malloc(renderChunks->capacity*sizeof(Chunk *));
 
 
     ChunksToUnload *chunksToUnload    = &(chunkLoaderManager.chunksToUnload);
     chunksToUnload->amtChunksToUnload = 0;
     chunksToUnload->capacity          = 16;
-    chunksToUnload->chunksToUnload    = malloc(sizeof(Chunk *)*chunksToUnload->capacity);
+    chunksToUnload->chunksToUnload    = malloc(chunksToUnload->capacity*sizeof(Chunk *));
+
+    RenderChunksToUnload *renderChunksToUnload    = &(chunkLoaderManager.renderChunksToUnload);
+    renderChunksToUnload->amtRenderChunksToUnload = 0;
+    renderChunksToUnload->capacity          = 16;
+    renderChunksToUnload->renderChunksToUnload    = malloc(renderChunksToUnload->capacity*sizeof(Chunk *));
 
     for (int i = 0; i < HASHMAP_AMOUNT_BUCKETS; i++) {
         chunkLoaderManager.hashmap.buckets[i].head = NULL;
@@ -51,7 +56,6 @@ BucketEntry *getHashmapEntry(uint64_t key) {
     while (currentNode != NULL) {
         if (currentNode->key == key) {
             if (currentNode->chunkEntry == NULL) {
-                printf("NULL CHUNK ENTRY!\n");
             }
             return currentNode;
         }
@@ -84,8 +88,6 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists) {
         }
         currentNode = currentNode->next;
     }
-    if (currentNode != bucket->head) {printf("went past - double\n");}
-
     currentNode->next = malloc(sizeof(BucketEntry));
     currentNode = currentNode->next; // move to the new node
     currentNode->key = key;
@@ -109,9 +111,9 @@ void deleteHashmapEntry(uint64_t key) {
         prevNode    = currentNode;
         currentNode = currentNode->next;
     }
-
+    
     if (currentNode == NULL) return; // key not found in bucket
-
+    
     if (prevNode == NULL) {
         bucket->head = currentNode->next;
     } else {
@@ -127,9 +129,13 @@ void loadChunks(GLfloat playerCoords[2]) {
     
     // preload radius -> get all of the chunk data loaded first
     // also find the chunks to render and allocate those for the next mesh loop
-    LoadedChunks *loadedChunks = &(chunkLoaderManager.loadedChunks);
-    RenderChunks *renderChunks = &(chunkLoaderManager.renderChunks);
-    renderChunks->amtRenderChunks = 0;
+    LoadedChunks *loadedChunks                 = &(chunkLoaderManager.loadedChunks);
+    RenderChunks *renderChunks                 = &(chunkLoaderManager.renderChunks);
+    ChunksToUnload *chunksToUnload             = &(chunkLoaderManager.chunksToUnload);
+    RenderChunksToUnload *renderChunksToUnload = &(chunkLoaderManager.renderChunksToUnload);
+    renderChunks->amtRenderChunks                 = 0;
+    chunksToUnload->amtChunksToUnload             = 0;
+    renderChunksToUnload->amtRenderChunksToUnload = 0;
 
     for (int dx = -CHUNK_PRELOAD_RADIUS; dx < CHUNK_PRELOAD_RADIUS+1; dx++) {
         for (int dz = -CHUNK_PRELOAD_RADIUS; dz < CHUNK_PRELOAD_RADIUS+1; dz++) {
@@ -173,9 +179,53 @@ void loadChunks(GLfloat playerCoords[2]) {
         if (curChunkToRender->flag == CHUNK_FLAG_RENDERED_AND_LOADED) { continue; }
         int64_t chunkX, chunkZ;
         unpackChunkKey(curChunkToRender->key, &chunkX, &chunkZ);
-        if (chunkX == -1 && chunkZ == 0) {
-            printf("this is the chunk\n");
-        }
         generateChunkMesh(curChunkToRender);
-    }       
+    }        
+
+    int64_t loadedChunkX, loadedChunkZ;
+    for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++) {
+        Chunk *curChunk = loadedChunks->loadedChunks[loadedChunkIdx];
+        unpackChunkKey(curChunk->key, &loadedChunkX, &loadedChunkZ);
+        if ((loadedChunkX > (playerChunkX + CHUNK_PRELOAD_RADIUS)) || (loadedChunkX < (playerChunkX - CHUNK_PRELOAD_RADIUS)) ||
+            (loadedChunkZ > (playerChunkZ + CHUNK_PRELOAD_RADIUS)) || (loadedChunkZ < (playerChunkZ - CHUNK_PRELOAD_RADIUS))) {
+
+            if (chunksToUnload->amtChunksToUnload >= chunksToUnload->capacity) {
+                chunksToUnload->capacity *= 2;
+                chunksToUnload->chunksToUnload = realloc(chunksToUnload->chunksToUnload, chunksToUnload->capacity*sizeof(Chunk *));
+            } 
+            
+            chunksToUnload->chunksToUnload[chunksToUnload->amtChunksToUnload++] = curChunk;
+        }
+    }
+
+    // for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++) {
+    //     Chunk *curChunk = renderChunks->renderChunks[loadedChunkIdx];
+    //     unpackChunkKey(curChunk->key, &loadedChunkX, &loadedChunkZ);
+    //     if (
+    //         (loadedChunkX > (playerChunkX + CHUNK_RENDER_RADIUS) && loadedChunkX < (playerChunkX + CHUNK_PRELOAD_RADIUS)) || (loadedChunkX < (playerChunkX - CHUNK_RENDER_RADIUS) && loadedChunkX > (playerChunkX - CHUNK_PRELOAD_RADIUS)) ||
+    //         (loadedChunkZ > (playerChunkZ + CHUNK_RENDER_RADIUS) && loadedChunkZ < (playerChunkZ + CHUNK_PRELOAD_RADIUS)) || (loadedChunkZ < (playerChunkZ - CHUNK_RENDER_RADIUS) && loadedChunkZ > (playerChunkZ - CHUNK_PRELOAD_RADIUS))) {
+    //         // if (renderChunksToUnload->amtRenderChunksToUnload >= renderChunksToUnload->capacity) {
+    //         //     renderChunksToUnload->capacity *= 2;
+    //         //     renderChunksToUnload->renderChunksToUnload = realloc(renderChunksToUnload->renderChunksToUnload, renderChunksToUnload->capacity*sizeof(Chunk *));
+    //         // } 
+    //         printf("deleting a chunk mesh!\n");
+    //         deleteChunkMesh(curChunk);
+            
+    //         // renderChunksToUnload->renderChunksToUnload[renderChunksToUnload->amtRenderChunksToUnload++] = curChunk;
+    //     }
+    // }
+
+    for (int chunkIdx = 0; chunkIdx < chunksToUnload->amtChunksToUnload; chunkIdx++) {
+        Chunk *curChunk = chunksToUnload->chunksToUnload[chunkIdx];
+        for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++) {
+            if (curChunk == loadedChunks->loadedChunks[loadedChunkIdx]) {
+                // this is a match of pointers to a chunk
+                deleteHashmapEntry(curChunk->key); 
+                loadedChunks->loadedChunks[loadedChunkIdx] = loadedChunks->loadedChunks[loadedChunks->amtLoadedChunks-1];
+                loadedChunks->amtLoadedChunks--;
+                break;
+            }
+        }       
+    }
+    // printf("amt render chunks %d\n", renderChunks->amtRenderChunks);
 }

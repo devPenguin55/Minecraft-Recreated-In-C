@@ -21,6 +21,7 @@ typedef struct Chunk
     int firstQuadIndex;
     int lastQuadIndex;
     int flag;
+    int hasMesh;
     uint64_t key;
 } Chunk;
 
@@ -74,6 +75,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 void initChunkMeshingSystem();
 void handleProgramClose();
 void generateChunkMesh(Chunk *chunk);
-void deleteChunkMesh(Chunk *chunk, int chunkIdx);
+void deleteChunkMesh(Chunk *chunk);
 
 #endif

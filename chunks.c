@@ -107,11 +107,6 @@ void generateChunkMesh(Chunk *chunk)
     BucketEntry *upNeighbor    = getHashmapEntry(upChunkNeighborKey);
     BucketEntry *downNeighbor  = getHashmapEntry(downChunkNeighborKey);
 
-    // leftNeighbor  = NULL;
-    // rightNeighbor = NULL;
-    // upNeighbor    = NULL;
-    // downNeighbor  = NULL;   
-
     if (DEBUG)
     {
         printf("X %d and Y %d\n", chunkX, chunkZ);
@@ -752,19 +747,19 @@ void generateChunkMesh(Chunk *chunk)
     chunk->flag = CHUNK_FLAG_RENDERED_AND_LOADED;
 }
 
-void deleteChunkMesh(Chunk *chunk, int chunkIdx) {
+void deleteChunkMesh(Chunk *chunk) {
     // need to delete the quads created from the chunks start to end quad
     // this can be done by shifting over entries and then resetting the quad count
 
     int firstQuadIndex = chunk->firstQuadIndex;
     int lastQuadIndex = chunk->lastQuadIndex;
+    printf("Deleting quads from %d to %d\n", firstQuadIndex, lastQuadIndex);
     if (firstQuadIndex == -1 && lastQuadIndex == -1) {
         return; 
     }
 
     int deleteAmount = (lastQuadIndex - firstQuadIndex) + 1;
 
-    // printf("Deleting quads from %d to %d\n", firstQuadIndex, lastQuadIndex);
 
 
     for (int quadIndex = lastQuadIndex+1; quadIndex < chunkMeshQuads.amtQuads; quadIndex++) {
@@ -781,7 +776,8 @@ void deleteChunkMesh(Chunk *chunk, int chunkIdx) {
             other->lastQuadIndex  -= deleteAmount;
         }
 
-        if (c == chunkIdx) {
+        if (other->key == chunk->key) {
+            printf("key reset!\n");
             other->firstQuadIndex = -1;
             other->lastQuadIndex = -1;
         }
