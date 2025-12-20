@@ -26,12 +26,6 @@ typedef struct ChunksToUnload {
     int          capacity;
 } ChunksToUnload;
 
-typedef struct RenderChunksToUnload {
-    Chunk **renderChunksToUnload;
-    int  amtRenderChunksToUnload;
-    int                 capacity;
-} RenderChunksToUnload;
-
 typedef struct BucketEntry {
     uint64_t             key;
     Chunk        *chunkEntry;
@@ -51,7 +45,6 @@ typedef struct ChunkLoaderManager {
     LoadedChunks                 loadedChunks;
     RenderChunks                 renderChunks;
     ChunksToUnload             chunksToUnload;
-    RenderChunksToUnload renderChunksToUnload;
     Hashmap                           hashmap;
 } ChunkLoaderManager;
 

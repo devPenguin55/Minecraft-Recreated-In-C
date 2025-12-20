@@ -24,6 +24,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->chunkStartZ = zAdd;
 
     chunk->key = key;
+    chunk->hasMesh = 0;
 
     if (isFirstCreation)
     {
@@ -753,14 +754,12 @@ void deleteChunkMesh(Chunk *chunk) {
 
     int firstQuadIndex = chunk->firstQuadIndex;
     int lastQuadIndex = chunk->lastQuadIndex;
-    printf("Deleting quads from %d to %d\n", firstQuadIndex, lastQuadIndex);
+    printf("Deleting quads from %d to %d and has mesh is %d\n", firstQuadIndex, lastQuadIndex, chunk->hasMesh);
     if (firstQuadIndex == -1 && lastQuadIndex == -1) {
         return; 
     }
 
     int deleteAmount = (lastQuadIndex - firstQuadIndex) + 1;
-
-
 
     for (int quadIndex = lastQuadIndex+1; quadIndex < chunkMeshQuads.amtQuads; quadIndex++) {
         chunkMeshQuads.quads[quadIndex - deleteAmount] = chunkMeshQuads.quads[quadIndex];
