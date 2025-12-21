@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "input.h"
-GLfloat CameraX = 0.5;
+GLfloat CameraX = 5;
 GLfloat CameraY = 65;
-GLfloat CameraZ = 1;
+GLfloat CameraZ = 5;
 GLfloat PlayerDirX = 0;
 GLfloat PlayerDirY = -3;
 GLfloat PlayerDirZ = -1;

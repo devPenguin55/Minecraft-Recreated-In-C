@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <inttypes.h>
+#include <math.h>
 #include "chunkLoaderManager.h"
 
 ChunkLoaderManager chunkLoaderManager;
@@ -119,8 +120,9 @@ void deleteHashmapEntry(uint64_t key) {
 }
 
 void loadChunks(GLfloat playerCoords[2]) {
-    int playerChunkX = playerCoords[0] / (ChunkWidthX * BlockWidthX);
-    int playerChunkZ = playerCoords[1] / (ChunkLengthZ * BlockLengthZ);
+    int playerChunkX = (int)floor(playerCoords[0] / (ChunkWidthX * BlockWidthX));
+    int playerChunkZ = (int)floor(playerCoords[1] / (ChunkLengthZ * BlockLengthZ));
+
     
     // preload radius -> get all of the chunk data loaded first
     // also find the chunks to render and allocate those for the next mesh loop
@@ -184,8 +186,8 @@ void loadChunks(GLfloat playerCoords[2]) {
             (loadedChunkX > (playerChunkX + CHUNK_RENDER_RADIUS) || (loadedChunkX < (playerChunkX - CHUNK_RENDER_RADIUS))) ||
             (loadedChunkZ > (playerChunkZ + CHUNK_RENDER_RADIUS) || (loadedChunkZ < (playerChunkZ - CHUNK_RENDER_RADIUS)))) {
             if (curChunk->hasMesh) {
-                printf("deleting a chunk mesh!\n");
-                printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
+                // printf("deleting a chunk mesh!\n");
+                // printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
                 deleteChunkMesh(curChunk);
             }
         }

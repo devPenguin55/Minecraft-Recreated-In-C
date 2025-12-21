@@ -756,7 +756,7 @@ void deleteChunkMesh(Chunk *chunk) {
     int lastQuadIndex = chunk->lastQuadIndex;
     chunk->hasMesh = 0;
     chunk->flag = CHUNK_FLAG_LOADED;
-    printf("Deleting quads from %d to %d and has mesh is %d\n", firstQuadIndex, lastQuadIndex, chunk->hasMesh);
+    // printf("Deleting quads from %d to %d and has mesh is %d\n", firstQuadIndex, lastQuadIndex, chunk->hasMesh);
     if (firstQuadIndex == -1 && lastQuadIndex == -1) {
         return; 
     }
@@ -778,7 +778,7 @@ void deleteChunkMesh(Chunk *chunk) {
         }
 
         if (other->key == chunk->key) {
-            printf("key reset!\n");
+            // printf("key reset!\n");
             other->firstQuadIndex = -1;
             other->lastQuadIndex = -1;
         }
