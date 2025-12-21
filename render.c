@@ -10,7 +10,10 @@
 #include "chunkLoaderManager.h"
 
 GLfloat T = 0;
-GLuint atlasTexture;
+GLuint grassSideTexture;
+GLuint grassTopTexture;
+GLuint dirtTexture;
+GLuint stoneTexture;
 
 double lastFpsTime = 0.0;
 double lastTime = 0.0;
@@ -22,26 +25,35 @@ int frameCount = 0;
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX4(a, b, c, d) (MAX(MAX(a, b), MAX(c, d)))
 
-int ATLAS_WIDTH, ATLAS_HEIGHT;
 GLuint loadTexture(const char *filename)
 {
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    int channels;
-    unsigned char *data = stbi_load(filename, &ATLAS_WIDTH, &ATLAS_HEIGHT, &channels, 0);
+    int width, height, channels;
+    unsigned char *data = stbi_load(filename, &width, &height, &channels, 0);
     if (data)
-    {   
-        printf("Loaded texture: %dx%d, channels: %d\n", ATLAS_WIDTH, ATLAS_HEIGHT, channels);
-        GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
-        glTexImage2D(GL_TEXTURE_2D, 0, format, ATLAS_WIDTH, ATLAS_HEIGHT, 0, format, GL_UNSIGNED_BYTE, data);
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, ATLAS_WIDTH, ATLAS_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    {
+        printf("Loaded texture: %dx%d, channels: %d\n", width, height, channels);
 
+        GLenum format;
+        if (channels == 1) {
+            unsigned char* rgbData = malloc(width * height * 3);
+            for (int i = 0; i < width * height; i++) {
+                rgbData[i*3 + 0] = data[i];
+                rgbData[i*3 + 1] = data[i];
+                rgbData[i*3 + 2] = data[i];
+            }
+            gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, rgbData);
+            free(rgbData);
+        } else {
+            format = (channels == 4) ? GL_RGBA : GL_RGB;
+            gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, data);
+        }
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
     else
@@ -53,6 +65,7 @@ GLuint loadTexture(const char *filename)
     return textureID;
 }
 
+
 void initGraphics()
 {
     glClearColor(0, 0, 0, 1);
@@ -61,7 +74,10 @@ void initGraphics()
 
     glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
 
-    atlasTexture = loadTexture("atlas.png");
+    grassSideTexture = loadTexture("assets\\grassSide.png");
+    grassTopTexture  = loadTexture("assets\\grassTop.png");
+    dirtTexture      = loadTexture("assets\\dirt.png");
+    stoneTexture     = loadTexture("assets\\stone.png");
     glEnable(GL_TEXTURE_2D);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -96,196 +112,96 @@ void spinObject()
     glutPostRedisplay();
 }
 
-void uvCoordinatesFromTextureIndex(
-    int textureIndex,
-    UV *uv,
-    int amtHorizTextures,
-    int amtVertTextures,
-    int atlasWidthPixels,
-    int atlasHeightPixels
+void face(
+    GLfloat A[3],
+    GLfloat B[3],
+    GLfloat C[3],
+    GLfloat D[3],
+    GLfloat transformation[3],
+    GLuint texture,
+    GLfloat size[2]
 ) {
-    float tileWidth  = 1.0f / amtHorizTextures;
-    float tileHeight = 1.0f / amtVertTextures;
+    GLfloat vA[3] = { A[0], A[1], A[2] };
+    GLfloat vB[3] = { B[0], B[1], B[2] };
+    GLfloat vC[3] = { C[0], C[1], C[2] };
+    GLfloat vD[3] = { D[0], D[1], D[2] };
 
-    int tileX = textureIndex % amtHorizTextures;
-    int tileY = textureIndex / amtHorizTextures;
-
-    float epsilonU = 1.0f / atlasWidthPixels;
-    float epsilonV = 1.0f / atlasHeightPixels;
-
-    uv->u  = tileX * tileWidth + epsilonU;
-    uv->v  = tileY * tileHeight + epsilonV;
-    uv->u1 = (tileX + 1) * tileWidth - epsilonU;
-    uv->v1 = (tileY + 1) * tileHeight - epsilonV;
-}
-
-
-
-void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[2])
-{
     float minX = MIN4(A[0], B[0], C[0], D[0]);
     float maxX = MAX4(A[0], B[0], C[0], D[0]);
-
     float minY = MIN4(A[1], B[1], C[1], D[1]);
     float maxY = MAX4(A[1], B[1], C[1], D[1]);
-
     float minZ = MIN4(A[2], B[2], C[2], D[2]);
     float maxZ = MAX4(A[2], B[2], C[2], D[2]);
 
-    // these differences help determine which axes are used to then create the sub faces
     float amtDx = maxX - minX;
     float amtDy = maxY - minY;
     float amtDz = maxZ - minZ;
 
-
-    UV uv;
-    uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3, ATLAS_WIDTH, ATLAS_HEIGHT);
-    float du = uv.u1 - uv.u;
-    float dv = uv.v1 - uv.v;
-    float U0 = uv.u;
-    float V0 = uv.v;
-    float U1 = uv.u + du;
-    float V1 = uv.v + dv;
-
-    // iterate for 2 of the 3 axes, but we do not know which one is the right one until the function is called
-    if (amtDy == 0) {
-        for (float dx = 0; dx < size[0]; dx++) {
-            for (float dz = 0; dz < size[1]; dz++) {
-                glPushMatrix();
-                glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
-                glTranslatef(
-                    transformation[0], 
-                    transformation[1], 
-                    transformation[2]
-                );
-                glBindTexture(GL_TEXTURE_2D, atlasTexture);
-                if (pressedKeys['z']) {
-                    glBegin(GL_LINE_LOOP);
-                } else {
-                    glBegin(GL_QUADS);
-                }
-    
-                // dx
-                A[0] += dx;
-                B[0] += dx;
-                C[0] += dx;
-                D[0] += dx;
-                // dz
-                A[2] += dz;
-                B[2] += dz;
-                C[2] += dz;
-                D[2] += dz;
-                glTexCoord2f(U0, V0); glVertex3fv(A);
-                glTexCoord2f(U1, V0); glVertex3fv(B);
-                glTexCoord2f(U1, V1); glVertex3fv(C);
-                glTexCoord2f(U0, V1); glVertex3fv(D);
-                glEnd();
-                glPopMatrix();
-                // dx
-                A[0] -= dx;
-                B[0] -= dx;
-                C[0] -= dx;
-                D[0] -= dx;
-                // dz
-                A[2] -= dz;
-                B[2] -= dz;
-                C[2] -= dz;
-                D[2] -= dz;
-            }
+    // scale along face axes only
+    if (amtDy == 0.0f) {
+        // X–Z face
+        for (int i = 0; i < 4; i++) {
+            GLfloat* v = (i == 0 ? vA : i == 1 ? vB : i == 2 ? vC : vD);
+            v[0] = (v[0] + 0.5f) * size[0] - 0.5f;
+            v[2] = (v[2] + 0.5f) * size[1] - 0.5f;
         }
-    } else if (amtDx == 0) {
-        for (float dy = 0; dy < size[0]; dy++) {
-            for (float dz = 0; dz < size[1]; dz++) {
-                glPushMatrix();
-                glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
-                glTranslatef(
-                    transformation[0], 
-                    transformation[1], 
-                    transformation[2]
-                );
-                glBindTexture(GL_TEXTURE_2D, atlasTexture);
-                if (pressedKeys['z']) {
-                    glBegin(GL_LINE_LOOP);
-                } else {
-                    glBegin(GL_QUADS);
-                }
-        
-                // dy
-                A[1] += dy;
-                B[1] += dy;
-                C[1] += dy;
-                D[1] += dy;
-                // dz
-                A[2] += dz;
-                B[2] += dz;
-                C[2] += dz;
-                D[2] += dz;
-                glTexCoord2f(U0, V1); glVertex3fv(A);
-                glTexCoord2f(U1, V1); glVertex3fv(B);
-                glTexCoord2f(U1, V0); glVertex3fv(C);
-                glTexCoord2f(U0, V0); glVertex3fv(D);
-                glEnd();
-                glPopMatrix();
-                // dy
-                A[1] -= dy;
-                B[1] -= dy;
-                C[1] -= dy;
-                D[1] -= dy;
-                // dz
-                A[2] -= dz;
-                B[2] -= dz;
-                C[2] -= dz;
-                D[2] -= dz;
-            }
+    } else if (amtDx == 0.0f) {
+        // Y–Z face
+        for (int i = 0; i < 4; i++) {
+            GLfloat* v = (i == 0 ? vA : i == 1 ? vB : i == 2 ? vC : vD);
+            v[1] = (v[1] + 0.5f) * size[0] - 0.5f;
+            v[2] = (v[2] + 0.5f) * size[1] - 0.5f;
         }
     } else {
-        // if dz == 0
-        for (float dx = 0; dx < size[0]; dx++) {
-            for (float dy = 0; dy < size[1]; dy++) {
-                glPushMatrix();
-                glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
-                glTranslatef(
-                    transformation[0], 
-                    transformation[1], 
-                    transformation[2]
-                );
-                glBindTexture(GL_TEXTURE_2D, atlasTexture);
-                if (pressedKeys['z']) {
-                    glBegin(GL_LINE_LOOP);
-                } else {
-                    glBegin(GL_QUADS);
-                }
-
-                // dx
-                A[0] += dx;
-                B[0] += dx;
-                C[0] += dx;
-                D[0] += dx;
-                // dy
-                A[1] += dy;
-                B[1] += dy;
-                C[1] += dy;
-                D[1] += dy;
-                glTexCoord2f(U0, V0); glVertex3fv(A);
-                glTexCoord2f(U1, V0); glVertex3fv(B);
-                glTexCoord2f(U1, V1); glVertex3fv(C);
-                glTexCoord2f(U0, V1); glVertex3fv(D);
-                glEnd();
-                glPopMatrix();
-                // dx
-                A[0] -= dx;
-                B[0] -= dx;
-                C[0] -= dx;
-                D[0] -= dx;
-                // dy
-                A[1] -= dy;
-                B[1] -= dy;
-                C[1] -= dy;
-                D[1] -= dy;
-            }
+        // X–Y face
+        for (int i = 0; i < 4; i++) {
+            GLfloat* v = (i == 0 ? vA : i == 1 ? vB : i == 2 ? vC : vD);
+            v[0] = (v[0] + 0.5f) * size[0] - 0.5f;
+            v[1] = (v[1] + 0.5f) * size[1] - 0.5f;
         }
     }
+
+    glPushMatrix();
+    glTranslatef(transformation[0], transformation[1], transformation[2]);
+    glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    if (pressedKeys['z']) {
+        glBegin(GL_LINE_LOOP);
+    } else {
+        glBegin(GL_QUADS);
+    }
+
+    GLfloat U0, V0, U1, V1;
+    U0 = 0.0f;
+    V0 = 0.0f;
+    U1 = size[0];
+    V1 = size[1];
+
+    if (amtDy == 0.0f) {       // X–Z face
+        glTexCoord2f(vA[0] + 0.5f, vA[2] + 0.5f); glVertex3fv(vA);
+        glTexCoord2f(vB[0] + 0.5f, vB[2] + 0.5f); glVertex3fv(vB);
+        glTexCoord2f(vC[0] + 0.5f, vC[2] + 0.5f); glVertex3fv(vC);
+        glTexCoord2f(vD[0] + 0.5f, vD[2] + 0.5f); glVertex3fv(vD);
+    } else if (amtDx == 0.0f) { // Y–Z face
+        glTexCoord2f(vA[2] + 0.5f, 1.0f - (vA[1] + 0.5f)); glVertex3fv(vA);
+        glTexCoord2f(vB[2] + 0.5f, 1.0f - (vB[1] + 0.5f)); glVertex3fv(vB);
+        glTexCoord2f(vC[2] + 0.5f, 1.0f - (vC[1] + 0.5f)); glVertex3fv(vC);
+        glTexCoord2f(vD[2] + 0.5f, 1.0f - (vD[1] + 0.5f)); glVertex3fv(vD);
+    } else {                    // X–Y face
+        glTexCoord2f(vA[0] + 0.5f, 1.0f - (vA[1] + 0.5f)); glVertex3fv(vA);
+        glTexCoord2f(vB[0] + 0.5f, 1.0f - (vB[1] + 0.5f)); glVertex3fv(vB);
+        glTexCoord2f(vC[0] + 0.5f, 1.0f - (vC[1] + 0.5f)); glVertex3fv(vC);
+        glTexCoord2f(vD[0] + 0.5f, 1.0f - (vD[1] + 0.5f)); glVertex3fv(vD);
+    }
+
+    glEnd();
+    glPopMatrix();
 }
+
 
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType, int blockType)
 {   
@@ -295,19 +211,19 @@ void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2]
 
     switch (blockType) {
         case BLOCK_TYPE_GRASS:
-            sideTextureIndex   = 0;
-            topTextureIndex    = 6;
-            bottomTextureIndex = 1;
+            sideTextureIndex   = grassSideTexture;
+            topTextureIndex    = grassTopTexture;
+            bottomTextureIndex = dirtTexture;
             break;
         case BLOCK_TYPE_DIRT:
-            sideTextureIndex   = 1;
-            topTextureIndex    = 1;
-            bottomTextureIndex = 1;
+            sideTextureIndex   = dirtTexture;
+            topTextureIndex    = dirtTexture;
+            bottomTextureIndex = dirtTexture;
             break;
         case BLOCK_TYPE_STONE:
-            sideTextureIndex   = 2;
-            topTextureIndex    = 2;
-            bottomTextureIndex = 2;
+            sideTextureIndex   = stoneTexture;
+            topTextureIndex    = stoneTexture;
+            bottomTextureIndex = stoneTexture;
             break;
         default:
             printf("No correct block type entered!\n");

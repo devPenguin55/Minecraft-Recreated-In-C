@@ -65,7 +65,6 @@ typedef struct ChunkMeshQuads
 
 #define CHUNK_FLAG_LOADED 1
 #define CHUNK_FLAG_RENDERED_AND_LOADED 2
-#define CHUNK_FLAG_TO_UNLOAD 3
 
 extern float BlockWidthX;
 extern float BlockLengthZ;
