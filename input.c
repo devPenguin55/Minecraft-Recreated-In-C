@@ -4,7 +4,7 @@
 #include <math.h>
 #include "input.h"
 GLfloat CameraX = 5;
-GLfloat CameraY = 65;
+GLfloat CameraY = 105;
 GLfloat CameraZ = 5;
 GLfloat PlayerDirX = 0;
 GLfloat PlayerDirY = -3;
@@ -19,7 +19,6 @@ int lastMouseY = 0;
 int mouseInteractionStarted = 0;
 
 int pressedKeys[256] = {0};
-
 
 
 void handleKeyDown(unsigned char key, int x, int y) {

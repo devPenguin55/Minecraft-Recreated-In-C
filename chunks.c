@@ -785,3 +785,4 @@ void deleteChunkMesh(Chunk *chunk) {
     }
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
 }
+ 
