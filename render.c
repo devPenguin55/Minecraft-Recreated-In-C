@@ -22,21 +22,21 @@ int frameCount = 0;
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX4(a, b, c, d) (MAX(MAX(a, b), MAX(c, d)))
 
-
+int ATLAS_WIDTH, ATLAS_HEIGHT;
 GLuint loadTexture(const char *filename)
 {
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    int width, height, channels;
-    unsigned char *data = stbi_load(filename, &width, &height, &channels, 0);
+    int channels;
+    unsigned char *data = stbi_load(filename, &ATLAS_WIDTH, &ATLAS_HEIGHT, &channels, 0);
     if (data)
     {   
-        printf("Loaded texture: %dx%d, channels: %d\n", width, height, channels);
+        printf("Loaded texture: %dx%d, channels: %d\n", ATLAS_WIDTH, ATLAS_HEIGHT, channels);
         GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, ATLAS_WIDTH, ATLAS_HEIGHT, 0, format, GL_UNSIGNED_BYTE, data);
+        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, ATLAS_WIDTH, ATLAS_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -62,11 +62,18 @@ void initGraphics()
 
     atlasTexture = loadTexture("atlas.png");
     glEnable(GL_TEXTURE_2D);
+
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    
+
 }
 
 void reshape(int width, int height)
 {
-    if (height == 0) height = 1;
+    if (height == 0) { 
+        height = 1; 
+    }
 
     glViewport(0, 0, width, height);
 
@@ -89,20 +96,30 @@ void spinObject()
     glutPostRedisplay();
 }
 
-void uvCoordinatesFromTextureIndex(int textureIndex, UV *uv, int amtHorizTextures, int amtVertTextures) {
-    float horizLen = 1.0f/amtHorizTextures;
-    float vertLen = 1.0f/amtVertTextures;
-    
-    float x = (int)(textureIndex % amtHorizTextures) * horizLen;
-    float y = (int)(textureIndex / amtHorizTextures) * vertLen;
+void uvCoordinatesFromTextureIndex(
+    int textureIndex,
+    UV *uv,
+    int amtHorizTextures,
+    int amtVertTextures,
+    int atlasWidthPixels,
+    int atlasHeightPixels
+) {
+    float tileWidth  = 1.0f / amtHorizTextures;
+    float tileHeight = 1.0f / amtVertTextures;
 
-    // bottom left
-    uv->u = x;
-    uv->v = y;
-    // top right
-    uv->u1 = x + horizLen;
-    uv->v1 = y + vertLen;
+    int tileX = textureIndex % amtHorizTextures;
+    int tileY = textureIndex / amtHorizTextures;
+
+    float epsilonU = 1.0f / atlasWidthPixels;
+    float epsilonV = 1.0f / atlasHeightPixels;
+
+    uv->u  = tileX * tileWidth + epsilonU;
+    uv->v  = tileY * tileHeight + epsilonV;
+    uv->u1 = (tileX + 1) * tileWidth - epsilonU;
+    uv->v1 = (tileY + 1) * tileHeight - epsilonV;
 }
+
+
 
 void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[2])
 {
@@ -119,6 +136,16 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
     float amtDx = maxX - minX;
     float amtDy = maxY - minY;
     float amtDz = maxZ - minZ;
+
+
+    UV uv;
+    uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3, ATLAS_WIDTH, ATLAS_HEIGHT);
+    float du = uv.u1 - uv.u;
+    float dv = uv.v1 - uv.v;
+    float U0 = uv.u;
+    float V0 = uv.v;
+    float U1 = uv.u + du;
+    float V1 = uv.v + dv;
 
     // iterate for 2 of the 3 axes, but we do not know which one is the right one until the function is called
     if (amtDy == 0) {
@@ -138,15 +165,6 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                     glBegin(GL_QUADS);
                 }
     
-                UV uv;
-                uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
-                float du = uv.u1 - uv.u;
-                float dv = uv.v1 - uv.v;
-                float U0 = uv.u;
-                float V0 = uv.v;
-                float U1 = uv.u + du;
-                float V1 = uv.v + dv;
-                
                 // dx
                 A[0] += dx;
                 B[0] += dx;
@@ -191,15 +209,6 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 } else {
                     glBegin(GL_QUADS);
                 }
-
-                UV uv;
-                uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
-                float du = uv.u1 - uv.u;
-                float dv = uv.v1 - uv.v;
-                float U0 = uv.u;
-                float V0 = uv.v;
-                float U1 = uv.u + du;
-                float V1 = uv.v + dv;
         
                 // dy
                 A[1] += dy;
@@ -246,16 +255,7 @@ void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transforma
                 } else {
                     glBegin(GL_QUADS);
                 }
-    
-                UV uv;
-                uvCoordinatesFromTextureIndex(textureIndex, &uv, 6, 3);
-                float du = uv.u1 - uv.u;
-                float dv = uv.v1 - uv.v;
-                float U0 = uv.u;
-                float V0 = uv.v;
-                float U1 = uv.u + du;
-                float V1 = uv.v + dv;
-                
+
                 // dx
                 A[0] += dx;
                 B[0] += dx;

@@ -162,6 +162,7 @@ void loadChunks(GLfloat playerCoords[2]) {
                     renderChunks->capacity *= 2;
                     renderChunks->renderChunks = realloc(renderChunks->renderChunks, renderChunks->capacity*sizeof(Chunk *));
                 }
+
                 renderChunks->renderChunks[(renderChunks->amtRenderChunks)++] = result->chunkEntry;
             }
         }
@@ -182,11 +183,10 @@ void loadChunks(GLfloat playerCoords[2]) {
         if ( 
             (loadedChunkX > (playerChunkX + CHUNK_RENDER_RADIUS) || (loadedChunkX < (playerChunkX - CHUNK_RENDER_RADIUS))) ||
             (loadedChunkZ > (playerChunkZ + CHUNK_RENDER_RADIUS) || (loadedChunkZ < (playerChunkZ - CHUNK_RENDER_RADIUS)))) {
-            if (curChunk->hasMesh && (loadedChunkX == 1 && loadedChunkZ == -1)) {
+            if (curChunk->hasMesh) {
                 printf("deleting a chunk mesh!\n");
                 printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
                 deleteChunkMesh(curChunk);
-                curChunk->hasMesh = 0;
             }
         }
 

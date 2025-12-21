@@ -754,6 +754,8 @@ void deleteChunkMesh(Chunk *chunk) {
 
     int firstQuadIndex = chunk->firstQuadIndex;
     int lastQuadIndex = chunk->lastQuadIndex;
+    chunk->hasMesh = 0;
+    chunk->flag = CHUNK_FLAG_LOADED;
     printf("Deleting quads from %d to %d and has mesh is %d\n", firstQuadIndex, lastQuadIndex, chunk->hasMesh);
     if (firstQuadIndex == -1 && lastQuadIndex == -1) {
         return; 
@@ -767,8 +769,8 @@ void deleteChunkMesh(Chunk *chunk) {
 
     chunkMeshQuads.amtQuads -= deleteAmount;
     // fix other chunks' indices
-    for (int c = 0; c < chunkLoaderManager.renderChunks.amtRenderChunks; c++) {
-        Chunk* other = chunkLoaderManager.renderChunks.renderChunks[c];
+    for (int c = 0; c < chunkLoaderManager.loadedChunks.amtLoadedChunks; c++) {
+        Chunk* other = chunkLoaderManager.loadedChunks.loadedChunks[c];
 
         if (other->firstQuadIndex > lastQuadIndex) {
             other->firstQuadIndex -= deleteAmount;

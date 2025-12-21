@@ -23,7 +23,14 @@ typedef struct UV
 void initGraphics();
 void reshape(int width, int height);
 void spinObject();
-void uvCoordinatesFromTextureIndex(int textureIndex, UV *uv, int amtHorizTextures, int amtVertTextures);
+void uvCoordinatesFromTextureIndex(
+    int textureIndex,
+    UV *uv,
+    int amtHorizTextures,
+    int amtVertTextures,
+    int atlasWidthPixels,
+    int atlasHeightPixels
+);
 void face(GLfloat A[], GLfloat B[], GLfloat C[], GLfloat D[], GLfloat transformation[3], int textureIndex, GLfloat size[2]);
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType, int blockType);
 void drawText(const char *text, float x, float y);
