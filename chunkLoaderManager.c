@@ -223,5 +223,4 @@ void loadChunks(GLfloat playerCoords[2]) {
             }
         }       
     }
-
 }
