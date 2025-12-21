@@ -80,8 +80,7 @@ void initGraphics()
     stoneTexture     = loadTexture("assets\\stone.png");
     glEnable(GL_TEXTURE_2D);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    
 
 }
 
@@ -133,7 +132,7 @@ void face(
     float minZ = MIN4(A[2], B[2], C[2], D[2]);
     float maxZ = MAX4(A[2], B[2], C[2], D[2]);
 
-    float amtDx = maxX - minX;
+    float amtDx = maxX - minX; 
     float amtDy = maxY - minY;
     float amtDz = maxZ - minZ;
 
@@ -168,7 +167,10 @@ void face(
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+    
     if (pressedKeys['z']) {
         glBegin(GL_LINE_LOOP);
     } else {
