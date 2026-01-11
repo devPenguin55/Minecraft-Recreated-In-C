@@ -2,14 +2,7 @@
 #define RENDER_H
 #include <GL/glu.h>
 #include <GL/glut.h>
-
-extern GLfloat T;
-extern GLfloat CameraX;
-extern GLfloat CameraY;
-extern GLfloat CameraZ;
-extern GLfloat PlayerDirX;
-extern GLfloat PlayerDirY;
-extern GLfloat PlayerDirZ;
+#include "chunks.h"
 
 typedef struct UV 
 {
@@ -18,6 +11,19 @@ typedef struct UV
     float u1;
     float v1;
 } UV;
+
+typedef struct SelectedBlockToRender {
+    MeshQuad *meshQuad;
+} SelectedBlockToRender;
+
+extern GLfloat T;
+extern GLfloat CameraX;
+extern GLfloat CameraY;
+extern GLfloat CameraZ;
+extern GLfloat PlayerDirX;
+extern GLfloat PlayerDirY;
+extern GLfloat PlayerDirZ;
+extern SelectedBlockToRender selectedBlockToRender;
 
 void initGraphics();
 void reshape(int width, int height);

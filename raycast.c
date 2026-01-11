@@ -6,9 +6,10 @@
 #include "chunks.h"
 #include "input.h"
 #include "chunkLoaderManager.h"
+#include "render.h"
 
 void raycastFromCamera() {
-    // DDA - digital differential analyzer
+    // DDA - digital differential analyzer, used for raycasting
 
     int playerChunkX = (int)floor(CameraX / (ChunkWidthX * BlockWidthX));
     int playerChunkZ = (int)floor(CameraZ / (ChunkLengthZ * BlockLengthZ));
@@ -33,8 +34,6 @@ void raycastFromCamera() {
     float rayUnitStepSizeY = fabs(1.0f / normCameraDirY);
     float rayUnitStepSizeZ = fabs(1.0f / normCameraDirZ);
 
-
-    
     float rayX = CameraX;
     float rayY = CameraY;
     float rayZ = CameraZ;
@@ -73,6 +72,8 @@ void raycastFromCamera() {
     float maxDist  = 16.0;
     int originalChunkX = floor((float)voxelX / ChunkWidthX);
     int originalChunkZ = floor((float)voxelZ / ChunkLengthZ);
+    Block *hitBlock = NULL;
+    int hitBlockFace;
     while (dist < maxDist) {
         // walking step
         if (rayLengthX < rayLengthY && rayLengthX < rayLengthZ) {
@@ -80,16 +81,32 @@ void raycastFromCamera() {
             voxelX += stepX;
             dist = rayLengthX;
             rayLengthX += rayUnitStepSizeX;
+
+            if (stepX == 1) {
+                hitBlockFace = FACE_LEFT;
+            } else {
+                hitBlockFace = FACE_RIGHT;
+            }
         } else if (rayLengthY < rayLengthZ) {
             // y step
             voxelY += stepY;
             dist = rayLengthY;
             rayLengthY += rayUnitStepSizeY;
+            if (stepY == 1) {
+                hitBlockFace = FACE_BOTTOM;
+            } else {
+                hitBlockFace = FACE_TOP;
+            }
         } else {
             // z step
             voxelZ += stepZ;
             dist = rayLengthZ;
             rayLengthZ += rayUnitStepSizeZ;
+            if (stepZ == 1) {
+                hitBlockFace = FACE_BACK;
+            } else {
+                hitBlockFace = FACE_FRONT;
+            }
         }
 
         int localX = voxelX - originalChunkX * ChunkWidthX;
@@ -110,8 +127,30 @@ void raycastFromCamera() {
 
         if (!result->chunkEntry->blocks[index].isAir) {
             // hit the block
-            printf("hit at dist %f\n", dist);
+            hitBlock = &result->chunkEntry->blocks[index];
             break;
         }
     }
+
+    if (hitBlock == NULL) {
+        if (selectedBlockToRender.meshQuad != NULL) {
+            free(selectedBlockToRender.meshQuad);
+        }
+        selectedBlockToRender.meshQuad = NULL;
+        return;
+    }
+
+    printf("Starting the mesh quad selections with %f and %d\n", hitBlock->x, voxelX);
+    selectedBlockToRender.meshQuad = malloc(sizeof(MeshQuad));
+
+    selectedBlockToRender.meshQuad->x = hitBlock->x + voxelX;
+    selectedBlockToRender.meshQuad->y = hitBlock->y + voxelY;
+    selectedBlockToRender.meshQuad->z = hitBlock->z + voxelZ;
+    selectedBlockToRender.meshQuad->width = BlockWidthX; 
+    // technically putting the same value isn't fully adapting but it would always be the same so it works
+    selectedBlockToRender.meshQuad->height = BlockWidthX;
+    selectedBlockToRender.meshQuad->blockType = hitBlock->blockType;
+    selectedBlockToRender.meshQuad->faceType = hitBlockFace;
+    printf("Ending the mesh quad selections\n");
+
 }

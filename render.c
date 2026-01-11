@@ -21,6 +21,8 @@ double lastTime = 0.0;
 double fps = 0.0;
 int frameCount = 0;
 
+SelectedBlockToRender selectedBlockToRender;
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -82,8 +84,7 @@ void initGraphics()
     stoneTexture     = loadTexture("assets\\stone.png");
     glEnable(GL_TEXTURE_2D);
 
-    
-
+    selectedBlockToRender.meshQuad = NULL;
 }
 
 void reshape(int width, int height)
@@ -370,27 +371,17 @@ void drawGraphics()
 
         GLfloat size[2] = {curQuad->width, curQuad->height};
         cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
-
-
-        // glPushMatrix();
-        // glLineWidth(3.0f);
-
-        // float halfX = (BlockWidthX) / 2.0f;
-        // float halfZ = (BlockLengthZ) / 2.0f;
-        // float borderY = 0.3f; // or top layer
-        // // printf("x from %f to %f, y from %f to %f\n", minX, maxX, minZ, maxZ);
-        // glBegin(GL_LINE_LOOP);
-        // glVertex3f(minX - halfX, borderY, minZ - halfZ);
-        // glVertex3f(maxX + halfX, borderY, minZ - halfZ);
-        // glVertex3f(maxX + halfX, borderY, maxZ + halfZ);
-        // glVertex3f(minX - halfX, borderY, maxZ + halfZ);
-        // glEnd();
-
-        // glLineWidth(1.0f);
-        // glPopMatrix();
-
     }
 
+    if (selectedBlockToRender.meshQuad != NULL) {
+        GLfloat translation[3];
+        translation[0] = selectedBlockToRender.meshQuad->x;
+        translation[1] = selectedBlockToRender.meshQuad->y;
+        translation[2] = selectedBlockToRender.meshQuad->z;
+
+        GLfloat size[2] = {selectedBlockToRender.meshQuad->width, selectedBlockToRender.meshQuad->height};
+        cubeFace(Vertices, translation, size, selectedBlockToRender.meshQuad->faceType, BLOCK_TYPE_STONE);
+    }
 
 
     char text[64];
@@ -410,6 +401,38 @@ void drawGraphics()
         glColor3f(1, 1, 1);
     glEnd();
 
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+
+    int windowWidth  = glutGet(GLUT_WINDOW_WIDTH);
+    int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
+
+    gluOrtho2D(0, windowWidth, windowHeight, 0);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    // draw 2d things
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glLineWidth(2.0f);
+    glBegin(GL_LINES);
+        glVertex2f(windowWidth/2, windowHeight/2 - 5);
+        glVertex2f(windowWidth/2, windowHeight/2 + 5);
+        glVertex2f(windowWidth/2 - 5, windowHeight/2);
+        glVertex2f(windowWidth/2 + 5, windowHeight/2);
+    glEnd();
+    glColor3f(1.0f, 1.0f, 1.0f); 
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 
     // switch the content of color and depth buffers
     glutSwapBuffers();
