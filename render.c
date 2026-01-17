@@ -368,7 +368,6 @@ void drawGraphics()
                 yHeight = curQuad->height;
                 break;
         } */
-
         GLfloat size[2] = {curQuad->width, curQuad->height};
         cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
     }
@@ -378,7 +377,6 @@ void drawGraphics()
         translation[0] = selectedBlockToRender.meshQuad->x;
         translation[1] = selectedBlockToRender.meshQuad->y;
         translation[2] = selectedBlockToRender.meshQuad->z;
-
         GLfloat size[2] = {selectedBlockToRender.meshQuad->width, selectedBlockToRender.meshQuad->height};
         cubeFace(Vertices, translation, size, selectedBlockToRender.meshQuad->faceType, BLOCK_TYPE_STONE);
     }
