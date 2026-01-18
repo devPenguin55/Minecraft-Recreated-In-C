@@ -241,9 +241,8 @@ float tMaxZ = (stepZ > 0)
             printf("Step z with %d\n", stepZ);
         }
         
-        // int chunkX = voxelX / ChunkWidthX;
-        int chunkZ;
         int chunkX;
+        int chunkZ;
         if (voxelX >= 0) {
             chunkX = voxelX / ChunkWidthX;
         } else {
@@ -256,7 +255,6 @@ float tMaxZ = (stepZ > 0)
         }
 
         int localX = voxelX - chunkX * ChunkWidthX;
-
         int localZ = voxelZ - chunkZ * ChunkLengthZ;
         int localY = voxelY;
         

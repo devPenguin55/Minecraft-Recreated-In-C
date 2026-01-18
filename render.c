@@ -169,27 +169,19 @@ void face(
 
     if ((int)texture == BLOCK_TYPE_OUTLINE) {
         
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glLineWidth(10.0f);
-        glBegin(GL_LINE_LOOP);
-        if (amtDy == 0.0f) {       // X–Z face
-            glVertex3fv(vA);
-            glVertex3fv(vB);
-            glVertex3fv(vC);
-            glVertex3fv(vD);
-        } else if (amtDx == 0.0f) { // Y–Z face
-            glVertex3fv(vA);
-            glVertex3fv(vB);
-            glVertex3fv(vC);
-            glVertex3fv(vD);
-        } else {                    // X–Y face
-            glVertex3fv(vA);
-            glVertex3fv(vB);
-            glVertex3fv(vC);
-            glVertex3fv(vD);
-        }
+        glDisable(GL_DEPTH_TEST);
 
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glLineWidth(1.0f);
+
+        glBegin(GL_LINE_LOOP);
+        glVertex3fv(vA);
+        glVertex3fv(vB);
+        glVertex3fv(vC);
+        glVertex3fv(vD);
         glEnd();
+
+        glEnable(GL_DEPTH_TEST);
         glPopMatrix();
         return;
     }
