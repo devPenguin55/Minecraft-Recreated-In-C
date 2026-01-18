@@ -1,6 +1,8 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include <math.h>
+
 extern int lastMouseX;
 extern int lastMouseY;
 extern int mouseInteractionStarted;
@@ -12,7 +14,6 @@ extern GLfloat PlayerDirX;
 extern GLfloat PlayerDirY;
 extern GLfloat PlayerDirZ;
 extern float PLAYER_SPEED;
-extern 
 
 void handleKeyDown(unsigned char key, int x, int y);
 void handleKeyUp(unsigned char key, int x, int y);

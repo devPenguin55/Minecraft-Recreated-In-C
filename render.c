@@ -10,6 +10,7 @@
 #include "chunkLoaderManager.h"
 #include "raycast.h"
 
+
 GLfloat T = 0;
 GLuint grassSideTexture;
 GLuint grassTopTexture;
@@ -27,6 +28,13 @@ SelectedBlockToRender selectedBlockToRender;
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX4(a, b, c, d) (MAX(MAX(a, b), MAX(c, d)))
+
+static inline float clamp(float value, float minVal, float maxVal) {
+    if (value < minVal) return minVal;
+    if (value > maxVal) return maxVal;
+    return value;
+}
+
 
 GLuint loadTexture(const char *filename)
 {
@@ -172,7 +180,14 @@ void face(
         glDisable(GL_DEPTH_TEST);
 
         glColor3f(1.0f, 0.0f, 0.0f);
-        glLineWidth(1.0f);
+        float dx = CameraX - transformation[0];
+        float dy = CameraY - transformation[1];
+        float dz = CameraZ - transformation[2];
+        float dist = sqrtf(dx*dx + dy*dy + dz*dz);
+
+        float lineWidth = clamp(15.0f / dist, 1.0f, 15.0f);
+        glLineWidth(lineWidth);
+
 
         glBegin(GL_LINE_LOOP);
         glVertex3fv(vA);
