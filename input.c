@@ -4,7 +4,7 @@
 #include <math.h>
 #include "input.h"
 GLfloat CameraX = 5;
-GLfloat CameraY = 105;
+GLfloat CameraY = 60;
 GLfloat CameraZ = 5;
 GLfloat PlayerDirX = 1;
 GLfloat PlayerDirY = -3;

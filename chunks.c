@@ -66,6 +66,41 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     curBlock->blockType = BLOCK_TYPE_STONE;
                 }
             }
+
+
+            /////////////////////////////////////////////////////////////
+
+            // for (int y = 0; y < ChunkHeightY; y++)
+            // { 
+            //     Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
+
+            //     curBlock->x = BlockWidthX * x + xAdd;
+            //     curBlock->z = BlockLengthZ * z + zAdd;
+            //     curBlock->y = BlockHeightY * (y);
+
+            //     // fill everything below the staircase height
+            //     int stairHeight;
+            //     if (x != 5) {
+            //         curBlock->isAir = (y > 50);
+            //         stairHeight = 50;
+            //     } else {
+            //         curBlock->isAir = (y > 58);
+            //         stairHeight = 58;
+            //     }
+
+            //     if (y == stairHeight)
+            //     {
+            //         curBlock->blockType = BLOCK_TYPE_GRASS;
+            //     }
+            //     else if (y < stairHeight && y >= (stairHeight - 3))
+            //     {
+            //         curBlock->blockType = BLOCK_TYPE_DIRT;
+            //     }
+            //     else
+            //     {
+            //         curBlock->blockType = BLOCK_TYPE_STONE;
+            //     }
+            // }
         }
     }
 }

@@ -176,16 +176,17 @@ void raycastFromCamera() {
     GLfloat normDirY = PlayerDirY / dirLen;
     GLfloat normDirZ = PlayerDirZ / dirLen;
 
-    float rayX = CameraX;
-    float rayY = CameraY;
-    float rayZ = CameraZ;
+    float rayX = roundf(CameraX);
+    float rayY = roundf(CameraY);
+    float rayZ = roundf(CameraZ);
 
     int voxelX = (int)floor(rayX / BlockWidthX);
     int voxelY = (int)floor(rayY / BlockHeightY);
     int voxelZ = (int)floor(rayZ / BlockLengthZ);
-    rayX = CameraX - 0.0001f;
-    rayY = CameraY - 0.0001f;
-    rayZ = CameraZ - 0.0001f;
+    rayX = CameraX + normDirX * 0.0001f;
+    rayY = CameraY + normDirY * 0.0001f;
+    rayZ = CameraZ + normDirZ * 0.0001f;
+
 
 
     int stepX = (normDirX > 0) ? 1 : -1;
@@ -239,14 +240,29 @@ float tMaxZ = (stepZ > 0)
             hitFace = (stepZ > 0) ? FACE_BACK : FACE_FRONT;
             printf("Step z with %d\n", stepZ);
         }
-        printf("now at %d %d %d\n", 
-        voxelX, voxelY, voxelZ);
+        
+        // int chunkX = voxelX / ChunkWidthX;
+        int chunkZ;
+        int chunkX;
+        if (voxelX >= 0) {
+            chunkX = voxelX / ChunkWidthX;
+        } else {
+            chunkX = (voxelX - (ChunkWidthX - 1)) / ChunkWidthX;
+        }
+        if (voxelZ >= 0) {
+            chunkZ = voxelZ / ChunkLengthZ;
+        } else {
+            chunkZ = (voxelZ - (ChunkLengthZ - 1)) / ChunkLengthZ;
+        }
 
-        int chunkX = voxelX / ChunkWidthX;
-        int chunkZ = voxelZ / ChunkLengthZ;
         int localX = voxelX - chunkX * ChunkWidthX;
+
         int localZ = voxelZ - chunkZ * ChunkLengthZ;
         int localY = voxelY;
+        
+        printf("now at %d %d %d     ||    local %d %d %d\n", 
+        voxelX, voxelY, voxelZ,
+        localX, localY, localZ);
 
         uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
         BucketEntry* result = getHashmapEntry(chunkKey);

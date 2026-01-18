@@ -167,6 +167,33 @@ void face(
     glTranslatef(transformation[0], transformation[1], transformation[2]);
     glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
 
+    if ((int)texture == BLOCK_TYPE_OUTLINE) {
+        
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glLineWidth(10.0f);
+        glBegin(GL_LINE_LOOP);
+        if (amtDy == 0.0f) {       // X–Z face
+            glVertex3fv(vA);
+            glVertex3fv(vB);
+            glVertex3fv(vC);
+            glVertex3fv(vD);
+        } else if (amtDx == 0.0f) { // Y–Z face
+            glVertex3fv(vA);
+            glVertex3fv(vB);
+            glVertex3fv(vC);
+            glVertex3fv(vD);
+        } else {                    // X–Y face
+            glVertex3fv(vA);
+            glVertex3fv(vB);
+            glVertex3fv(vC);
+            glVertex3fv(vD);
+        }
+
+        glEnd();
+        glPopMatrix();
+        return;
+    }
+
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -229,6 +256,11 @@ void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2]
             sideTextureIndex   = stoneTexture;
             topTextureIndex    = stoneTexture;
             bottomTextureIndex = stoneTexture;
+            break;
+        case BLOCK_TYPE_OUTLINE:
+            sideTextureIndex   = BLOCK_TYPE_OUTLINE;
+            topTextureIndex    = BLOCK_TYPE_OUTLINE;
+            bottomTextureIndex = BLOCK_TYPE_OUTLINE;
             break;
         default:
             printf("No correct block type entered!\n");
@@ -378,15 +410,12 @@ void drawGraphics()
         translation[1] = selectedBlockToRender.meshQuad->y;
         translation[2] = selectedBlockToRender.meshQuad->z;
         GLfloat size[2] = {selectedBlockToRender.meshQuad->width, selectedBlockToRender.meshQuad->height};
-        cubeFace(Vertices, translation, size, selectedBlockToRender.meshQuad->faceType, BLOCK_TYPE_STONE);
+
+        cubeFace(Vertices, translation, size, selectedBlockToRender.meshQuad->faceType, BLOCK_TYPE_OUTLINE);
     }
 
 
-    char text[64];
-    snprintf(text, sizeof(text), "FPS: %.1f, Quads: %d", fps, chunkMeshQuads.amtQuads);
-
-    glColor3f(1, 1, 1);
-    drawText(text, 50, 100);
+    
     
     
     glBegin(GL_POINTS);
@@ -423,6 +452,13 @@ void drawGraphics()
         glVertex2f(windowWidth/2 - 5, windowHeight/2);
         glVertex2f(windowWidth/2 + 5, windowHeight/2);
     glEnd();
+
+    char text[64];
+    snprintf(text, sizeof(text), "FPS: %.1f, Quads: %d", fps, chunkMeshQuads.amtQuads);
+
+    glColor3f(1, 1, 1);
+    drawText(text, 5, 15);
+
     glColor3f(1.0f, 1.0f, 1.0f); 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
