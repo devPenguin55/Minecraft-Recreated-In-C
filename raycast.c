@@ -25,7 +25,7 @@ void raycastFromCamera() {
     Block* hitBlock = NULL;
     int voxelX, voxelY, voxelZ;
     int localX, localY, localZ;
-    int faceType = -1;
+    int hitFace;
 
     Chunk* curChunk = NULL;
     for (float dist = 0; dist < maxDist; dist += step) {
@@ -56,6 +56,29 @@ void raycastFromCamera() {
 
         if (!curChunk->blocks[index].isAir) {
             hitBlock = &curChunk->blocks[index];
+
+            // determine which face the ray entered from
+            float prevRayX = rayX - step*normDirX;
+            float prevRayY = rayY - step*normDirY;
+            float prevRayZ = rayZ - step*normDirZ;
+
+            int prevX = (int)round(prevRayX);
+            int prevY = (int)round(prevRayY);
+            int prevZ = (int)round(prevRayZ);
+
+            int curX = (int)round(rayX);
+            int curY = (int)round(rayY);
+            int curZ = (int)round(rayZ);
+
+            if (curX != prevX) {
+                hitFace = (normDirX > 0) ? FACE_LEFT : FACE_RIGHT;
+            }
+            else if (curY != prevY) {
+                hitFace = (normDirY > 0) ? FACE_BOTTOM : FACE_TOP;
+            }
+            else if (curZ != prevZ) {
+                hitFace = (normDirZ > 0) ? FACE_BACK : FACE_FRONT;
+            }
             break;
         }
 
@@ -67,26 +90,22 @@ void raycastFromCamera() {
     voxelY = (int)round(rayY / BlockHeightY);
     voxelZ = (int)round(rayZ / BlockLengthZ);
     if (!hitBlock) {
-        if (selectedBlockToRender.meshQuad) free(selectedBlockToRender.meshQuad);
-        selectedBlockToRender.meshQuad = NULL;
+        selectedBlockToRender.active = 0;
         return;
     }
 
-    if (!selectedBlockToRender.meshQuad) {
-        selectedBlockToRender.meshQuad = malloc(sizeof(MeshQuad));
-    }
+    selectedBlockToRender.active = 1;
 
-    selectedBlockToRender.meshQuad->x = voxelX * BlockWidthX;
-    selectedBlockToRender.meshQuad->y = voxelY * BlockHeightY;
-    selectedBlockToRender.meshQuad->z = voxelZ * BlockLengthZ;
-    selectedBlockToRender.meshQuad->width = BlockWidthX;
-    selectedBlockToRender.meshQuad->height = BlockHeightY;
-    selectedBlockToRender.meshQuad->faceType = faceType;
-    selectedBlockToRender.meshQuad->blockType = hitBlock->blockType;
+    selectedBlockToRender.worldX = voxelX * BlockWidthX;
+    selectedBlockToRender.worldY = voxelY * BlockHeightY;
+    selectedBlockToRender.worldZ = voxelZ * BlockLengthZ;
 
     selectedBlockToRender.localX = localX;
     selectedBlockToRender.localY = localY;
     selectedBlockToRender.localZ = localZ;
+
+    selectedBlockToRender.hitFace = hitFace;
+
     selectedBlockToRender.chunk = curChunk;
 }
 

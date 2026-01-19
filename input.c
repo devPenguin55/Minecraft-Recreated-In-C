@@ -51,13 +51,30 @@ void handleMouse(int button, int state, int x, int y) {
         mouseInteractionStarted = 0;
     }
 
-    if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+    if ((button == GLUT_RIGHT_BUTTON || button == GLUT_MIDDLE_BUTTON) && state == GLUT_DOWN) {
         int x,y,z;
         x = selectedBlockToRender.localX;
         y = selectedBlockToRender.localY;
         z = selectedBlockToRender.localZ;
-        selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
-        printf("xyz %d %d %d\n", x, y, z);
+
+        if (button == GLUT_RIGHT_BUTTON) {
+            selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
+        } else {
+            if (selectedBlockToRender.hitFace == FACE_TOP) {
+                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y+1)].isAir = 0;
+            } else if (selectedBlockToRender.hitFace == FACE_BOTTOM) {
+                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y-1)].isAir = 0;
+            } else if (selectedBlockToRender.hitFace == FACE_LEFT) {
+                selectedBlockToRender.chunk->blocks[x-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+            } else if (selectedBlockToRender.hitFace == FACE_RIGHT) {
+                selectedBlockToRender.chunk->blocks[x+1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+            } else if (selectedBlockToRender.hitFace == FACE_FRONT) {
+                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*(z+1) + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+            } else if (selectedBlockToRender.hitFace == FACE_BACK) {
+                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*(z-1) + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+            }
+        }
+        
         
         int chunkXUnit =   ChunkWidthX * BlockWidthX;
         int chunkZUnit = ChunkLengthZ * BlockLengthZ;

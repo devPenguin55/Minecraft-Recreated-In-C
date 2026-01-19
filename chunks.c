@@ -36,7 +36,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
-            if (1) {
+            if (0) {
                 
             int baseHeight = 60;
             int stairHeight = baseHeight + x + z;

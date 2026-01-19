@@ -126,11 +126,11 @@ void loadChunks(GLfloat playerCoords[2]) {
     
     // preload radius -> get all of the chunk data loaded first
     // also find the chunks to render and allocate those for the next mesh loop
-    LoadedChunks *loadedChunks                 = &(chunkLoaderManager.loadedChunks);
-    RenderChunks *renderChunks                 = &(chunkLoaderManager.renderChunks);
-    ChunksToUnload *chunksToUnload             = &(chunkLoaderManager.chunksToUnload);
-    renderChunks->amtRenderChunks                 = 0;
-    chunksToUnload->amtChunksToUnload             = 0;
+    LoadedChunks *loadedChunks        = &(chunkLoaderManager.loadedChunks);
+    RenderChunks *renderChunks        = &(chunkLoaderManager.renderChunks);
+    ChunksToUnload *chunksToUnload    = &(chunkLoaderManager.chunksToUnload);
+    renderChunks->amtRenderChunks     = 0;
+    chunksToUnload->amtChunksToUnload = 0;
 
     for (int dx = -CHUNK_PRELOAD_RADIUS; dx < CHUNK_PRELOAD_RADIUS+1; dx++) {
         for (int dz = -CHUNK_PRELOAD_RADIUS; dz < CHUNK_PRELOAD_RADIUS+1; dz++) {

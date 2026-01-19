@@ -13,10 +13,14 @@ typedef struct UV
 } UV;
 
 typedef struct SelectedBlockToRender {
-    MeshQuad *meshQuad;
+    int   active;
+    float worldX;
+    float worldY;
+    float worldZ;
     float localX;
     float localY;
     float localZ;
+    int  hitFace;
     Chunk *chunk;
 } SelectedBlockToRender;
 

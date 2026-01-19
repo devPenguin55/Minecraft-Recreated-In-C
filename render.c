@@ -84,7 +84,7 @@ void initGraphics()
     glColor3f(1, 1, 1);
     glEnable(GL_DEPTH_TEST);
 
-    // glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
 
     grassSideTexture = loadTexture("assets\\grassSide.png");
     grassTopTexture  = loadTexture("assets\\grassTop.png");
@@ -92,7 +92,7 @@ void initGraphics()
     stoneTexture     = loadTexture("assets\\stone.png");
     glEnable(GL_TEXTURE_2D);
 
-    selectedBlockToRender.meshQuad = NULL;
+    selectedBlockToRender.active = 0;
 }
 
 void reshape(int width, int height)
@@ -415,12 +415,12 @@ void drawGraphics()
         cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
     }
 
-    if (selectedBlockToRender.meshQuad != NULL) {
+    if (selectedBlockToRender.active) {
         GLfloat translation[3];
-        translation[0] = selectedBlockToRender.meshQuad->x;
-        translation[1] = selectedBlockToRender.meshQuad->y;
-        translation[2] = selectedBlockToRender.meshQuad->z;
-        GLfloat size[2] = {selectedBlockToRender.meshQuad->width, selectedBlockToRender.meshQuad->height};
+        translation[0] = selectedBlockToRender.worldX;
+        translation[1] = selectedBlockToRender.worldY;
+        translation[2] = selectedBlockToRender.worldZ;
+        GLfloat size[2] = {BlockWidthX, BlockLengthZ};
 
 
         float outlineScale = 1.01f;
@@ -469,7 +469,7 @@ void drawGraphics()
     glPushMatrix();
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
-    // glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
     // draw 2d things
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -489,7 +489,7 @@ void drawGraphics()
 
     glColor3f(1.0f, 1.0f, 1.0f); 
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
