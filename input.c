@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <math.h>
 #include "input.h"
-GLfloat CameraX = 5;
-GLfloat CameraY = 70;
-GLfloat CameraZ = 5;
-GLfloat PlayerDirX = 1;
-GLfloat PlayerDirY = -3;
+GLfloat CameraX = 33.3;
+GLfloat CameraY = 63;//63;
+GLfloat CameraZ = 0;
+GLfloat PlayerDirX = -5;
+GLfloat PlayerDirY = 0;
 GLfloat PlayerDirZ = -1;
 float PLAYER_SPEED = 0.005;
 
@@ -86,9 +86,9 @@ void handleUserMovement() {
         CameraZ += RightZ * PLAYER_SPEED;
     }
     if (pressedKeys['r']) {
-        CameraY += PLAYER_SPEED;
+        CameraY += -PlayerDirY * PLAYER_SPEED;
     }   
     if (pressedKeys['f']) {
-        CameraY -= PLAYER_SPEED;
+        CameraY -= -PlayerDirY * PLAYER_SPEED;
     }
 }

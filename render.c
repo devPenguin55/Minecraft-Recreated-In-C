@@ -186,7 +186,7 @@ void face(
         float dist = sqrtf(dx*dx + dy*dy + dz*dz);
 
         float lineWidth = clamp(15.0f / dist, 1.0f, 15.0f);
-        glLineWidth(lineWidth);
+        glLineWidth(5);
 
 
         glBegin(GL_LINE_LOOP);
@@ -360,6 +360,9 @@ void drawGraphics()
 
     glPointSize(5);
 
+
+    
+
     for (int quadIndex = 0; quadIndex < chunkMeshQuads.amtQuads; quadIndex++)
     {
         MeshQuad *curQuad = &(chunkMeshQuads.quads[quadIndex]);
@@ -411,6 +414,7 @@ void drawGraphics()
         cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
     }
 
+    
     if (selectedBlockToRender.meshQuad != NULL) {
         GLfloat translation[3];
         translation[0] = selectedBlockToRender.meshQuad->x;
@@ -418,13 +422,35 @@ void drawGraphics()
         translation[2] = selectedBlockToRender.meshQuad->z;
         GLfloat size[2] = {selectedBlockToRender.meshQuad->width, selectedBlockToRender.meshQuad->height};
 
-        cubeFace(Vertices, translation, size, selectedBlockToRender.meshQuad->faceType, BLOCK_TYPE_OUTLINE);
+        float dx = selectedBlockToRender.x - CameraX;
+        float dy = selectedBlockToRender.y - CameraY;
+        float dz = selectedBlockToRender.z - CameraZ;
+        float dist = sqrtf(dx*dx + dy*dy + dz*dz);
+        float pointSize = 120.0f / (dist + 0.001f);
+        if (pointSize < 3.0f)  pointSize = 3.0f;
+        if (pointSize > 20.0f) pointSize = 20.0f;
+
+
+        glDisable(GL_DEPTH_TEST);
+        glPointSize(12.0f);
+
+        glBegin(GL_POINTS);
+        glVertex3f(selectedBlockToRender.x, selectedBlockToRender.y, selectedBlockToRender.z);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glEnd();
+
+        glEnable(GL_DEPTH_TEST);
+        
+        for (int i = 1; i<7; i++) {
+
+            cubeFace(Vertices, translation, size, i, BLOCK_TYPE_OUTLINE);
+        }
+        glColor3f(1.0f, 1.0f, 1.0f);
     }
 
-
     
     
-    
+    glPointSize(10.0f); 
     glBegin(GL_POINTS);
         glColor3f(1, 0, 0);
         glVertex3f(-1, 0, -1);
@@ -432,6 +458,7 @@ void drawGraphics()
         glVertex3f(2, 0, -1);
         glColor3f(1, 0, 0);
         glVertex3f(-1, 3, -1);
+        
         glColor3f(1, 1, 1);
     glEnd();
 
@@ -454,10 +481,10 @@ void drawGraphics()
     glColor3f(1.0f, 0.0f, 0.0f);
     glLineWidth(2.0f);
     glBegin(GL_LINES);
-        glVertex2f(windowWidth/2, windowHeight/2 - 5);
-        glVertex2f(windowWidth/2, windowHeight/2 + 5);
-        glVertex2f(windowWidth/2 - 5, windowHeight/2);
-        glVertex2f(windowWidth/2 + 5, windowHeight/2);
+        glVertex2f(windowWidth/2, windowHeight/2 - 15);
+        glVertex2f(windowWidth/2, windowHeight/2 + 15);
+        glVertex2f(windowWidth/2 - 15, windowHeight/2);
+        glVertex2f(windowWidth/2 + 15, windowHeight/2);
     glEnd();
 
     char text[64];

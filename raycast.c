@@ -8,270 +8,206 @@
 #include "chunkLoaderManager.h"
 #include "render.h"
 
+static inline int voxelFloor(float v, float size) {
+    int i = (int)(v / size);
+    if (v < 0 && fmodf(v, size) != 0.0f) i--;
+    return i;
+}
+
+
+
+
 // void raycastFromCamera() {
-//     // DDA - digital differential analyzer, used for raycasting
+//     // normalize direction
+//     float dirLen = sqrtf(PlayerDirX*PlayerDirX + PlayerDirY*PlayerDirY + PlayerDirZ*PlayerDirZ);
+//     GLfloat normDirX = PlayerDirX / dirLen;
+//     GLfloat normDirY = PlayerDirY / dirLen;
+//     GLfloat normDirZ = PlayerDirZ / dirLen;
 
-//     int playerChunkX = (int)floor(CameraX / (ChunkWidthX * BlockWidthX));
-//     int playerChunkZ = (int)floor(CameraZ / (ChunkLengthZ * BlockLengthZ));
-    
-//     uint64_t chunkKey  = packChunkKey(playerChunkX, playerChunkZ);
-//     BucketEntry *result = getHashmapEntry(chunkKey);
-    
-//     if (result == NULL) { return; }
-    
-//     float directionVectorLength = sqrtf(
-//         PlayerDirX*PlayerDirX + 
-//         PlayerDirY*PlayerDirY + 
-//         PlayerDirZ*PlayerDirZ
-//     );
-    
+//     // get the voxel the camera is inside
+//     int camVoxelX = (int)floor(CameraX / BlockWidthX);
+//     int camVoxelY = (int)floor(CameraY / BlockHeightY);
+//     int camVoxelZ = (int)floor(CameraZ / BlockLengthZ);
+//     printf("inside of %d %d %d with %f %f %f\n", camVoxelX, camVoxelY, camVoxelZ, CameraX, CameraY, CameraZ);
+//     // start the ray at the CENTER of that voxel
+//     float rayX = camVoxelX * BlockWidthX + 0.5f * BlockWidthX;
+//     float rayY = camVoxelY * BlockHeightY + 0.5f * BlockHeightY;
+//     float rayZ = camVoxelZ * BlockLengthZ + 0.5f * BlockLengthZ;
 
-//     GLfloat normCameraDirX = PlayerDirX / directionVectorLength;
-//     GLfloat normCameraDirY = PlayerDirY / directionVectorLength;
-//     GLfloat normCameraDirZ = PlayerDirZ / directionVectorLength;
+//     // small epsilon along the ray direction to avoid self-hit
+//     const float epsilon = 1e-2f;
+//     rayX += epsilon * normDirX;
+//     rayY += epsilon * normDirY;
+//     rayZ += epsilon * normDirZ;
 
-//     float rayUnitStepSizeX = fabs(1.0f / normCameraDirX);
-//     float rayUnitStepSizeY = fabs(1.0f / normCameraDirY);
-//     float rayUnitStepSizeZ = fabs(1.0f / normCameraDirZ);
+//     // initialize voxel coordinates for DDA
+//     int voxelX = (int)floor(rayX / BlockWidthX);
+//     int voxelY = (int)floor(rayY / BlockHeightY);
+//     int voxelZ = (int)floor(rayZ / BlockLengthZ);
 
-//     float rayX = CameraX;
-//     float rayY = CameraY;
-//     float rayZ = CameraZ;
-//     int voxelX = floor(rayX/BlockWidthX);
-//     int voxelY = floor(rayY/BlockHeightY);
-//     int voxelZ = floor(rayZ/BlockLengthZ);
+//     // compute steps
+//     int stepX = (normDirX > 0) ? 1 : -1;
+//     int stepY = (normDirY > 0) ? 1 : -1;
+//     int stepZ = (normDirZ > 0) ? 1 : -1;
 
-//     int stepX, stepY, stepZ;
-//     float rayLengthX, rayLengthY, rayLengthZ;
-//     float voxelWorldX = voxelX * BlockWidthX;
-//     float voxelWorldY = voxelY * BlockHeightY;
-//     float voxelWorldZ = voxelZ * BlockLengthZ;
+//     // compute tMax and tDelta
+//     float tMaxX = (stepX > 0)
+//         ? ((voxelX + 1) * BlockWidthX - rayX) / normDirX
+//         : (rayX - voxelX * BlockWidthX) / -normDirX;
+//     float tMaxY = (stepY > 0)
+//         ? ((voxelY + 1) * BlockHeightY - rayY) / normDirY
+//         : (rayY - voxelY * BlockHeightY) / -normDirY;
+//     float tMaxZ = (stepZ > 0)
+//         ? ((voxelZ + 1) * BlockLengthZ - rayZ) / normDirZ
+//         : (rayZ - voxelZ * BlockLengthZ) / -normDirZ;
 
-//     if (normCameraDirX > 0) {
-//         stepX = 1;
-//         rayLengthX = (voxelWorldX + BlockWidthX - rayX) * rayUnitStepSizeX;
-//     } else {
-//         stepX = -1;
-//         rayLengthX = (rayX - voxelWorldX) * rayUnitStepSizeX;
-//     }
+//     float tDeltaX = (normDirX != 0.0f) ? BlockWidthX / fabs(normDirX) : 99999999999.0f;
+//     float tDeltaY = (normDirY != 0.0f) ? BlockHeightY / fabs(normDirY) : 99999999999.0f;
+//     float tDeltaZ = (normDirZ != 0.0f) ? BlockLengthZ / fabs(normDirZ) : 99999999999.0f;
 
-//     if (normCameraDirY > 0) {
-//         stepY = 1;
-//         rayLengthY = (voxelWorldY + BlockHeightY - rayY) * rayUnitStepSizeY;
-//     } else {
-//         stepY = -1;
-//         rayLengthY = (rayY - voxelWorldY) * rayUnitStepSizeY;
-//     }
-
-//     if (normCameraDirZ > 0) {
-//         stepZ = 1;
-//         rayLengthZ = (voxelWorldZ + BlockLengthZ - rayZ) * rayUnitStepSizeZ;
-//     } else {
-//         stepZ = -1;
-//         rayLengthZ = (rayZ - voxelWorldZ) * rayUnitStepSizeZ;
-//     }
-
-
-    
-//     float dist     = 0.0;
-//     float maxDist  = 16.0;
-//     Block *hitBlock = NULL;
-//     int hitBlockFace;
+//     float maxDist = 16.0f;
+//     float dist = 0.0f;
+//     Block* hitBlock = NULL;
+//     int hitFace;
+//     // printf("begin with player at %f %f %f\n", 
+//     // CameraX, CameraY, CameraZ);
 //     while (dist < maxDist) {
-//         int originalChunkX = floor((float)voxelX / ChunkWidthX);
-//         int originalChunkZ = floor((float)voxelZ / ChunkLengthZ);
-
-//         // walking step
-//         if (rayLengthX < rayLengthY && rayLengthX < rayLengthZ) {
-//             // x step
+//         // step along shortest tMax
+//         // printf("will step now with tvals %f %f %f\n", tMaxX, tMaxY, tMaxZ);
+//         if (tMaxX <= tMaxY && tMaxX <= tMaxZ) {
 //             voxelX += stepX;
-//             dist = rayLengthX;
-//             rayLengthX += rayUnitStepSizeX;
-
-//             if (stepX == 1) {
-//                 hitBlockFace = FACE_LEFT;
-//             } else {
-//                 hitBlockFace = FACE_RIGHT;
-//             }
-//         } else if (rayLengthY < rayLengthZ) {
-//             // y step
+//             dist = tMaxX;
+//             tMaxX += tDeltaX;
+//             hitFace = (stepX > 0) ? FACE_LEFT : FACE_RIGHT;
+//             // printf("Step x with %d\n", stepX);
+//         }
+//         else if (tMaxY <= tMaxZ) {
 //             voxelY += stepY;
-//             dist = rayLengthY;
-//             rayLengthY += rayUnitStepSizeY;
-//             if (stepY == 1) {
-//                 hitBlockFace = FACE_BOTTOM;
-//             } else {
-//                 hitBlockFace = FACE_TOP;
-//             }
-//         } else {
-//             // z step
+//             dist = tMaxY;
+//             tMaxY += tDeltaY;
+//             hitFace = (stepY > 0) ? FACE_BOTTOM : FACE_TOP;
+//             // printf("Step y with %d\n", stepY);
+//         }
+//         else {
 //             voxelZ += stepZ;
-//             dist = rayLengthZ;
-//             rayLengthZ += rayUnitStepSizeZ;
-//             if (stepZ == 1) {
-//                 hitBlockFace = FACE_BACK;
-//             } else {
-//                 hitBlockFace = FACE_FRONT;
-//             }
+//             dist = tMaxZ;
+//             tMaxZ += tDeltaZ;
+//             hitFace = (stepZ > 0) ? FACE_BACK : FACE_FRONT;
+//             // printf("Step z with %d\n", stepZ);
+//         }
+        
+//         int chunkX;
+//         int chunkZ;
+//         if (voxelX >= 0) {
+//             chunkX = voxelX / ChunkWidthX;
+//         } else {
+//             chunkX = (voxelX - (ChunkWidthX - 1)) / ChunkWidthX;
+//         }
+//         if (voxelZ >= 0) {
+//             chunkZ = voxelZ / ChunkLengthZ;
+//         } else {
+//             chunkZ = (voxelZ - (ChunkLengthZ - 1)) / ChunkLengthZ;
 //         }
 
-//         int localX = voxelX - originalChunkX * ChunkWidthX ;
-//         int localZ = voxelZ - originalChunkZ * ChunkLengthZ;
+//         int localX = voxelX - chunkX * ChunkWidthX;
+//         int localZ = voxelZ - chunkZ * ChunkLengthZ;
 //         int localY = voxelY;
+        
+//         // printf("now at %d %d %d     ||    local %d %d %d\n", 
+//         // voxelX, voxelY, voxelZ,
+//         // localX, localY, localZ);
 
-//         if (localY < 0 || localY >= ChunkHeightY) {
+//         uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
+//         BucketEntry* result = getHashmapEntry(chunkKey);
+//         if (!result) break;
+
+//         Chunk* curChunk = result->chunkEntry;
+//         int index = localX + ChunkWidthX * localZ + (ChunkWidthX * ChunkLengthZ) * localY;
+
+        
+//         if (index >= ChunkWidthX*ChunkLengthZ*ChunkHeightY || index < 0) {
+//             // out of bounds
 //             continue;
 //         }
 
-//         int index = localX +
-//         ChunkWidthX * localZ +
-//         (ChunkWidthX * ChunkLengthZ) * localY;
-
-//         uint64_t chunkKey  = packChunkKey(
-//             floor((float)(voxelX) / ChunkWidthX), floor((float)(voxelZ) / ChunkLengthZ));
-//         BucketEntry *result = getHashmapEntry(chunkKey);
-
-//         if (result == NULL) {
-//             break;
-//         }
-
-//         if (!result->chunkEntry->blocks[index].isAir) {
-//             // hit the block
-//             hitBlock = &result->chunkEntry->blocks[index];
+//         if (!curChunk->blocks[index].isAir) {
+//             hitBlock = &curChunk->blocks[index];
 //             break;
 //         }
 //     }
 
-//     if (hitBlock == NULL) {
-//         if (selectedBlockToRender.meshQuad != NULL) {
-//             free(selectedBlockToRender.meshQuad);
-//         }
+//     if (!hitBlock) {
+//         if (selectedBlockToRender.meshQuad) free(selectedBlockToRender.meshQuad);
 //         selectedBlockToRender.meshQuad = NULL;
 //         return;
 //     }
 
-//     printf("Starting the mesh quad selections with %f and %d\n", hitBlock->x, voxelX);
-//     if (selectedBlockToRender.meshQuad == NULL) {
+//     // if (hitFace == FACE_LEFT) {
+//     //     voxelX -= 1;
+//     // } else if (hitFace == FACE_BOTTOM) {
+//     //     voxelY -= 1;
+//     // } else if (hitFace == FACE_BACK) {
+//     //     voxelZ -= 1;
+//     // }
+
+//     if (!selectedBlockToRender.meshQuad) {
 //         selectedBlockToRender.meshQuad = malloc(sizeof(MeshQuad));
 //     }
-
-
+//     // printf("hit block at %f %f %f, and player at %f %f %f\n", 
+//     // voxelX * BlockWidthX, voxelY * BlockHeightY, voxelZ * BlockLengthZ, 
+//     // CameraX, CameraY, CameraZ);
+    
 //     selectedBlockToRender.meshQuad->x = voxelX * BlockWidthX;
-//     selectedBlockToRender.meshQuad->y = voxelY * BlockHeightY + 0.01;
+//     selectedBlockToRender.meshQuad->y = (voxelY) * BlockHeightY;
 //     selectedBlockToRender.meshQuad->z = voxelZ * BlockLengthZ;
-
-//     selectedBlockToRender.meshQuad->width = BlockWidthX; 
-//     // technically putting the same value isn't fully adapting but it would always be the same so it works
+//     selectedBlockToRender.meshQuad->width = BlockWidthX;
 //     selectedBlockToRender.meshQuad->height = BlockHeightY;
 //     selectedBlockToRender.meshQuad->blockType = hitBlock->blockType;
-//     selectedBlockToRender.meshQuad->faceType = hitBlockFace;
-//     printf("Ending the mesh quad selections\n");
-
+//     selectedBlockToRender.meshQuad->faceType = hitFace;
 // }
+
 
 void raycastFromCamera() {
     float dirLen = sqrtf(PlayerDirX*PlayerDirX + PlayerDirY*PlayerDirY + PlayerDirZ*PlayerDirZ);
-
     GLfloat normDirX = PlayerDirX / dirLen;
     GLfloat normDirY = PlayerDirY / dirLen;
     GLfloat normDirZ = PlayerDirZ / dirLen;
 
-    float rayX = roundf(CameraX);
-    float rayY = roundf(CameraY);
-    float rayZ = roundf(CameraZ);
+    const float step = 0.05f;      // small enough to not skip voxels
+    const float maxDist = 16.0f;
 
-    int voxelX = (int)floor(rayX / BlockWidthX);
-    int voxelY = (int)floor(rayY / BlockHeightY);
-    int voxelZ = (int)floor(rayZ / BlockLengthZ);
-    rayX = CameraX + normDirX * 0.0001f;
-    rayY = CameraY + normDirY * 0.0001f;
-    rayZ = CameraZ + normDirZ * 0.0001f;
+    float rayX = CameraX; //+ ((normDirX >= 0) ? 1e-4f : -1e-4f);
+    float rayY = CameraY; //+ ((normDirY >= 0) ? 1e-4f : -1e-4f);
+    float rayZ = CameraZ; //+ ((normDirZ >= 0) ? 1e-4f : -1e-4f);
 
 
-
-    int stepX = (normDirX > 0) ? 1 : -1;
-    int stepY = (normDirY > 0) ? 1 : -1;
-    int stepZ = (normDirZ > 0) ? 1 : -1;
-
-    float tMaxX = (stepX > 0)
-    ? ((voxelX + 1) * BlockWidthX - rayX) / normDirX
-    : (rayX - voxelX * BlockWidthX) / -normDirX;
-
-float tMaxY = (stepY > 0)
-    ? ((voxelY + 1) * BlockHeightY - rayY) / normDirY
-    : (rayY - voxelY * BlockHeightY) / -normDirY;
-
-float tMaxZ = (stepZ > 0)
-    ? ((voxelZ + 1) * BlockLengthZ - rayZ) / normDirZ
-    : (rayZ - voxelZ * BlockLengthZ) / -normDirZ;
-
-
-    float tDeltaX = (normDirX != 0.0f) ? BlockWidthX / fabs(normDirX) : 99999999999.0f;
-    float tDeltaY = (normDirY != 0.0f) ? BlockHeightY / fabs(normDirY) : 99999999999.0f;
-    float tDeltaZ = (normDirZ != 0.0f) ? BlockLengthZ / fabs(normDirZ) : 99999999999.0f;
-
-
-    float maxDist = 16.0f;
-    float dist = 0.0f;
     Block* hitBlock = NULL;
-    int hitFace;
-    printf("begin with player at %f %f %f\n", 
-    CameraX, CameraY, CameraZ);
-    while (dist < maxDist) {
-        // step along shortest tMax
-        if (tMaxX <= tMaxY && tMaxX <= tMaxZ) {
-            voxelX += stepX;
-            dist = tMaxX;
-            tMaxX += tDeltaX;
-            hitFace = (stepX > 0) ? FACE_LEFT : FACE_RIGHT;
-            printf("Step x with %d\n", stepX);
-        }
-        else if (tMaxY <= tMaxZ) {
-            voxelY += stepY;
-            dist = tMaxY;
-            tMaxY += tDeltaY;
-            hitFace = (stepY > 0) ? FACE_BOTTOM : FACE_TOP;
-            printf("Step y with %d\n", stepY);
-        }
-        else {
-            voxelZ += stepZ;
-            dist = tMaxZ;
-            tMaxZ += tDeltaZ;
-            hitFace = (stepZ > 0) ? FACE_BACK : FACE_FRONT;
-            printf("Step z with %d\n", stepZ);
-        }
-        
-        int chunkX;
-        int chunkZ;
-        if (voxelX >= 0) {
-            chunkX = voxelX / ChunkWidthX;
-        } else {
-            chunkX = (voxelX - (ChunkWidthX - 1)) / ChunkWidthX;
-        }
-        if (voxelZ >= 0) {
-            chunkZ = voxelZ / ChunkLengthZ;
-        } else {
-            chunkZ = (voxelZ - (ChunkLengthZ - 1)) / ChunkLengthZ;
-        }
+    int voxelX, voxelY, voxelZ;
+    int faceType = -1;
+
+    for (float dist = 0; dist < maxDist; dist += step) {
+        voxelX = (int)round(rayX / BlockWidthX);
+        voxelY = (int)round(rayY / BlockHeightY);
+        voxelZ = (int)round(rayZ / BlockLengthZ);
+
+
+        int chunkX = (voxelX >= 0) ? voxelX / ChunkWidthX : (voxelX - (ChunkWidthX-1)) / ChunkWidthX;
+        int chunkZ = (voxelZ >= 0) ? voxelZ / ChunkLengthZ : (voxelZ - (ChunkLengthZ-1)) / ChunkLengthZ;
 
         int localX = voxelX - chunkX * ChunkWidthX;
-        int localZ = voxelZ - chunkZ * ChunkLengthZ;
         int localY = voxelY;
-        
-        printf("now at %d %d %d     ||    local %d %d %d\n", 
-        voxelX, voxelY, voxelZ,
-        localX, localY, localZ);
+        int localZ = voxelZ - chunkZ * ChunkLengthZ;
 
         uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
         BucketEntry* result = getHashmapEntry(chunkKey);
         if (!result) break;
 
         Chunk* curChunk = result->chunkEntry;
-        int index = localX + ChunkWidthX * localZ + (ChunkWidthX * ChunkLengthZ) * localY;
-
-        
-        if (index >= ChunkWidthX*ChunkLengthZ*ChunkHeightY || index < 0) {
-            // out of bounds
+        int index = localX + ChunkWidthX * localZ + (ChunkWidthX*ChunkLengthZ)*localY;
+        if (index < 0 || index >= ChunkWidthX*ChunkLengthZ*ChunkHeightY) {
+            rayX += step * normDirX;
+            rayY += step * normDirY;
+            rayZ += step * normDirZ;
             continue;
         }
 
@@ -279,34 +215,50 @@ float tMaxZ = (stepZ > 0)
             hitBlock = &curChunk->blocks[index];
             break;
         }
-    }
 
+        rayX += step * normDirX;
+        rayY += step * normDirY;
+        rayZ += step * normDirZ;
+    }
+    voxelX = (int)round(rayX / BlockWidthX);
+    voxelY = (int)round(rayY / BlockHeightY);
+    voxelZ = (int)round(rayZ / BlockLengthZ);
     if (!hitBlock) {
         if (selectedBlockToRender.meshQuad) free(selectedBlockToRender.meshQuad);
         selectedBlockToRender.meshQuad = NULL;
         return;
     }
 
-    // if (hitFace == FACE_LEFT) {
-    //     voxelX -= 1;
-    // } else if (hitFace == FACE_BOTTOM) {
-    //     voxelY -= 1;
-    // } else if (hitFace == FACE_BACK) {
-    //     voxelZ -= 1;
-    // }
-
     if (!selectedBlockToRender.meshQuad) {
         selectedBlockToRender.meshQuad = malloc(sizeof(MeshQuad));
     }
-    printf("hit block at %f %f %f, and player at %f %f %f\n", 
-    voxelX * BlockWidthX, voxelY * BlockHeightY, voxelZ * BlockLengthZ, 
-    CameraX, CameraY, CameraZ);
-    
+
+    // --- MODULO-BASED BOUNDARY CORRECTION ---
+    // float modX = fmodf(rayX, BlockWidthX);
+    // float modY = fmodf(rayY, BlockHeightY);
+    // float modZ = fmodf(rayZ, BlockLengthZ);
+    // if (modX < 0) modX += BlockWidthX;
+    // if (modY < 0) modY += BlockHeightY;
+    // if (modZ < 0) modZ += BlockLengthZ;
+
+    // const float eps = 1e-4f;
+    // if (modX < eps && normDirX > 0) voxelX--;
+    // if (modX > BlockWidthX - eps && normDirX < 0) voxelX++;
+    // if (modY < eps && normDirY > 0) voxelY--;
+    // if (modY > BlockHeightY - eps && normDirY < 0) voxelY++;
+    // if (modZ < eps && normDirZ > 0) voxelZ--;
+    // if (modZ > BlockLengthZ - eps && normDirZ < 0) voxelZ++;
+
+    printf("%f %f %f\n", rayX, rayY, rayZ);
     selectedBlockToRender.meshQuad->x = voxelX * BlockWidthX;
-    selectedBlockToRender.meshQuad->y = (voxelY) * BlockHeightY;
+    selectedBlockToRender.meshQuad->y = voxelY * BlockHeightY;
     selectedBlockToRender.meshQuad->z = voxelZ * BlockLengthZ;
+    selectedBlockToRender.x = rayX * BlockWidthX;
+    selectedBlockToRender.y = rayY * BlockHeightY;
+    selectedBlockToRender.z = rayZ * BlockLengthZ;
     selectedBlockToRender.meshQuad->width = BlockWidthX;
     selectedBlockToRender.meshQuad->height = BlockHeightY;
+    selectedBlockToRender.meshQuad->faceType = faceType;
     selectedBlockToRender.meshQuad->blockType = hitBlock->blockType;
-    selectedBlockToRender.meshQuad->faceType = hitFace;
 }
+

@@ -14,6 +14,9 @@ typedef struct UV
 
 typedef struct SelectedBlockToRender {
     MeshQuad *meshQuad;
+    float x;
+    float y;
+    float z;
 } SelectedBlockToRender;
 
 extern GLfloat T;
