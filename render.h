@@ -14,6 +14,10 @@ typedef struct UV
 
 typedef struct SelectedBlockToRender {
     MeshQuad *meshQuad;
+    float localX;
+    float localY;
+    float localZ;
+    Chunk *chunk;
 } SelectedBlockToRender;
 
 extern GLfloat T;

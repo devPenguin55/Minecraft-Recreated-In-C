@@ -3,8 +3,9 @@
 #include <stdio.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-
 #include "input.h"
+#include "render.h"
+
 GLfloat CameraX = 33.3;
 GLfloat CameraY = 63;//63;
 GLfloat CameraZ = 0;
@@ -12,6 +13,9 @@ GLfloat PlayerDirX = -5;
 GLfloat PlayerDirY = 0;
 GLfloat PlayerDirZ = -1;
 float PLAYER_SPEED = 0.005;
+
+float rightMouseHeldDuration = 0.0f;
+
 
 float yaw   = 0.0f; // horizontal rotation
 float pitch = 0.0f; // vertical   rotation
@@ -44,6 +48,16 @@ void handleMouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
         mouseInteractionStarted = 0;
     }
+
+    if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+        int x,y,z;
+        x = selectedBlockToRender.localX;
+        y = selectedBlockToRender.localY;
+        z = selectedBlockToRender.localZ;
+        selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
+
+        
+    } 
 }
 
 void handleMovingMouse(int x, int y) {

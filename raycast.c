@@ -24,8 +24,10 @@ void raycastFromCamera() {
 
     Block* hitBlock = NULL;
     int voxelX, voxelY, voxelZ;
+    int localX, localY, localZ;
     int faceType = -1;
 
+    Chunk* curChunk = NULL;
     for (float dist = 0; dist < maxDist; dist += step) {
         voxelX = (int)round(rayX / BlockWidthX);
         voxelY = (int)round(rayY / BlockHeightY);
@@ -35,15 +37,15 @@ void raycastFromCamera() {
         int chunkX = (voxelX >= 0) ? voxelX / ChunkWidthX : (voxelX - (ChunkWidthX-1)) / ChunkWidthX;
         int chunkZ = (voxelZ >= 0) ? voxelZ / ChunkLengthZ : (voxelZ - (ChunkLengthZ-1)) / ChunkLengthZ;
 
-        int localX = voxelX - chunkX * ChunkWidthX;
-        int localY = voxelY;
-        int localZ = voxelZ - chunkZ * ChunkLengthZ;
+        localX = voxelX - chunkX * ChunkWidthX;
+        localY = voxelY;
+        localZ = voxelZ - chunkZ * ChunkLengthZ;
 
         uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
         BucketEntry* result = getHashmapEntry(chunkKey);
         if (!result) break;
 
-        Chunk* curChunk = result->chunkEntry;
+        curChunk = result->chunkEntry;
         int index = localX + ChunkWidthX * localZ + (ChunkWidthX*ChunkLengthZ)*localY;
         if (index < 0 || index >= ChunkWidthX*ChunkLengthZ*ChunkHeightY) {
             rayX += step * normDirX;
@@ -81,5 +83,10 @@ void raycastFromCamera() {
     selectedBlockToRender.meshQuad->height = BlockHeightY;
     selectedBlockToRender.meshQuad->faceType = faceType;
     selectedBlockToRender.meshQuad->blockType = hitBlock->blockType;
+
+    selectedBlockToRender.localX = localX;
+    selectedBlockToRender.localY = localY;
+    selectedBlockToRender.localZ = localZ;
+    selectedBlockToRender.chunk = curChunk;
 }
 
