@@ -16,7 +16,7 @@ float BlockWidthX = 1;
 float BlockHeightY = 1;
 float BlockLengthZ = 1;
 
-int DEBUG = 1;
+int DEBUG = 0;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key)
 {
@@ -56,10 +56,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 curBlock->isAir = (y > stairHeight);
                 if (x == 5 && (z == 5 && y == 63)) {
                     curBlock->isAir = 0;
-                } else {
-                    if  (y == 63 || y== 62) {
-                        curBlock->isAir = 1;
-                    }
                 }
 
                 if (y == stairHeight)
@@ -206,6 +202,7 @@ void generateChunkMesh(Chunk *chunk)
                     bottoms[x][z][y] = 0;
                 }
 
+
                 if ((x > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[leftBlockIndex].isAir)) ||
                     (!chunk->blocks[blockIndex].isAir && x == 0))
                 {
@@ -330,22 +327,22 @@ void generateChunkMesh(Chunk *chunk)
         }
     }
 
-    int visitedBottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY - 1] = {0};
-    for (int y = 1; y < ChunkHeightY; y++)
+    int visitedBottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};
+    for (int y = 0; y < ChunkHeightY; y++)
     {
         for (int x = 0; x < ChunkWidthX; x++)
         {
             for (int z = 0; z < ChunkLengthZ; z++)
             {
-                if (bottoms[x][z][y - 1] == 0 || visitedBottoms[x][z][y - 1])
+                if (bottoms[x][z][y] == 0 || visitedBottoms[x][z][y])
                 {
                     continue;
                 }
 
-                curBlockType = bottoms[x][z][y - 1];
+                curBlockType = bottoms[x][z][y];
 
                 width = 1;
-                while (((x + width) < ChunkWidthX && bottoms[x + width][z][y - 1] == curBlockType) && !visitedBottoms[x + width][z][y - 1])
+                while (((x + width) < ChunkWidthX && bottoms[x + width][z][y] == curBlockType) && !visitedBottoms[x + width][z][y])
                 {
                     width++;
                 }
@@ -356,7 +353,7 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     for (int dx = 0; dx < width; dx++)
                     {
-                        if ((bottoms[x + dx][z + height][y - 1] == 0 || visitedBottoms[x + dx][z + height][y - 1]) || bottoms[x + dx][z + height][y - 1] != curBlockType)
+                        if ((bottoms[x + dx][z + height][y] == 0 || visitedBottoms[x + dx][z + height][y]) || bottoms[x + dx][z + height][y] != curBlockType)
                         {
                             done = 1;
                             break;
@@ -373,7 +370,7 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     for (int dx = 0; dx < width; dx++)
                     {
-                        visitedBottoms[x + dx][z + dz][y - 1] = 1;
+                        visitedBottoms[x + dx][z + dz][y] = 1;
                     }
                 }
 
@@ -385,7 +382,7 @@ void generateChunkMesh(Chunk *chunk)
 
                 MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
                 curQuad->x = x + chunk->chunkStartX;
-                curQuad->y = y - 1;
+                curQuad->y = y;
                 curQuad->z = z + chunk->chunkStartZ;
                 curQuad->width = width;
                 curQuad->height = height;
