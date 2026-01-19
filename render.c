@@ -422,14 +422,6 @@ void drawGraphics()
         translation[2] = selectedBlockToRender.meshQuad->z;
         GLfloat size[2] = {selectedBlockToRender.meshQuad->width, selectedBlockToRender.meshQuad->height};
 
-        float dx = selectedBlockToRender.x - CameraX;
-        float dy = selectedBlockToRender.y - CameraY;
-        float dz = selectedBlockToRender.z - CameraZ;
-        float dist = sqrtf(dx*dx + dy*dy + dz*dz);
-        float pointSize = 120.0f / (dist + 0.001f);
-        if (pointSize < 3.0f)  pointSize = 3.0f;
-        if (pointSize > 20.0f) pointSize = 20.0f;
-
 
         float outlineScale = 1.01f;
         float offset = (outlineScale - 1.0f) * 0.5f;

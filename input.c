@@ -1,7 +1,9 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <stdio.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
+
 #include "input.h"
 GLfloat CameraX = 33.3;
 GLfloat CameraY = 63;//63;

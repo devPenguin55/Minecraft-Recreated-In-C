@@ -77,9 +77,6 @@ void raycastFromCamera() {
     selectedBlockToRender.meshQuad->x = voxelX * BlockWidthX;
     selectedBlockToRender.meshQuad->y = voxelY * BlockHeightY;
     selectedBlockToRender.meshQuad->z = voxelZ * BlockLengthZ;
-    selectedBlockToRender.x = rayX * BlockWidthX;
-    selectedBlockToRender.y = rayY * BlockHeightY;
-    selectedBlockToRender.z = rayZ * BlockLengthZ;
     selectedBlockToRender.meshQuad->width = BlockWidthX;
     selectedBlockToRender.meshQuad->height = BlockHeightY;
     selectedBlockToRender.meshQuad->faceType = faceType;
