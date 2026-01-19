@@ -16,7 +16,7 @@ float BlockWidthX = 1;
 float BlockHeightY = 1;
 float BlockLengthZ = 1;
 
-int DEBUG = 0;
+int DEBUG = 1;
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key)
 {
