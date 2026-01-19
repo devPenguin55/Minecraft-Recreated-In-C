@@ -5,6 +5,8 @@
 #include <math.h>
 #include "input.h"
 #include "render.h"
+#include "chunkLoaderManager.h"
+
 
 GLfloat CameraX = 33.3;
 GLfloat CameraY = 63;//63;
@@ -55,8 +57,8 @@ void handleMouse(int button, int state, int x, int y) {
         y = selectedBlockToRender.localY;
         z = selectedBlockToRender.localZ;
         selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
-
-        
+        printf("triggering chunk rebuild\n");
+        triggerRenderChunkRebuild(selectedBlockToRender.chunk);
     } 
 }
 

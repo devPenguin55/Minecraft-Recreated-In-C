@@ -57,5 +57,6 @@ void unpackChunkKey(uint64_t key, int64_t* chunkX, int64_t* chunkZ);
 void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists);
 void deleteHashmapEntry(uint64_t key);
 void loadChunks(GLfloat playerCoords[2]);
+void triggerRenderChunkRebuild (Chunk *chunk);
 
 #endif
