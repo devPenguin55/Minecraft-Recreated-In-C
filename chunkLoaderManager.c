@@ -227,18 +227,6 @@ void loadChunks(GLfloat playerCoords[2]) {
 
 void triggerRenderChunkRebuild (Chunk *chunk) {
     if (chunk->hasMesh) {
-        deleteChunkMesh(chunk);
-        // LoadedChunks *loadedChunks = &chunkLoaderManager.loadedChunks;
-        
-        // for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++) {
-        //     if (chunk == loadedChunks->loadedChunks[loadedChunkIdx]) {
-        //         printf("Responding\n");
-        //         // this is a match of pointers to a chunk
-        //         deleteHashmapEntry(chunk->key); 
-        //         loadedChunks->loadedChunks[loadedChunkIdx] = loadedChunks->loadedChunks[loadedChunks->amtLoadedChunks-1];
-        //         loadedChunks->amtLoadedChunks--;
-        //         break;
-        //     }
-        // }    
+        deleteChunkMesh(chunk);   
     }
 }

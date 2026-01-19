@@ -54,6 +54,13 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
                 // fill everything below the staircase height
                 curBlock->isAir = (y > stairHeight);
+                if (x == 5 && (z == 5 && y == 63)) {
+                    curBlock->isAir = 0;
+                } else {
+                    if  (y == 63 || y== 62) {
+                        curBlock->isAir = 1;
+                    }
+                }
 
                 if (y == stairHeight)
                 {
@@ -89,6 +96,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     curBlock->isAir = (y > 58);
                     stairHeight = 58;
                 }
+
+                
 
                 if (y == stairHeight)
                 {

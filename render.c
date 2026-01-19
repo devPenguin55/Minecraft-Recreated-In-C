@@ -84,7 +84,7 @@ void initGraphics()
     glColor3f(1, 1, 1);
     glEnable(GL_DEPTH_TEST);
 
-    glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
+    // glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
 
     grassSideTexture = loadTexture("assets\\grassSide.png");
     grassTopTexture  = loadTexture("assets\\grassTop.png");
@@ -469,7 +469,7 @@ void drawGraphics()
     glPushMatrix();
     glLoadIdentity();
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    // glDisable(GL_CULL_FACE);
 
     // draw 2d things
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -489,7 +489,7 @@ void drawGraphics()
 
     glColor3f(1.0f, 1.0f, 1.0f); 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);

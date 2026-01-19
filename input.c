@@ -57,7 +57,42 @@ void handleMouse(int button, int state, int x, int y) {
         y = selectedBlockToRender.localY;
         z = selectedBlockToRender.localZ;
         selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
-        printf("triggering chunk rebuild\n");
+        printf("xyz %d %d %d\n", x, y, z);
+        
+        int chunkXUnit =   ChunkWidthX * BlockWidthX;
+        int chunkZUnit = ChunkLengthZ * BlockLengthZ;
+        if (x == 0 ) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        } else if (x == ChunkWidthX-1) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        }
+
+        if (z == 0 ) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ - chunkZUnit) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        } else if (z == ChunkLengthZ-1) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ + chunkZUnit) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        }
+
         triggerRenderChunkRebuild(selectedBlockToRender.chunk);
     } 
 }
