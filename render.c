@@ -176,9 +176,8 @@ void face(
     glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
 
     if ((int)texture == BLOCK_TYPE_OUTLINE) {
-        
-        glDisable(GL_DEPTH_TEST);
-
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
         glColor3f(1.0f, 0.0f, 0.0f);
         float dx = CameraX - transformation[0];
         float dy = CameraY - transformation[1];
@@ -196,7 +195,7 @@ void face(
         glVertex3fv(vD);
         glEnd();
 
-        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
         glPopMatrix();
         return;
     }
@@ -213,6 +212,8 @@ void face(
     } else {
         glBegin(GL_QUADS);
     }
+
+    glDepthMask(GL_TRUE);
 
     GLfloat U0, V0, U1, V1;
     U0 = 0.0f;
@@ -414,7 +415,6 @@ void drawGraphics()
         cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
     }
 
-    
     if (selectedBlockToRender.meshQuad != NULL) {
         GLfloat translation[3];
         translation[0] = selectedBlockToRender.meshQuad->x;
@@ -431,22 +431,24 @@ void drawGraphics()
         if (pointSize > 20.0f) pointSize = 20.0f;
 
 
-        glDisable(GL_DEPTH_TEST);
-        glPointSize(12.0f);
+        float outlineScale = 1.01f;
+        float offset = (outlineScale - 1.0f) * 0.5f;
 
-        glBegin(GL_POINTS);
-        glVertex3f(selectedBlockToRender.x, selectedBlockToRender.y, selectedBlockToRender.z);
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glEnd();
+        translation[0] -= offset;
+        translation[1] -= offset;
+        translation[2] -= offset;
 
-        glEnable(GL_DEPTH_TEST);
-        
-        for (int i = 1; i<7; i++) {
+        size[0] *= outlineScale;
+        size[1] *= outlineScale;
 
+        for (int i = 1; i < 7; i++) {
             cubeFace(Vertices, translation, size, i, BLOCK_TYPE_OUTLINE);
         }
+
         glColor3f(1.0f, 1.0f, 1.0f);
+
     }
+    
 
     
     

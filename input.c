@@ -86,9 +86,9 @@ void handleUserMovement() {
         CameraZ += RightZ * PLAYER_SPEED;
     }
     if (pressedKeys['r']) {
-        CameraY += -PlayerDirY * PLAYER_SPEED;
+        CameraY += 0.5 * PLAYER_SPEED;
     }   
     if (pressedKeys['f']) {
-        CameraY -= -PlayerDirY * PLAYER_SPEED;
+        CameraY -= 0.5 * PLAYER_SPEED;
     }
 }
