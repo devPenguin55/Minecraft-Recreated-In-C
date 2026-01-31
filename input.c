@@ -9,28 +9,43 @@
 
 
 GLfloat CameraX = 33.3;
-GLfloat CameraY = 63;//63;
+GLfloat CameraY = 50;//63;
 GLfloat CameraZ = 0;
 GLfloat PlayerDirX = -5;
 GLfloat PlayerDirY = 0;
 GLfloat PlayerDirZ = -1;
 float PLAYER_SPEED = 0.005;
 
-float rightMouseHeldDuration = 0.0f;
-
-
 float yaw   = 0.0f; // horizontal rotation
 float pitch = 0.0f; // vertical   rotation
 
-int lastMouseX = 0;
-int lastMouseY = 0;
-int mouseInteractionStarted = 0;
 
 int pressedKeys[256] = {0};
 
+int isFullscreen = 0;
+
+void toggleFullscreen() {
+    if (!isFullscreen) {
+        glutFullScreen();   // go fullscreen
+        isFullscreen = 1;
+    } else {
+        glutReshapeWindow(500, 500);  // restore windowed size
+        glutPositionWindow(1000, 400); // optional
+        isFullscreen = 0;
+    }
+}
 
 void handleKeyDown(unsigned char key, int x, int y) {
     pressedKeys[key] = 1;
+
+    if (key == 'q') {
+        int z = 5;
+        z = z/(z-5);
+    }
+
+    if (key == '.') {
+        toggleFullscreen();
+    }
 }
 
 void handleKeyUp(unsigned char key, int x, int y) {
@@ -42,18 +57,11 @@ void handleKeyUp(unsigned char key, int x, int y) {
 void handleMouse(int button, int state, int x, int y) {
     // button: GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, etc.
     // state: GLUT_DOWN or GLUT_UP
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-        lastMouseX = x;
-        lastMouseY = y;
 
-        mouseInteractionStarted = 1;
-    }
-
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-        mouseInteractionStarted = 0;
-    }
-
-    if ((button == GLUT_RIGHT_BUTTON || button == GLUT_MIDDLE_BUTTON) && state == GLUT_DOWN) {
+    if ((button == GLUT_RIGHT_BUTTON || button == GLUT_LEFT_BUTTON) && state == GLUT_DOWN) {
+        if (!selectedBlockToRender.active) {
+            return;
+        }
         int x,y,z;
         x = selectedBlockToRender.localX;
         y = selectedBlockToRender.localY;
@@ -62,7 +70,7 @@ void handleMouse(int button, int state, int x, int y) {
         int chunkXUnit =   ChunkWidthX * BlockWidthX;
         int chunkZUnit = ChunkLengthZ * BlockLengthZ;
         
-        if (button == GLUT_RIGHT_BUTTON) {
+        if (button == GLUT_LEFT_BUTTON) {
             selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
         } else {
             int blockIndex;
@@ -179,13 +187,15 @@ void handleMouse(int button, int state, int x, int y) {
 
         triggerRenderChunkRebuild(selectedBlockToRender.chunk);
     } 
+    
 }
 
 void handleMovingMouse(int x, int y) {
-    if (!mouseInteractionStarted) { return; }
+    int windowCenterX = glutGet(GLUT_WINDOW_WIDTH)  / 2;
+    int windowCenterY = glutGet(GLUT_WINDOW_HEIGHT) / 2; 
 
-    int dx = x - lastMouseX;
-    int dy = y - lastMouseY;
+    int dx = x - windowCenterX;
+    int dy = y - windowCenterY;
 
     yaw += dx * 0.2f;
     pitch += -dy * 0.2f;
@@ -196,10 +206,8 @@ void handleMovingMouse(int x, int y) {
     PlayerDirY = sinf(pitch * M_PI/180);
     PlayerDirZ = -cosf(pitch * M_PI/180) * cosf(yaw * M_PI/180);
 
-    lastMouseX = x;
-    lastMouseY = y;
-
     glutPostRedisplay();
+    glutWarpPointer(windowCenterX, windowCenterY);
 }
 
 void handleUserMovement() {

@@ -15,6 +15,7 @@ extern GLfloat PlayerDirY;
 extern GLfloat PlayerDirZ;
 extern float PLAYER_SPEED;
 
+void toggleFullscreen();
 void handleKeyDown(unsigned char key, int x, int y);
 void handleKeyUp(unsigned char key, int x, int y);
 void handleMouse(int button, int state, int x, int y);

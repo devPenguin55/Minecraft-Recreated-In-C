@@ -91,3 +91,34 @@ float fbm2D(
     
     return sum;
 }
+
+
+float ridgedFbm2D(
+    float x,
+    float y,
+    uint32_t seed,
+    int octaves,
+    float lacunarity,
+    float gain
+) {
+    float sum = 0.0f;
+    float amplitude = 1.0f;
+    float frequency = 1.0f;
+    float maxSum = 0.0f;
+
+    for (int i = 0; i < octaves; i++) {
+        float n = perlinNoise(x * frequency, y * frequency, seed + i * 1013);
+
+        n = fabsf(n);        // fold
+        n = 1.0f - n;        // ridges
+        n *= n;              // sharpen peaks
+
+        sum += n * amplitude;
+        maxSum += amplitude;
+
+        amplitude *= gain;
+        frequency *= lacunarity;
+    }
+
+    return sum / maxSum;     // [0,1]
+}

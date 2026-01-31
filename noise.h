@@ -14,5 +14,12 @@ float fbm2D(
     float lacunarity,  // frequency multiplier (usually 2.0)
     float gain         // amplitude multiplier (usually 0.5)
 );
-
+float ridgedFbm2D(
+    float x,
+    float y,
+    uint32_t seed,
+    int octaves,
+    float lacunarity,
+    float gain
+);
 #endif
