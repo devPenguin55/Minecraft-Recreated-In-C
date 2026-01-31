@@ -108,4 +108,3 @@ void raycastFromCamera() {
 
     selectedBlockToRender.chunk = curChunk;
 }
-

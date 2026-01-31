@@ -443,18 +443,6 @@ void drawGraphics()
     
 
     
-    
-    glPointSize(10.0f); 
-    glBegin(GL_POINTS);
-        glColor3f(1, 0, 0);
-        glVertex3f(-1, 0, -1);
-        glColor3f(0, 1, 0);
-        glVertex3f(2, 0, -1);
-        glColor3f(1, 0, 0);
-        glVertex3f(-1, 3, -1);
-        
-        glColor3f(1, 1, 1);
-    glEnd();
 
 
     glMatrixMode(GL_PROJECTION);

@@ -37,6 +37,8 @@ void handleKeyUp(unsigned char key, int x, int y) {
     pressedKeys[key] = 0;
 }
 
+
+
 void handleMouse(int button, int state, int x, int y) {
     // button: GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, etc.
     // state: GLUT_DOWN or GLUT_UP
@@ -56,28 +58,93 @@ void handleMouse(int button, int state, int x, int y) {
         x = selectedBlockToRender.localX;
         y = selectedBlockToRender.localY;
         z = selectedBlockToRender.localZ;
-
+        
+        int chunkXUnit =   ChunkWidthX * BlockWidthX;
+        int chunkZUnit = ChunkLengthZ * BlockLengthZ;
+        
         if (button == GLUT_RIGHT_BUTTON) {
             selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
         } else {
+            int blockIndex;
+
             if (selectedBlockToRender.hitFace == FACE_TOP) {
-                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y+1)].isAir = 0;
+                blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y+1);
+                if ((y+1) >= ChunkHeightY) {
+                    return;
+                }
+                selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                
+
             } else if (selectedBlockToRender.hitFace == FACE_BOTTOM) {
-                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y-1)].isAir = 0;
+                blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y-1);
+                if ((y-1) < 0) {
+                    return;
+                }
+                selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+
             } else if (selectedBlockToRender.hitFace == FACE_LEFT) {
-                selectedBlockToRender.chunk->blocks[x-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+                if ((x-1) >= 0) {
+                    blockIndex = x-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
+                    selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                } else {
+                    uint64_t chunkKey = packChunkKey(
+                        (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
+                        (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+                    );
+                    BucketEntry *result = getHashmapEntry(chunkKey);
+                    blockIndex = ChunkWidthX-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
+                    result->chunkEntry->blocks[blockIndex].isAir = 0;
+                    triggerRenderChunkRebuild(result->chunkEntry);
+                }
+
             } else if (selectedBlockToRender.hitFace == FACE_RIGHT) {
-                selectedBlockToRender.chunk->blocks[x+1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+                if ((x+1) < ChunkWidthX) {
+                    blockIndex = x+1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
+                    selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                } else {
+                    uint64_t chunkKey = packChunkKey(
+                        (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
+                        (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+                    );
+                    BucketEntry *result = getHashmapEntry(chunkKey);
+                    blockIndex = 0 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
+                    result->chunkEntry->blocks[blockIndex].isAir = 0;
+                    triggerRenderChunkRebuild(result->chunkEntry);
+                }
+
             } else if (selectedBlockToRender.hitFace == FACE_FRONT) {
-                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*(z+1) + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+                if ((z + 1) < ChunkLengthZ) {
+                    blockIndex = x + (ChunkWidthX)*(z+1) + (ChunkWidthX * ChunkLengthZ)*y;
+                    selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                } else {
+                    uint64_t chunkKey = packChunkKey(
+                        (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+                        (int)((selectedBlockToRender.chunk->chunkStartZ + chunkZUnit) / (chunkZUnit))
+                    );
+                    BucketEntry *result = getHashmapEntry(chunkKey);
+                    blockIndex = x + (ChunkWidthX)*(0) + (ChunkWidthX * ChunkLengthZ)*y;
+                    result->chunkEntry->blocks[blockIndex].isAir = 0;
+                    triggerRenderChunkRebuild(result->chunkEntry);
+                }
+
             } else if (selectedBlockToRender.hitFace == FACE_BACK) {
-                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*(z-1) + (ChunkWidthX * ChunkLengthZ)*y].isAir = 0;
+                if ((z-1) >= 0) {
+                    blockIndex = x + (ChunkWidthX)*(z-1) + (ChunkWidthX * ChunkLengthZ)*y;
+                    selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                } else {
+                    uint64_t chunkKey = packChunkKey(
+                        (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+                        (int)((selectedBlockToRender.chunk->chunkStartZ - chunkZUnit) / (chunkZUnit))
+                    );
+                    BucketEntry *result = getHashmapEntry(chunkKey);
+                    blockIndex = x + (ChunkWidthX)*(ChunkLengthZ - 1) + (ChunkWidthX * ChunkLengthZ)*y;
+                    result->chunkEntry->blocks[blockIndex].isAir = 0;
+                    triggerRenderChunkRebuild(result->chunkEntry);
+                }
             }
         }
         
         
-        int chunkXUnit =   ChunkWidthX * BlockWidthX;
-        int chunkZUnit = ChunkLengthZ * BlockLengthZ;
         if (x == 0 ) {
             uint64_t chunkKey = packChunkKey(
                 (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
