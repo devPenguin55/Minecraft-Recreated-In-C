@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include "chunks.h"
 
-#define CHUNK_PRELOAD_RADIUS 3
-#define CHUNK_RENDER_RADIUS  2
+#define CHUNK_PRELOAD_RADIUS 4
+#define CHUNK_RENDER_RADIUS  3
 
 #define HASHMAP_AMOUNT_BUCKETS 2048
 

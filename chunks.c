@@ -6,6 +6,7 @@
 #include <math.h>
 #include "chunks.h"
 #include "chunkLoaderManager.h"
+#include "noise.h"
 
 ChunkMeshQuads chunkMeshQuads;
 // int ChunkWidthX = 1;
@@ -79,21 +80,26 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             { 
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
 
+                
                 curBlock->x = BlockWidthX * x + xAdd;
                 curBlock->z = BlockLengthZ * z + zAdd;
+                
                 curBlock->y = BlockHeightY * (y);
+                float scale = 100;
 
                 // fill everything below the staircase height
                 int stairHeight;
-                if (x != 5) {
-                    curBlock->isAir = (y > 50);
-                    stairHeight = 50;
-                } else {
-                    curBlock->isAir = (y > 58);
-                    stairHeight = 58;
-                }
+                // stairHeight = fade(perlin(curBlock->x / scale, curBlock->z / scale))*10 + 30;
+                // stairHeight = powf(perlin((curBlock->x + chunk->chunkStartX) / scale, (curBlock->z + chunk->chunkStartZ) / scale), 1.3) * BlockHeightY * 10 + 30;
+                // curBlock->isAir = (y > stairHeight);   
 
-                
+                float worldX = curBlock->x;
+                float worldZ = curBlock->z;
+
+                float noise = fbm2D(worldX / scale, worldZ / scale, 5, 2, 2.0, 5.0);
+                stairHeight = (int)(noise * BlockHeightY * 15 + 30);
+                curBlock->isAir = (y > stairHeight);
+
 
                 if (y == stairHeight)
                 {

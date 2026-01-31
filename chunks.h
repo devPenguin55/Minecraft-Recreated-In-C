@@ -15,7 +15,7 @@ typedef struct Block
 
 typedef struct Chunk
 {
-    Block blocks[16 * 16 * 64];
+    Block blocks[16 * 16 * 128];
     GLfloat chunkStartX;
     GLfloat chunkStartZ;
     int firstQuadIndex;
@@ -62,7 +62,7 @@ typedef struct ChunkMeshQuads
 
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
-#define ChunkHeightY 64
+#define ChunkHeightY 128
 
 #define CHUNK_FLAG_LOADED 1
 #define CHUNK_FLAG_RENDERED_AND_LOADED 2

@@ -156,9 +156,9 @@ void handleUserMovement() {
         CameraZ += RightZ * PLAYER_SPEED;
     }
     if (pressedKeys['r']) {
-        CameraY += 0.5 * PLAYER_SPEED;
+        CameraY += 0.8 * PLAYER_SPEED;
     }   
     if (pressedKeys['f']) {
-        CameraY -= 0.5 * PLAYER_SPEED;
+        CameraY -= 0.8 * PLAYER_SPEED;
     }
 }
