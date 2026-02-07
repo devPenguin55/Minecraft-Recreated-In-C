@@ -23,6 +23,7 @@ float pitch = 0.0f; // vertical   rotation
 int pressedKeys[256] = {0};
 
 int isFullscreen = 0;
+int userBlockBreakingTimeElapsed = 0;
 
 void toggleFullscreen() {
     if (!isFullscreen) {
@@ -43,7 +44,7 @@ void handleKeyDown(unsigned char key, int x, int y) {
         z = z/(z-5);
     }
 
-    if (key == '.') {
+    if (key == 'e') {
         toggleFullscreen();
     }
 }
@@ -51,7 +52,6 @@ void handleKeyDown(unsigned char key, int x, int y) {
 void handleKeyUp(unsigned char key, int x, int y) {
     pressedKeys[key] = 0;
 }
-
 
 
 void handleMouse(int button, int state, int x, int y) {
@@ -71,8 +71,15 @@ void handleMouse(int button, int state, int x, int y) {
         int chunkZUnit = ChunkLengthZ * BlockLengthZ;
         
         if (button == GLUT_LEFT_BUTTON) {
-            selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
+            // break blocks
+            userBlockBreakingTimeElapsed++;
+            int blockType = selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].blockType;
+
+            if (userBlockBreakingTimeElapsed >= 5) {
+                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
+            }
         } else {
+            // place blocks
             int blockIndex;
 
             if (selectedBlockToRender.hitFace == FACE_TOP) {
@@ -186,8 +193,7 @@ void handleMouse(int button, int state, int x, int y) {
         }
 
         triggerRenderChunkRebuild(selectedBlockToRender.chunk);
-    } 
-    
+    }    
 }
 
 void handleMovingMouse(int x, int y) {

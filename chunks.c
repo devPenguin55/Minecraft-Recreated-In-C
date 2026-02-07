@@ -85,7 +85,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 curBlock->z = BlockLengthZ * z + zAdd;
                 
                 curBlock->y = BlockHeightY * (y);
-                float scale = 800;
+                float scale = 100;
 
                 // fill everything below the staircase height
                 int stairHeight;
@@ -96,7 +96,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 float worldX = curBlock->x;
                 float worldZ = curBlock->z;
 
-                float noise = ridgedFbm2D(worldX / scale, worldZ / scale, 5, 6, 2.0, 5.0);
+                float noise = fbm2D(worldX / scale, worldZ / scale, 5, 2, 2.0, 5.0);
                 stairHeight = (int)(noise * BlockHeightY * 15 + 30);
                 curBlock->isAir = (y > stairHeight);
 
