@@ -19,6 +19,8 @@ float BlockLengthZ = 1;
 
 int DEBUG = 0;
 
+int blockBreakingTimeByBlockType[100];
+
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key)
 {
     chunk->chunkStartX = xAdd;
@@ -125,6 +127,11 @@ void initChunkMeshingSystem()
     chunkMeshQuads.capacity = 16;
     chunkMeshQuads.amtQuads = 0;
     chunkMeshQuads.quads = malloc(sizeof(MeshQuad) * chunkMeshQuads.capacity);
+
+
+    blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS] = 20;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]  = 20;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_STONE] = 50;
 }
 
 void handleProgramClose()

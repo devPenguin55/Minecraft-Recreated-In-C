@@ -71,6 +71,9 @@ extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
+
+extern int blockBreakingTimeByBlockType[100];
+
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key);
 void initChunkMeshingSystem();
 void handleProgramClose();

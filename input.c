@@ -229,7 +229,7 @@ void handleMovingMouse(int x, int y) {
         // break blocks
         int blockType = selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].blockType;
 
-        if (userBlockBreakingTimeElapsed >= 150 && beginBlockBreakingIndex == (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
+        if (userBlockBreakingTimeElapsed >= blockBreakingTimeByBlockType[blockType] && beginBlockBreakingIndex == (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
             selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
             userBlockBreakingTimeElapsed = 0;
             triggerRenderChunkRebuild(selectedBlockToRender.chunk);
