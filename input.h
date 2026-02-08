@@ -14,6 +14,7 @@ extern GLfloat PlayerDirX;
 extern GLfloat PlayerDirY;
 extern GLfloat PlayerDirZ;
 extern float PLAYER_SPEED;
+extern int userBlockBreakingTimeElapsed;
 
 void toggleFullscreen();
 void handleKeyDown(unsigned char key, int x, int y);

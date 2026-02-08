@@ -24,6 +24,7 @@ int pressedKeys[256] = {0};
 
 int isFullscreen = 0;
 int userBlockBreakingTimeElapsed = 0;
+int beginBlockBreakingIndex = -1;
 
 void toggleFullscreen() {
     if (!isFullscreen) {
@@ -54,7 +55,7 @@ void handleKeyUp(unsigned char key, int x, int y) {
 }
 
 
-void handleMouse(int button, int state, int x, int y) {
+void handleMouse(int button, int state, int x_, int y_) {
     // button: GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, etc.
     // state: GLUT_DOWN or GLUT_UP
 
@@ -72,12 +73,8 @@ void handleMouse(int button, int state, int x, int y) {
         
         if (button == GLUT_LEFT_BUTTON) {
             // break blocks
-            userBlockBreakingTimeElapsed++;
-            int blockType = selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].blockType;
-
-            if (userBlockBreakingTimeElapsed >= 5) {
-                selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
-            }
+            userBlockBreakingTimeElapsed = 1;
+            beginBlockBreakingIndex = (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y);
         } else {
             // place blocks
             int blockIndex;
@@ -193,7 +190,7 @@ void handleMouse(int button, int state, int x, int y) {
         }
 
         triggerRenderChunkRebuild(selectedBlockToRender.chunk);
-    }    
+    }
 }
 
 void handleMovingMouse(int x, int y) {
@@ -214,6 +211,71 @@ void handleMovingMouse(int x, int y) {
 
     glutPostRedisplay();
     glutWarpPointer(windowCenterX, windowCenterY);
+
+    if (userBlockBreakingTimeElapsed >= 1) {
+        userBlockBreakingTimeElapsed++;
+        
+        if (!selectedBlockToRender.active) {
+            return;
+        }
+        int x,y,z;
+        x = selectedBlockToRender.localX;
+        y = selectedBlockToRender.localY;
+        z = selectedBlockToRender.localZ;
+        
+        int chunkXUnit =   ChunkWidthX * BlockWidthX;
+        int chunkZUnit = ChunkLengthZ * BlockLengthZ;
+
+        // break blocks
+        int blockType = selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].blockType;
+
+        if (userBlockBreakingTimeElapsed >= 150 && beginBlockBreakingIndex == (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
+            selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
+            userBlockBreakingTimeElapsed = 0;
+            triggerRenderChunkRebuild(selectedBlockToRender.chunk);
+        } else {
+            if (beginBlockBreakingIndex == -1) {
+                beginBlockBreakingIndex = (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y);
+            } else if (beginBlockBreakingIndex != (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
+                userBlockBreakingTimeElapsed = 0;
+            }
+            return;
+        }
+
+        
+        
+        if (x == 0 ) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        } else if (x == ChunkWidthX-1) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        }
+
+        if (z == 0 ) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ - chunkZUnit) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        } else if (z == ChunkLengthZ-1) {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+                (int)((selectedBlockToRender.chunk->chunkStartZ + chunkZUnit) / (chunkZUnit))
+            );
+            BucketEntry *result = getHashmapEntry(chunkKey);
+            triggerRenderChunkRebuild(result->chunkEntry);
+        }
+    }
 }
 
 void handleUserMovement() {
