@@ -119,10 +119,7 @@ void spinObject()
     T = T + 0.00025;
     if (T > 360)
         T = 0;
-
-    if (userBlockBreakingTimeElapsed >= 1) {
-        userBlockBreakingTimeElapsed++;
-    }
+        
     glutPostRedisplay();
 }
 
