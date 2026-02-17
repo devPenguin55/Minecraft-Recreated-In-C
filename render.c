@@ -17,6 +17,8 @@ GLuint grassTopTexture;
 GLuint dirtTexture;
 GLuint stoneTexture;
 
+GLuint destroyStageTextureArray[10];
+
 double lastFpsTime = 0.0;
 double lastTime = 0.0;
 double fps = 0.0;
@@ -90,6 +92,18 @@ void initGraphics()
     grassTopTexture  = loadTexture("assets\\grassTop.png");
     dirtTexture      = loadTexture("assets\\dirt.png");
     stoneTexture     = loadTexture("assets\\stone.png");
+
+    destroyStageTextureArray[0] = loadTexture("assets\\destroy_stage_0.png");
+    destroyStageTextureArray[1] = loadTexture("assets\\destroy_stage_1.png");
+    destroyStageTextureArray[2] = loadTexture("assets\\destroy_stage_2.png");
+    destroyStageTextureArray[3] = loadTexture("assets\\destroy_stage_3.png");
+    destroyStageTextureArray[4] = loadTexture("assets\\destroy_stage_4.png");
+    destroyStageTextureArray[5] = loadTexture("assets\\destroy_stage_5.png");
+    destroyStageTextureArray[6] = loadTexture("assets\\destroy_stage_6.png");
+    destroyStageTextureArray[7] = loadTexture("assets\\destroy_stage_7.png");
+    destroyStageTextureArray[8] = loadTexture("assets\\destroy_stage_8.png");
+    destroyStageTextureArray[9] = loadTexture("assets\\destroy_stage_9.png");
+
     glEnable(GL_TEXTURE_2D);
 
     selectedBlockToRender.active = 0;
@@ -119,7 +133,7 @@ void spinObject()
     T = T + 0.00025;
     if (T > 360)
         T = 0;
-        
+
     glutPostRedisplay();
 }
 
@@ -177,26 +191,67 @@ void face(
     glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
 
     if ((int)texture == BLOCK_TYPE_OUTLINE) {
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        float dx = CameraX - transformation[0];
-        float dy = CameraY - transformation[1];
-        float dz = CameraZ - transformation[2];
-        float dist = sqrtf(dx*dx + dy*dy + dz*dz);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        float lineWidth = clamp(15.0f / dist, 1.0f, 15.0f);
-        glLineWidth(5);
+        int stage;
+        if (beginBlockBreakingBlockType != -1) {
+            stage = 10 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
+            printf("stage %d\n", stage);
+        } else {
+            stage = 0;
+        }
 
 
-        glBegin(GL_LINE_LOOP);
-        glVertex3fv(vA);
-        glVertex3fv(vB);
-        glVertex3fv(vC);
-        glVertex3fv(vD);
+        
+
+        glBindTexture(GL_TEXTURE_2D, destroyStageTextureArray[stage]);  // crack PNG
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        float crackAlpha = (stage) / 20.0f;
+        crackAlpha = (crackAlpha > 0.5) ? 0.5 : (crackAlpha*1.5);
+        glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
+
+        glBegin(GL_QUADS);
+
+        const float eps = 0.05f;
+        float offX = 0.0f, offY = 0.0f, offZ = 0.0f;
+
+        if (amtDy == 0.0f) {        // X–Z face → normal along Y
+            offY = (vA[1] < vB[1] ? -eps : eps);  // pick correct outward direction
+        } else if (amtDx == 0.0f) { // Y–Z face → normal along X
+            offX = (vA[0] < vB[0] ? -eps : eps);
+        } else {                     // X–Y face → normal along Z
+            offZ = (vA[2] < vB[2] ? -eps : eps);
+        }
+
+        vA[0] += offX; vA[1] += offY; vA[2] += offZ;
+        vB[0] += offX; vB[1] += offY; vB[2] += offZ;
+        vC[0] += offX; vC[1] += offY; vC[2] += offZ;
+        vD[0] += offX; vD[1] += offY; vD[2] += offZ;
+
+        if (amtDy == 0.0f) {       // X-Z face
+            glTexCoord2f(vA[0]+0.5f, vA[2]+0.5f); glVertex3fv(vA);
+            glTexCoord2f(vB[0]+0.5f, vB[2]+0.5f); glVertex3fv(vB);
+            glTexCoord2f(vC[0]+0.5f, vC[2]+0.5f); glVertex3fv(vC);
+            glTexCoord2f(vD[0]+0.5f, vD[2]+0.5f); glVertex3fv(vD);
+        } else if (amtDx == 0.0f) { // Y-Z face
+            glTexCoord2f(vA[2]+0.5f, 1.0f-(vA[1]+0.5f)); glVertex3fv(vA);
+            glTexCoord2f(vB[2]+0.5f, 1.0f-(vB[1]+0.5f)); glVertex3fv(vB);
+            glTexCoord2f(vC[2]+0.5f, 1.0f-(vC[1]+0.5f)); glVertex3fv(vC);
+            glTexCoord2f(vD[2]+0.5f, 1.0f-(vD[1]+0.5f)); glVertex3fv(vD);
+        } else {                    // X-Y face
+            glTexCoord2f(vA[0]+0.5f, 1.0f-(vA[1]+0.5f)); glVertex3fv(vA);
+            glTexCoord2f(vB[0]+0.5f, 1.0f-(vB[1]+0.5f)); glVertex3fv(vB);
+            glTexCoord2f(vC[0]+0.5f, 1.0f-(vC[1]+0.5f)); glVertex3fv(vC);
+            glTexCoord2f(vD[0]+0.5f, 1.0f-(vD[1]+0.5f)); glVertex3fv(vD);
+        }
+
         glEnd();
 
-        glDepthMask(GL_TRUE);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glDisable(GL_BLEND);
         glPopMatrix();
         return;
     }

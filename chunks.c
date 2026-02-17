@@ -129,9 +129,9 @@ void initChunkMeshingSystem()
     chunkMeshQuads.quads = malloc(sizeof(MeshQuad) * chunkMeshQuads.capacity);
 
 
-    blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS] = 20;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]  = 20;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_STONE] = 50;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS] = 100;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]  = 100;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_STONE] = 200;
 }
 
 void handleProgramClose()

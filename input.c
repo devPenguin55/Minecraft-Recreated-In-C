@@ -25,6 +25,7 @@ int pressedKeys[256] = {0};
 int isFullscreen = 0;
 int userBlockBreakingTimeElapsed = 0;
 int beginBlockBreakingIndex = -1;
+int beginBlockBreakingBlockType = -1;
 
 void toggleFullscreen() {
     if (!isFullscreen) {
@@ -75,6 +76,7 @@ void handleMouse(int button, int state, int x_, int y_) {
             // break blocks
             userBlockBreakingTimeElapsed = 1;
             beginBlockBreakingIndex = (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y);
+            beginBlockBreakingBlockType = selectedBlockToRender.chunk->blocks[beginBlockBreakingIndex].blockType;
         } else {
             // place blocks
             int blockIndex;
@@ -190,6 +192,8 @@ void handleMouse(int button, int state, int x_, int y_) {
         }
 
         triggerRenderChunkRebuild(selectedBlockToRender.chunk);
+    } else {
+        userBlockBreakingTimeElapsed = 0;
     }
 }
 
@@ -228,7 +232,7 @@ void handleMovingMouse(int x, int y) {
 
         // break blocks
         int blockType = selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].blockType;
-
+        
         if (userBlockBreakingTimeElapsed >= blockBreakingTimeByBlockType[blockType] && beginBlockBreakingIndex == (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
             selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
             userBlockBreakingTimeElapsed = 0;
@@ -236,6 +240,7 @@ void handleMovingMouse(int x, int y) {
         } else {
             if (beginBlockBreakingIndex == -1) {
                 beginBlockBreakingIndex = (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y);
+                beginBlockBreakingBlockType = blockType;
             } else if (beginBlockBreakingIndex != (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
                 userBlockBreakingTimeElapsed = 0;
             }
