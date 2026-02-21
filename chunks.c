@@ -99,7 +99,10 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 float worldZ = curBlock->z;
 
                 float noise = fbm2D(worldX / scale, worldZ / scale, 5, 2, 2.0, 5.0);
-                stairHeight = (int)(noise * BlockHeightY * 15 + 30);
+                
+                stairHeight = (int)(noise * BlockHeightY * 20 + 30);
+                float ridge = ridgedFbm2D(worldX/150.0f, worldZ/150.0f, 9, 4, 2.0, 0.5) * 20;
+                stairHeight += (int)ridge;
                 curBlock->isAir = (y > stairHeight);
 
 
