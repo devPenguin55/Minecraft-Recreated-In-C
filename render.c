@@ -219,7 +219,7 @@ void face(
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(-2.0f, -2.0f); // slight offset to draw on top
 
-        glColor4f(0.3f, 0.3f, 0.3f, 0.4f); // gray with 40% transparency
+        glColor4f(0.3f, 0.3f, 0.3f, 0.1f); // gray with 40% transparency
 
         glBegin(GL_QUADS);
             glVertex3fv(vA);
@@ -234,31 +234,71 @@ void face(
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
 
+        glPopMatrix();
         ///////////////////////////
-        glLineWidth(5.0f);
-        glColor3f(0.0f, 0.0f, 0.0f); // black outline
 
-        glEnable(GL_POLYGON_OFFSET_LINE);
-        glPolygonOffset(-2.0f, -2.0f); // offset to avoid z-fighting
+        glPushMatrix();
+        glTranslatef(transformation[0], transformation[1], transformation[2]);
+        glScalef(BlockWidthX+0.01, BlockHeightY+0.01, BlockLengthZ+0.01);
 
-        glBegin(GL_LINE_LOOP);
-            glVertex3fv(vA);
-            glVertex3fv(vB);
-            glVertex3fv(vC);
-            glVertex3fv(vD);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_CULL_FACE);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLineWidth(1.5f);
+
+        glDepthMask(GL_FALSE);
+
+
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Slightly expand the quad outward
+        float expand = 1.f;  // 1% larger
+
+        GLfloat center[3] = {
+            (vA[0] + vC[0]) * 0.5f,
+            (vA[1] + vC[1]) * 0.5f,
+            (vA[2] + vC[2]) * 0.5f
+        };
+
+        GLfloat eA[3], eB[3], eC[3], eD[3];
+
+        for (int i = 0; i < 3; i++) {
+            eA[i] = center[i] + (vA[i] - center[i]) * expand;
+            eB[i] = center[i] + (vB[i] - center[i]) * expand;
+            eC[i] = center[i] + (vC[i] - center[i]) * expand;
+            eD[i] = center[i] + (vD[i] - center[i]) * expand;
+        }
+
+        glLineWidth(2.0f);   // keep it 1px
+        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+
+        glDepthMask(GL_FALSE);   // draw on top but respect depth
+
+        glBegin(GL_LINES);
+            glVertex3fv(eA); glVertex3fv(eB);
+            glVertex3fv(eB); glVertex3fv(eC);
+            glVertex3fv(eC); glVertex3fv(eD);
+            glVertex3fv(eD); glVertex3fv(eA);
         glEnd();
 
-        glDisable(GL_POLYGON_OFFSET_LINE);
+        glDepthMask(GL_TRUE);
 
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glDisable(GL_LINE_SMOOTH);
         glEnable(GL_CULL_FACE);
         glEnable(GL_TEXTURE_2D);
-        glDisable(GL_BLEND);
 
+        glDepthMask(GL_TRUE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_TEXTURE_2D);
 
         glPopMatrix();
-
-        
         if (beginBlockBreakingBlockType == -1) {return;}
         glPushMatrix();
         glTranslatef(transformation[0], transformation[1], transformation[2]);
