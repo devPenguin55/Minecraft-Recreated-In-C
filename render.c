@@ -17,7 +17,7 @@ GLuint grassTopTexture;
 GLuint dirtTexture;
 GLuint stoneTexture;
 
-GLuint destroyStageTextureArray[10];
+GLuint destroyStageTextureArray[9];
 
 double lastFpsTime = 0.0;
 double lastTime = 0.0;
@@ -102,8 +102,6 @@ void initGraphics()
     destroyStageTextureArray[6] = loadTexture("assets\\destroy_stage_6.png");
     destroyStageTextureArray[7] = loadTexture("assets\\destroy_stage_7.png");
     destroyStageTextureArray[8] = loadTexture("assets\\destroy_stage_8.png");
-    destroyStageTextureArray[9] = loadTexture("assets\\destroy_stage_9.png");
-
     glEnable(GL_TEXTURE_2D);
 
     selectedBlockToRender.active = 0;
@@ -197,8 +195,8 @@ void face(
             return;
         }
 
-        int stage = 10 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
-        if (stage > 9) stage = 9;
+        int stage = 9 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
+        if (stage > 8) stage = 8;
 
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);       // don’t write depth
