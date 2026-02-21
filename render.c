@@ -123,6 +123,7 @@ void reshape(int width, int height)
     float aspect = (float)width / (float)height;
 
     gluPerspective(70.0f, aspect, 0.1f, 500.0f);
+    
 
     glMatrixMode(GL_MODELVIEW);
 }
@@ -191,70 +192,86 @@ void face(
     glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
 
     if ((int)texture == BLOCK_TYPE_OUTLINE) {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        int stage;
-        if (beginBlockBreakingBlockType != -1) {
-            stage = 10 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
-            printf("stage %d\n", stage);
-        } else {
-            stage = 0;
+        if (beginBlockBreakingBlockType == -1) {
+            glPopMatrix();
+            return;
         }
 
+        int stage = 10 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
+        if (stage > 9) stage = 9;
 
-        
-
-        glBindTexture(GL_TEXTURE_2D, destroyStageTextureArray[stage]);  // crack PNG
+        glEnable(GL_BLEND);
+        glDepthMask(GL_FALSE);       // don’t write depth
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBindTexture(GL_TEXTURE_2D, destroyStageTextureArray[stage]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        float crackAlpha = (stage) / 20.0f;
-        crackAlpha = (crackAlpha > 0.5) ? 0.5 : (crackAlpha*1.5);
+        float crackAlpha = (stage / 20.0f);
+        crackAlpha = (crackAlpha > 0.5f) ? 0.5f : (crackAlpha*1.5f);
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
+        // Compute face normal from vertices
+        GLfloat u[3], v[3], normal[3];
+        for (int i = 0; i < 3; i++) {
+            u[i] = vB[i] - vA[i];
+            v[i] = vC[i] - vA[i];
+        }
+        normal[0] = u[1]*v[2] - u[2]*v[1];
+        normal[1] = u[2]*v[0] - u[0]*v[2];
+        normal[2] = u[0]*v[1] - u[1]*v[0];
+        float len = sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
+        if (len != 0.0f) {
+            normal[0] /= len;
+            normal[1] /= len;
+            normal[2] /= len;
+        }
+
+        
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(-4.0f, -4.0f);
+        
+        glDepthMask(GL_FALSE);  
+        glEnable(GL_DEPTH_TEST);
+        // map texture coords based on face orientation
+        GLfloat uvs[4][2];
+        if (amtDy == 0.0f) {       // X–Z face
+            uvs[0][0] = 0; uvs[0][1] = 0;
+            uvs[1][0] = 1; uvs[1][1] = 0;
+            uvs[2][0] = 1; uvs[2][1] = 1;
+            uvs[3][0] = 0; uvs[3][1] = 1;
+        } else if (amtDx == 0.0f) { // Y–Z face
+            uvs[0][0] = 0; uvs[0][1] = 0;
+            uvs[1][0] = 1; uvs[1][1] = 0;
+            uvs[2][0] = 1; uvs[2][1] = 1;
+            uvs[3][0] = 0; uvs[3][1] = 1;
+        } else {                    // X–Y face
+            uvs[0][0] = 0; uvs[0][1] = 0;
+            uvs[1][0] = 1; uvs[1][1] = 0;
+            uvs[2][0] = 1; uvs[2][1] = 1;
+            uvs[3][0] = 0; uvs[3][1] = 1;
+        }
+
         glBegin(GL_QUADS);
-
-        const float eps = 0.05f;
-        float offX = 0.0f, offY = 0.0f, offZ = 0.0f;
-
-        if (amtDy == 0.0f) {        // X–Z face → normal along Y
-            offY = (vA[1] < vB[1] ? -eps : eps);  // pick correct outward direction
-        } else if (amtDx == 0.0f) { // Y–Z face → normal along X
-            offX = (vA[0] < vB[0] ? -eps : eps);
-        } else {                     // X–Y face → normal along Z
-            offZ = (vA[2] < vB[2] ? -eps : eps);
-        }
-
-        vA[0] += offX; vA[1] += offY; vA[2] += offZ;
-        vB[0] += offX; vB[1] += offY; vB[2] += offZ;
-        vC[0] += offX; vC[1] += offY; vC[2] += offZ;
-        vD[0] += offX; vD[1] += offY; vD[2] += offZ;
-
-        if (amtDy == 0.0f) {       // X-Z face
-            glTexCoord2f(vA[0]+0.5f, vA[2]+0.5f); glVertex3fv(vA);
-            glTexCoord2f(vB[0]+0.5f, vB[2]+0.5f); glVertex3fv(vB);
-            glTexCoord2f(vC[0]+0.5f, vC[2]+0.5f); glVertex3fv(vC);
-            glTexCoord2f(vD[0]+0.5f, vD[2]+0.5f); glVertex3fv(vD);
-        } else if (amtDx == 0.0f) { // Y-Z face
-            glTexCoord2f(vA[2]+0.5f, 1.0f-(vA[1]+0.5f)); glVertex3fv(vA);
-            glTexCoord2f(vB[2]+0.5f, 1.0f-(vB[1]+0.5f)); glVertex3fv(vB);
-            glTexCoord2f(vC[2]+0.5f, 1.0f-(vC[1]+0.5f)); glVertex3fv(vC);
-            glTexCoord2f(vD[2]+0.5f, 1.0f-(vD[1]+0.5f)); glVertex3fv(vD);
-        } else {                    // X-Y face
-            glTexCoord2f(vA[0]+0.5f, 1.0f-(vA[1]+0.5f)); glVertex3fv(vA);
-            glTexCoord2f(vB[0]+0.5f, 1.0f-(vB[1]+0.5f)); glVertex3fv(vB);
-            glTexCoord2f(vC[0]+0.5f, 1.0f-(vC[1]+0.5f)); glVertex3fv(vC);
-            glTexCoord2f(vD[0]+0.5f, 1.0f-(vD[1]+0.5f)); glVertex3fv(vD);
-        }
-
+            glTexCoord2f(uvs[0][0], uvs[0][1]); glVertex3f(vA[0], vA[1], vA[2]);
+            glTexCoord2f(uvs[1][0], uvs[1][1]); glVertex3f(vB[0], vB[1], vB[2]);
+            glTexCoord2f(uvs[2][0], uvs[2][1]); glVertex3f(vC[0], vC[1], vC[2]);
+            glTexCoord2f(uvs[3][0], uvs[3][1]); glVertex3f(vD[0], vD[1], vD[2]);
         glEnd();
 
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glDepthMask(GL_TRUE);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        glEnable(GL_CULL_FACE);
+        glColor4f(1.0f,1.0f,1.0f,1.0f);
         glDisable(GL_BLEND);
+        glDepthMask(GL_TRUE);
         glPopMatrix();
         return;
     }
+
+
+
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -479,7 +496,7 @@ void drawGraphics()
         GLfloat size[2] = {BlockWidthX, BlockLengthZ};
 
 
-        float outlineScale = 1.01f;
+        float outlineScale = 1.f;
         float offset = (outlineScale - 1.0f) * 0.5f;
 
         translation[0] -= offset;
