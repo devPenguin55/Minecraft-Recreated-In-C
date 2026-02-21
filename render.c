@@ -10,7 +10,6 @@
 #include "chunkLoaderManager.h"
 #include "raycast.h"
 
-
 GLfloat T = 0;
 GLuint grassSideTexture;
 GLuint grassTopTexture;
@@ -31,12 +30,14 @@ SelectedBlockToRender selectedBlockToRender;
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX4(a, b, c, d) (MAX(MAX(a, b), MAX(c, d)))
 
-static inline float clamp(float value, float minVal, float maxVal) {
-    if (value < minVal) return minVal;
-    if (value > maxVal) return maxVal;
+static inline float clamp(float value, float minVal, float maxVal)
+{
+    if (value < minVal)
+        return minVal;
+    if (value > maxVal)
+        return maxVal;
     return value;
 }
-
 
 GLuint loadTexture(const char *filename)
 {
@@ -51,16 +52,20 @@ GLuint loadTexture(const char *filename)
         printf("Loaded texture: %dx%d, channels: %d\n", width, height, channels);
 
         GLenum format;
-        if (channels == 1) {
-            unsigned char* rgbData = malloc(width * height * 3);
-            for (int i = 0; i < width * height; i++) {
-                rgbData[i*3 + 0] = data[i];
-                rgbData[i*3 + 1] = data[i];
-                rgbData[i*3 + 2] = data[i];
+        if (channels == 1)
+        {
+            unsigned char *rgbData = malloc(width * height * 3);
+            for (int i = 0; i < width * height; i++)
+            {
+                rgbData[i * 3 + 0] = data[i];
+                rgbData[i * 3 + 1] = data[i];
+                rgbData[i * 3 + 2] = data[i];
             }
             gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, rgbData);
             free(rgbData);
-        } else {
+        }
+        else
+        {
             format = (channels == 4) ? GL_RGBA : GL_RGB;
             gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, data);
         }
@@ -68,7 +73,6 @@ GLuint loadTexture(const char *filename)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     }
     else
     {
@@ -79,19 +83,19 @@ GLuint loadTexture(const char *filename)
     return textureID;
 }
 
-
 void initGraphics()
 {
     glClearColor(0, 0, 0, 1);
     glColor3f(1, 1, 1);
     glEnable(GL_DEPTH_TEST);
 
-    glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     grassSideTexture = loadTexture("assets\\grassSide.png");
-    grassTopTexture  = loadTexture("assets\\grassTop.png");
-    dirtTexture      = loadTexture("assets\\dirt.png");
-    stoneTexture     = loadTexture("assets\\stone.png");
+    grassTopTexture = loadTexture("assets\\grassTop.png");
+    dirtTexture = loadTexture("assets\\dirt.png");
+    stoneTexture = loadTexture("assets\\stone.png");
 
     destroyStageTextureArray[0] = loadTexture("assets\\destroy_stage_0.png");
     destroyStageTextureArray[1] = loadTexture("assets\\destroy_stage_1.png");
@@ -109,8 +113,9 @@ void initGraphics()
 
 void reshape(int width, int height)
 {
-    if (height == 0) { 
-        height = 1; 
+    if (height == 0)
+    {
+        height = 1;
     }
 
     glViewport(0, 0, width, height);
@@ -121,11 +126,9 @@ void reshape(int width, int height)
     float aspect = (float)width / (float)height;
 
     gluPerspective(70.0f, aspect, 0.1f, 500.0f);
-    
 
     glMatrixMode(GL_MODELVIEW);
 }
-
 
 void spinObject()
 {
@@ -143,12 +146,12 @@ void face(
     GLfloat D[3],
     GLfloat transformation[3],
     GLuint texture,
-    GLfloat size[2]
-) {
-    GLfloat vA[3] = { A[0], A[1], A[2] };
-    GLfloat vB[3] = { B[0], B[1], B[2] };
-    GLfloat vC[3] = { C[0], C[1], C[2] };
-    GLfloat vD[3] = { D[0], D[1], D[2] };
+    GLfloat size[2])
+{
+    GLfloat vA[3] = {A[0], A[1], A[2]};
+    GLfloat vB[3] = {B[0], B[1], B[2]};
+    GLfloat vC[3] = {C[0], C[1], C[2]};
+    GLfloat vD[3] = {D[0], D[1], D[2]};
 
     float minX = MIN4(A[0], B[0], C[0], D[0]);
     float maxX = MAX4(A[0], B[0], C[0], D[0]);
@@ -157,29 +160,43 @@ void face(
     float minZ = MIN4(A[2], B[2], C[2], D[2]);
     float maxZ = MAX4(A[2], B[2], C[2], D[2]);
 
-    float amtDx = maxX - minX; 
+    float amtDx = maxX - minX;
     float amtDy = maxY - minY;
     float amtDz = maxZ - minZ;
 
     // scale along face axes only
-    if (amtDy == 0.0f) {
+    if (amtDy == 0.0f)
+    {
         // X–Z face
-        for (int i = 0; i < 4; i++) {
-            GLfloat* v = (i == 0 ? vA : i == 1 ? vB : i == 2 ? vC : vD);
+        for (int i = 0; i < 4; i++)
+        {
+            GLfloat *v = (i == 0 ? vA : i == 1 ? vB
+                                    : i == 2   ? vC
+                                               : vD);
             v[0] = (v[0] + 0.5f) * size[0] - 0.5f;
             v[2] = (v[2] + 0.5f) * size[1] - 0.5f;
         }
-    } else if (amtDx == 0.0f) {
+    }
+    else if (amtDx == 0.0f)
+    {
         // Y–Z face
-        for (int i = 0; i < 4; i++) {
-            GLfloat* v = (i == 0 ? vA : i == 1 ? vB : i == 2 ? vC : vD);
+        for (int i = 0; i < 4; i++)
+        {
+            GLfloat *v = (i == 0 ? vA : i == 1 ? vB
+                                    : i == 2   ? vC
+                                               : vD);
             v[1] = (v[1] + 0.5f) * size[0] - 0.5f;
             v[2] = (v[2] + 0.5f) * size[1] - 0.5f;
         }
-    } else {
+    }
+    else
+    {
         // X–Y face
-        for (int i = 0; i < 4; i++) {
-            GLfloat* v = (i == 0 ? vA : i == 1 ? vB : i == 2 ? vC : vD);
+        for (int i = 0; i < 4; i++)
+        {
+            GLfloat *v = (i == 0 ? vA : i == 1 ? vB
+                                    : i == 2   ? vC
+                                               : vD);
             v[0] = (v[0] + 0.5f) * size[0] - 0.5f;
             v[1] = (v[1] + 0.5f) * size[1] - 0.5f;
         }
@@ -189,87 +206,160 @@ void face(
     glTranslatef(transformation[0], transformation[1], transformation[2]);
     glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
 
-    if ((int)texture == BLOCK_TYPE_OUTLINE) {
-        if (beginBlockBreakingBlockType == -1) {
-            glPopMatrix();
-            return;
-        }
+    if ((int)texture == BLOCK_TYPE_SELECT)
+    {
+        
+        // simple block outline, not a block breaking animation
+
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_CULL_FACE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(-2.0f, -2.0f); // slight offset to draw on top
+
+        glColor4f(0.3f, 0.3f, 0.3f, 0.4f); // gray with 40% transparency
+
+        glBegin(GL_QUADS);
+            glVertex3fv(vA);
+            glVertex3fv(vB);
+            glVertex3fv(vC);
+            glVertex3fv(vD);
+        glEnd();
+
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // reset color
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+
+        ///////////////////////////
+        glLineWidth(5.0f);
+        glColor3f(0.0f, 0.0f, 0.0f); // black outline
+
+        glEnable(GL_POLYGON_OFFSET_LINE);
+        glPolygonOffset(-2.0f, -2.0f); // offset to avoid z-fighting
+
+        glBegin(GL_LINE_LOOP);
+            glVertex3fv(vA);
+            glVertex3fv(vB);
+            glVertex3fv(vC);
+            glVertex3fv(vD);
+        glEnd();
+
+        glDisable(GL_POLYGON_OFFSET_LINE);
+
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+
+
+        glPopMatrix();
+
+        
+        if (beginBlockBreakingBlockType == -1) {return;}
+        glPushMatrix();
+        glTranslatef(transformation[0], transformation[1], transformation[2]);
+        glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
+
 
         int stage = 9 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
-        if (stage > 8) stage = 8;
+        if (stage > 8)
+            stage = 8;
 
         glEnable(GL_BLEND);
-        glDepthMask(GL_FALSE);       // don’t write depth
+        glDepthMask(GL_FALSE); // don’t write depth
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, destroyStageTextureArray[stage]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         float crackAlpha = (stage / 20.0f);
-        crackAlpha = (crackAlpha > 0.5f) ? 0.5f : (crackAlpha*1.5f);
+        crackAlpha = (crackAlpha > 0.5f) ? 0.5f : (crackAlpha * 1.5f);
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
         // Compute face normal from vertices
         GLfloat u[3], v[3], normal[3];
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++)
+        {
             u[i] = vB[i] - vA[i];
             v[i] = vC[i] - vA[i];
         }
-        normal[0] = u[1]*v[2] - u[2]*v[1];
-        normal[1] = u[2]*v[0] - u[0]*v[2];
-        normal[2] = u[0]*v[1] - u[1]*v[0];
-        float len = sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
-        if (len != 0.0f) {
+        normal[0] = u[1] * v[2] - u[2] * v[1];
+        normal[1] = u[2] * v[0] - u[0] * v[2];
+        normal[2] = u[0] * v[1] - u[1] * v[0];
+        float len = sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+        if (len != 0.0f)
+        {
             normal[0] /= len;
             normal[1] /= len;
             normal[2] /= len;
         }
 
-        
         glDisable(GL_CULL_FACE);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(-4.0f, -4.0f);
-        
-        glDepthMask(GL_FALSE);  
+
+        glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
         // map texture coords based on face orientation
         GLfloat uvs[4][2];
-        if (amtDy == 0.0f) {       // X–Z face
-            uvs[0][0] = 0; uvs[0][1] = 0;
-            uvs[1][0] = 1; uvs[1][1] = 0;
-            uvs[2][0] = 1; uvs[2][1] = 1;
-            uvs[3][0] = 0; uvs[3][1] = 1;
-        } else if (amtDx == 0.0f) { // Y–Z face
-            uvs[0][0] = 0; uvs[0][1] = 0;
-            uvs[1][0] = 1; uvs[1][1] = 0;
-            uvs[2][0] = 1; uvs[2][1] = 1;
-            uvs[3][0] = 0; uvs[3][1] = 1;
-        } else {                    // X–Y face
-            uvs[0][0] = 0; uvs[0][1] = 0;
-            uvs[1][0] = 1; uvs[1][1] = 0;
-            uvs[2][0] = 1; uvs[2][1] = 1;
-            uvs[3][0] = 0; uvs[3][1] = 1;
+        if (amtDy == 0.0f)
+        { // X–Z face
+            uvs[0][0] = 0;
+            uvs[0][1] = 0;
+            uvs[1][0] = 1;
+            uvs[1][1] = 0;
+            uvs[2][0] = 1;
+            uvs[2][1] = 1;
+            uvs[3][0] = 0;
+            uvs[3][1] = 1;
+        }
+        else if (amtDx == 0.0f)
+        { // Y–Z face
+            uvs[0][0] = 0;
+            uvs[0][1] = 0;
+            uvs[1][0] = 1;
+            uvs[1][1] = 0;
+            uvs[2][0] = 1;
+            uvs[2][1] = 1;
+            uvs[3][0] = 0;
+            uvs[3][1] = 1;
+        }
+        else
+        { // X–Y face
+            uvs[0][0] = 0;
+            uvs[0][1] = 0;
+            uvs[1][0] = 1;
+            uvs[1][1] = 0;
+            uvs[2][0] = 1;
+            uvs[2][1] = 1;
+            uvs[3][0] = 0;
+            uvs[3][1] = 1;
         }
 
         glBegin(GL_QUADS);
-            glTexCoord2f(uvs[0][0], uvs[0][1]); glVertex3f(vA[0], vA[1], vA[2]);
-            glTexCoord2f(uvs[1][0], uvs[1][1]); glVertex3f(vB[0], vB[1], vB[2]);
-            glTexCoord2f(uvs[2][0], uvs[2][1]); glVertex3f(vC[0], vC[1], vC[2]);
-            glTexCoord2f(uvs[3][0], uvs[3][1]); glVertex3f(vD[0], vD[1], vD[2]);
+        glTexCoord2f(uvs[0][0], uvs[0][1]);
+        glVertex3f(vA[0], vA[1], vA[2]);
+        glTexCoord2f(uvs[1][0], uvs[1][1]);
+        glVertex3f(vB[0], vB[1], vB[2]);
+        glTexCoord2f(uvs[2][0], uvs[2][1]);
+        glVertex3f(vC[0], vC[1], vC[2]);
+        glTexCoord2f(uvs[3][0], uvs[3][1]);
+        glVertex3f(vD[0], vD[1], vD[2]);
         glEnd();
 
         glDepthMask(GL_TRUE);
         glDisable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_CULL_FACE);
-        glColor4f(1.0f,1.0f,1.0f,1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
         glPopMatrix();
         return;
     }
-
-
-
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -277,10 +367,12 @@ void face(
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    
-    if (pressedKeys['z']) {
+    if (pressedKeys['z'])
+    {
         glBegin(GL_LINE_LOOP);
-    } else {
+    }
+    else
+    {
         glBegin(GL_QUADS);
     }
 
@@ -292,91 +384,110 @@ void face(
     U1 = size[0];
     V1 = size[1];
 
-    if (amtDy == 0.0f) {       // X–Z face
-        glTexCoord2f(vA[0] + 0.5f, vA[2] + 0.5f); glVertex3fv(vA);
-        glTexCoord2f(vB[0] + 0.5f, vB[2] + 0.5f); glVertex3fv(vB);
-        glTexCoord2f(vC[0] + 0.5f, vC[2] + 0.5f); glVertex3fv(vC);
-        glTexCoord2f(vD[0] + 0.5f, vD[2] + 0.5f); glVertex3fv(vD);
-    } else if (amtDx == 0.0f) { // Y–Z face
-        glTexCoord2f(vA[2] + 0.5f, 1.0f - (vA[1] + 0.5f)); glVertex3fv(vA);
-        glTexCoord2f(vB[2] + 0.5f, 1.0f - (vB[1] + 0.5f)); glVertex3fv(vB);
-        glTexCoord2f(vC[2] + 0.5f, 1.0f - (vC[1] + 0.5f)); glVertex3fv(vC);
-        glTexCoord2f(vD[2] + 0.5f, 1.0f - (vD[1] + 0.5f)); glVertex3fv(vD);
-    } else {                    // X–Y face
-        glTexCoord2f(vA[0] + 0.5f, 1.0f - (vA[1] + 0.5f)); glVertex3fv(vA);
-        glTexCoord2f(vB[0] + 0.5f, 1.0f - (vB[1] + 0.5f)); glVertex3fv(vB);
-        glTexCoord2f(vC[0] + 0.5f, 1.0f - (vC[1] + 0.5f)); glVertex3fv(vC);
-        glTexCoord2f(vD[0] + 0.5f, 1.0f - (vD[1] + 0.5f)); glVertex3fv(vD);
+    if (amtDy == 0.0f)
+    { // X–Z face
+        glTexCoord2f(vA[0] + 0.5f, vA[2] + 0.5f);
+        glVertex3fv(vA);
+        glTexCoord2f(vB[0] + 0.5f, vB[2] + 0.5f);
+        glVertex3fv(vB);
+        glTexCoord2f(vC[0] + 0.5f, vC[2] + 0.5f);
+        glVertex3fv(vC);
+        glTexCoord2f(vD[0] + 0.5f, vD[2] + 0.5f);
+        glVertex3fv(vD);
+    }
+    else if (amtDx == 0.0f)
+    { // Y–Z face
+        glTexCoord2f(vA[2] + 0.5f, 1.0f - (vA[1] + 0.5f));
+        glVertex3fv(vA);
+        glTexCoord2f(vB[2] + 0.5f, 1.0f - (vB[1] + 0.5f));
+        glVertex3fv(vB);
+        glTexCoord2f(vC[2] + 0.5f, 1.0f - (vC[1] + 0.5f));
+        glVertex3fv(vC);
+        glTexCoord2f(vD[2] + 0.5f, 1.0f - (vD[1] + 0.5f));
+        glVertex3fv(vD);
+    }
+    else
+    { // X–Y face
+        glTexCoord2f(vA[0] + 0.5f, 1.0f - (vA[1] + 0.5f));
+        glVertex3fv(vA);
+        glTexCoord2f(vB[0] + 0.5f, 1.0f - (vB[1] + 0.5f));
+        glVertex3fv(vB);
+        glTexCoord2f(vC[0] + 0.5f, 1.0f - (vC[1] + 0.5f));
+        glVertex3fv(vC);
+        glTexCoord2f(vD[0] + 0.5f, 1.0f - (vD[1] + 0.5f));
+        glVertex3fv(vD);
     }
 
     glEnd();
     glPopMatrix();
 }
 
-
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType, int blockType)
-{   
+{
     int sideTextureIndex;
     int topTextureIndex;
     int bottomTextureIndex;
 
-    switch (blockType) {
-        case BLOCK_TYPE_GRASS:
-            sideTextureIndex   = grassSideTexture;
-            topTextureIndex    = grassTopTexture;
-            bottomTextureIndex = dirtTexture;
-            break;
-        case BLOCK_TYPE_DIRT:
-            sideTextureIndex   = dirtTexture;
-            topTextureIndex    = dirtTexture;
-            bottomTextureIndex = dirtTexture;
-            break;
-        case BLOCK_TYPE_STONE:
-            sideTextureIndex   = stoneTexture;
-            topTextureIndex    = stoneTexture;
-            bottomTextureIndex = stoneTexture;
-            break;
-        case BLOCK_TYPE_OUTLINE:
-            sideTextureIndex   = BLOCK_TYPE_OUTLINE;
-            topTextureIndex    = BLOCK_TYPE_OUTLINE;
-            bottomTextureIndex = BLOCK_TYPE_OUTLINE;
-            break;
-        default:
-            printf("No correct block type entered!\n");
-            break;
+    switch (blockType)
+    {
+    case BLOCK_TYPE_GRASS:
+        sideTextureIndex = grassSideTexture;
+        topTextureIndex = grassTopTexture;
+        bottomTextureIndex = dirtTexture;
+        break;
+    case BLOCK_TYPE_DIRT:
+        sideTextureIndex = dirtTexture;
+        topTextureIndex = dirtTexture;
+        bottomTextureIndex = dirtTexture;
+        break;
+    case BLOCK_TYPE_STONE:
+        sideTextureIndex = stoneTexture;
+        topTextureIndex = stoneTexture;
+        bottomTextureIndex = stoneTexture;
+        break;
+    case BLOCK_TYPE_SELECT:
+        sideTextureIndex = BLOCK_TYPE_SELECT;
+        topTextureIndex = BLOCK_TYPE_SELECT;
+        bottomTextureIndex = BLOCK_TYPE_SELECT;
+        break;
+    default:
+        printf("No correct block type entered!\n");
+        break;
     }
 
-    switch (faceType) {
-        case FACE_FRONT:
-            face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, sideTextureIndex, size);
-            break;
+    switch (faceType)
+    {
+    case FACE_FRONT:
+        face(Vertices[0], Vertices[1], Vertices[2], Vertices[3], transformation, sideTextureIndex, size);
+        break;
 
-        case FACE_BACK:
-            face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, sideTextureIndex, size);
-            break;
+    case FACE_BACK:
+        face(Vertices[5], Vertices[4], Vertices[7], Vertices[6], transformation, sideTextureIndex, size);
+        break;
 
-        case FACE_LEFT:
-            face(Vertices[7], Vertices[3], Vertices[0], Vertices[4], transformation, sideTextureIndex, size);
-            break;
+    case FACE_LEFT:
+        face(Vertices[7], Vertices[3], Vertices[0], Vertices[4], transformation, sideTextureIndex, size);
+        break;
 
-        case FACE_RIGHT:
-            face(Vertices[2], Vertices[6], Vertices[5], Vertices[1], transformation, sideTextureIndex, size);
-            break;
+    case FACE_RIGHT:
+        face(Vertices[2], Vertices[6], Vertices[5], Vertices[1], transformation, sideTextureIndex, size);
+        break;
 
-        case FACE_TOP:
-            face(Vertices[0], Vertices[1], Vertices[5], Vertices[4], transformation, topTextureIndex, size);
-            break;
+    case FACE_TOP:
+        face(Vertices[0], Vertices[1], Vertices[5], Vertices[4], transformation, topTextureIndex, size);
+        break;
 
-        case FACE_BOTTOM:
-            face(Vertices[7], Vertices[6], Vertices[2], Vertices[3], transformation, bottomTextureIndex, size);
-            break;
+    case FACE_BOTTOM:
+        face(Vertices[7], Vertices[6], Vertices[2], Vertices[3], transformation, bottomTextureIndex, size);
+        break;
     }
-
 }
 
-void drawText(const char *text, float x, float y) {
+void drawText(const char *text, float x, float y)
+{
     glRasterPos2f(x, y);
-    while (*text) {
+    while (*text)
+    {
         glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *text);
         text++;
     }
@@ -385,15 +496,16 @@ void drawText(const char *text, float x, float y) {
 void drawGraphics()
 {
     frameCount++;
-    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0;  // seconds
+    double currentTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0; // seconds
 
     // update FPS every 0.25 seconds
-    if (currentTime - lastFpsTime >= 0.25) {
+    if (currentTime - lastFpsTime >= 0.25)
+    {
         fps = frameCount / (currentTime - lastFpsTime);
         frameCount = 0;
         lastFpsTime = currentTime;
     }
-    PLAYER_SPEED = 10*(currentTime - lastTime);
+    PLAYER_SPEED = 10 * (currentTime - lastTime);
     lastTime = currentTime;
     handleUserMovement();
 
@@ -432,20 +544,15 @@ void drawGraphics()
 
     glPointSize(5);
 
-
-    
-
     for (int quadIndex = 0; quadIndex < chunkMeshQuads.amtQuads; quadIndex++)
     {
         MeshQuad *curQuad = &(chunkMeshQuads.quads[quadIndex]);
-        
 
-            
         GLfloat translation[3];
         translation[0] = curQuad->x;
         translation[1] = curQuad->y;
         translation[2] = curQuad->z;
-        
+
         /*
 
         * FACE GUIDE
@@ -456,7 +563,7 @@ void drawGraphics()
                 zLength = curQuad->height;
                 yHeight = 1;
                 break;
-            case FACE_BOTTOM: 
+            case FACE_BOTTOM:
                 xWidth = curQuad->width;
                 zLength = curQuad->height;
                 yHeight = 1;
@@ -486,13 +593,13 @@ void drawGraphics()
         cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
     }
 
-    if (selectedBlockToRender.active) {
+    if (selectedBlockToRender.active)
+    {
         GLfloat translation[3];
         translation[0] = selectedBlockToRender.worldX;
         translation[1] = selectedBlockToRender.worldY;
         translation[2] = selectedBlockToRender.worldZ;
         GLfloat size[2] = {BlockWidthX, BlockLengthZ};
-
 
         float outlineScale = 1.f;
         float offset = (outlineScale - 1.0f) * 0.5f;
@@ -504,23 +611,19 @@ void drawGraphics()
         size[0] *= outlineScale;
         size[1] *= outlineScale;
 
-        for (int i = 1; i < 7; i++) {
-            cubeFace(Vertices, translation, size, i, BLOCK_TYPE_OUTLINE);
+        for (int i = 1; i < 7; i++)
+        {
+            cubeFace(Vertices, translation, size, i, BLOCK_TYPE_SELECT);
         }
 
         glColor3f(1.0f, 1.0f, 1.0f);
-
     }
-    
-
-    
-
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
-    int windowWidth  = glutGet(GLUT_WINDOW_WIDTH);
+    int windowWidth = glutGet(GLUT_WINDOW_WIDTH);
     int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
     gluOrtho2D(0, windowWidth, windowHeight, 0);
@@ -534,10 +637,10 @@ void drawGraphics()
     glColor3f(1.0f, 0.0f, 0.0f);
     glLineWidth(2.0f);
     glBegin(GL_LINES);
-        glVertex2f(windowWidth/2, windowHeight/2 - 15);
-        glVertex2f(windowWidth/2, windowHeight/2 + 15);
-        glVertex2f(windowWidth/2 - 15, windowHeight/2);
-        glVertex2f(windowWidth/2 + 15, windowHeight/2);
+    glVertex2f(windowWidth / 2, windowHeight / 2 - 15);
+    glVertex2f(windowWidth / 2, windowHeight / 2 + 15);
+    glVertex2f(windowWidth / 2 - 15, windowHeight / 2);
+    glVertex2f(windowWidth / 2 + 15, windowHeight / 2);
     glEnd();
 
     char text[64];
@@ -546,7 +649,7 @@ void drawGraphics()
     glColor3f(1, 1, 1);
     drawText(text, 5, 15);
 
-    glColor3f(1.0f, 1.0f, 1.0f); 
+    glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glMatrixMode(GL_MODELVIEW);

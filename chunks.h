@@ -55,7 +55,7 @@ typedef struct ChunkMeshQuads
 #define PLANE_Y 2
 #define PLANE_Z 3
 
-#define BLOCK_TYPE_OUTLINE -55
+#define BLOCK_TYPE_SELECT -55
 #define BLOCK_TYPE_GRASS 1
 #define BLOCK_TYPE_DIRT 2
 #define BLOCK_TYPE_STONE 3
