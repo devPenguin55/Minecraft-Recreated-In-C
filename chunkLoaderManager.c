@@ -228,5 +228,8 @@ void loadChunks(GLfloat playerCoords[2]) {
 void triggerRenderChunkRebuild (Chunk *chunk) {
     if (chunk->hasMesh) {
         deleteChunkMesh(chunk);   
+
+        chunk->hasMesh = 1;
+        generateChunkMesh(chunk);
     }
 }
