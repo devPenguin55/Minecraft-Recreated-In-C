@@ -533,6 +533,14 @@ void drawText(const char *text, float x, float y)
     }
 }
 
+void normalizePlane(Plane *p) {
+    float length = sqrtf(p->A * p->A + p->B * p->B + p->C * p->C);
+    p->A /= length;
+    p->B /= length;
+    p->C /= length;
+    p->D /= length;
+}
+
 void drawGraphics()
 {
     frameCount++;
@@ -584,9 +592,109 @@ void drawGraphics()
 
     glPointSize(5);
 
+
+    
+
+    
+    GLfloat proj[16];
+    GLfloat modelview[16];
+    GLfloat clip[16]; // combined matrix
+
+    glGetFloatv(GL_PROJECTION_MATRIX, proj);
+    glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
+
+    // clip = modelview * projection
+    clip[ 0] = modelview[0] * proj[0] + modelview[1] * proj[4] + modelview[2] * proj[8] + modelview[3] * proj[12];
+    clip[ 1] = modelview[0] * proj[1] + modelview[1] * proj[5] + modelview[2] * proj[9] + modelview[3] * proj[13];
+    clip[ 2] = modelview[0] * proj[2] + modelview[1] * proj[6] + modelview[2] * proj[10] + modelview[3] * proj[14];
+    clip[ 3] = modelview[0] * proj[3] + modelview[1] * proj[7] + modelview[2] * proj[11] + modelview[3] * proj[15];
+
+    clip[ 4] = modelview[4] * proj[0] + modelview[5] * proj[4] + modelview[6] * proj[8] + modelview[7] * proj[12];
+    clip[ 5] = modelview[4] * proj[1] + modelview[5] * proj[5] + modelview[6] * proj[9] + modelview[7] * proj[13];
+    clip[ 6] = modelview[4] * proj[2] + modelview[5] * proj[6] + modelview[6] * proj[10] + modelview[7] * proj[14];
+    clip[ 7] = modelview[4] * proj[3] + modelview[5] * proj[7] + modelview[6] * proj[11] + modelview[7] * proj[15];
+
+    clip[ 8] = modelview[8] * proj[0] + modelview[9] * proj[4] + modelview[10] * proj[8] + modelview[11] * proj[12];
+    clip[ 9] = modelview[8] * proj[1] + modelview[9] * proj[5] + modelview[10] * proj[9] + modelview[11] * proj[13];
+    clip[10] = modelview[8] * proj[2] + modelview[9] * proj[6] + modelview[10] * proj[10] + modelview[11] * proj[14];
+    clip[11] = modelview[8] * proj[3] + modelview[9] * proj[7] + modelview[10] * proj[11] + modelview[11] * proj[15];
+
+    clip[12] = modelview[12] * proj[0] + modelview[13] * proj[4] + modelview[14] * proj[8] + modelview[15] * proj[12];
+    clip[13] = modelview[12] * proj[1] + modelview[13] * proj[5] + modelview[14] * proj[9] + modelview[15] * proj[13];
+    clip[14] = modelview[12] * proj[2] + modelview[13] * proj[6] + modelview[14] * proj[10] + modelview[15] * proj[14];
+    clip[15] = modelview[12] * proj[3] + modelview[13] * proj[7] + modelview[14] * proj[11] + modelview[15] * proj[15];
+
+    Plane frustum[6];
+
+    // Left plane
+    frustum[0].A = clip[3] + clip[0];
+    frustum[0].B = clip[7] + clip[4];
+    frustum[0].C = clip[11] + clip[8];
+    frustum[0].D = clip[15] + clip[12];
+    normalizePlane(&frustum[0]);
+
+    // Right plane
+    frustum[1].A = clip[3] - clip[0];
+    frustum[1].B = clip[7] - clip[4];
+    frustum[1].C = clip[11] - clip[8];
+    frustum[1].D = clip[15] - clip[12];
+    normalizePlane(&frustum[1]);
+
+    // Bottom plane
+    frustum[2].A = clip[3] + clip[1];
+    frustum[2].B = clip[7] + clip[5];
+    frustum[2].C = clip[11] + clip[9];
+    frustum[2].D = clip[15] + clip[13];
+    normalizePlane(&frustum[2]);
+
+    // Top plane
+    frustum[3].A = clip[3] - clip[1];
+    frustum[3].B = clip[7] - clip[5];
+    frustum[3].C = clip[11] - clip[9];
+    frustum[3].D = clip[15] - clip[13];
+    normalizePlane(&frustum[3]);
+
+    // Near plane
+    frustum[4].A = clip[3] + clip[2];
+    frustum[4].B = clip[7] + clip[6];
+    frustum[4].C = clip[11] + clip[10];
+    frustum[4].D = clip[15] + clip[14];
+    normalizePlane(&frustum[4]);
+
+    // Far plane
+    frustum[5].A = clip[3] - clip[2];
+    frustum[5].B = clip[7] - clip[6];
+    frustum[5].C = clip[11] - clip[10];
+    frustum[5].D = clip[15] - clip[14];
+    normalizePlane(&frustum[5]);
+
+
     for (int quadIndex = 0; quadIndex < chunkMeshQuads.amtQuads; quadIndex++)
     {
         MeshQuad *curQuad = &(chunkMeshQuads.quads[quadIndex]);
+
+        int chunkX = (int)floor(curQuad->x / ChunkWidthX);
+        int chunkZ = (int)floor(curQuad->z / ChunkLengthZ);
+        float centerX = chunkX * ChunkWidthX + ChunkWidthX*0.5f;
+        float centerY = ChunkHeightY * 0.5f; // middle of the chunk vertically
+        float centerZ = chunkZ * ChunkLengthZ + ChunkLengthZ*0.5f;
+
+        // bounding sphere radius (half-diagonal of XZ + half-height)
+        float radius = sqrtf((ChunkWidthX*0.5f)*(ChunkWidthX*0.5f) +
+                             (ChunkHeightY*0.5f)*(ChunkHeightY*0.5f) +
+                             (ChunkLengthZ*0.5f)*(ChunkLengthZ*0.5f));
+
+        int isVisible = 1;
+        for (int i = 0; i < 6; i++) {
+            float distance = frustum[i].A*centerX +
+                             frustum[i].B*centerY +
+                             frustum[i].C*centerZ +
+                             frustum[i].D;
+            if (distance < -radius) {
+                isVisible = 0;
+                break;
+            }
+        }
 
         GLfloat translation[3];
         translation[0] = curQuad->x;

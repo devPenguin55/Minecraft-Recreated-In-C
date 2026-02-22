@@ -24,6 +24,10 @@ typedef struct SelectedBlockToRender {
     Chunk *chunk;
 } SelectedBlockToRender;
 
+typedef struct Plane {
+    float A, B, C, D; // plane equation: Ax + By + Cz + D = 0
+} Plane;
+
 extern GLfloat T;
 extern GLfloat CameraX;
 extern GLfloat CameraY;

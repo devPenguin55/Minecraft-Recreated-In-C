@@ -132,6 +132,7 @@ void loadChunks(GLfloat playerCoords[2]) {
     renderChunks->amtRenderChunks     = 0;
     chunksToUnload->amtChunksToUnload = 0;
 
+    int alreadyPreloadedOnce = 0;
     for (int dx = -CHUNK_PRELOAD_RADIUS; dx < CHUNK_PRELOAD_RADIUS+1; dx++) {
         for (int dz = -CHUNK_PRELOAD_RADIUS; dz < CHUNK_PRELOAD_RADIUS+1; dz++) {
             int chunkX, chunkZ;
@@ -140,7 +141,8 @@ void loadChunks(GLfloat playerCoords[2]) {
 
             uint64_t chunkKey  = packChunkKey(chunkX, chunkZ);
             BucketEntry *result = getHashmapEntry(chunkKey);
-            if (result == NULL) {
+            if (result == NULL && !alreadyPreloadedOnce) {
+                alreadyPreloadedOnce = 1;
                 // if (chunkX == -1 && chunkZ == 0) {printf("Loading chunks for %d %d %d %d!\n", chunkX, chunkZ, dx, dz);}
                 // * the chunk has not been loaded yet, must load it in and add to the hashmap
                 // ? chunks that are loaded are just skipped since their data is already there
@@ -155,9 +157,12 @@ void loadChunks(GLfloat playerCoords[2]) {
     
                 loadedChunks->loadedChunks[(loadedChunks->amtLoadedChunks)++] = result->chunkEntry;
             }
+
+            if (alreadyPreloadedOnce) { break; }
  
             // see if a chunk is in the render radius
             if ((dx <= CHUNK_RENDER_RADIUS && dx >= -CHUNK_RENDER_RADIUS) && (dz <= CHUNK_RENDER_RADIUS && dz >= -CHUNK_RENDER_RADIUS)) {
+                if (result->chunkEntry->flag != CHUNK_FLAG_RENDERED_AND_LOADED) { alreadyPreloadedOnce = 1; }
                 // if (chunkX == -1 && chunkZ == 0) {printf("rendering chunks for %d %d %d %d!\n", chunkX, chunkZ, dx, dz);printf("chunkKey = %" PRIu64 "\n", chunkKey);}
                 // if it is, allocate it
                 if (renderChunks->amtRenderChunks >= renderChunks->capacity) {
@@ -167,6 +172,7 @@ void loadChunks(GLfloat playerCoords[2]) {
 
                 renderChunks->renderChunks[(renderChunks->amtRenderChunks)++] = result->chunkEntry;
             }
+            
         }
     }
 
@@ -178,9 +184,7 @@ void loadChunks(GLfloat playerCoords[2]) {
     }        
 
     int64_t loadedChunkX, loadedChunkZ;
-    int hasUnloadedOneChunk = 0;
     for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++) {
-
         Chunk *curChunk = loadedChunks->loadedChunks[loadedChunkIdx];
         unpackChunkKey(curChunk->key, &loadedChunkX, &loadedChunkZ);
 
@@ -191,7 +195,6 @@ void loadChunks(GLfloat playerCoords[2]) {
                 // printf("deleting a chunk mesh!\n");
                 // printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
                 deleteChunkMesh(curChunk);
-                hasUnloadedOneChunk = 1;
             }
         }
 
@@ -205,10 +208,7 @@ void loadChunks(GLfloat playerCoords[2]) {
             } 
             
             chunksToUnload->chunksToUnload[chunksToUnload->amtChunksToUnload++] = curChunk;
-            hasUnloadedOneChunk = 1;
         }
-
-        if (hasUnloadedOneChunk) { break; }
     }
 
     for (int chunkIdx = 0; chunkIdx < chunksToUnload->amtChunksToUnload; chunkIdx++) {
