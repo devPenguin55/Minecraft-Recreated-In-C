@@ -122,3 +122,88 @@ float ridgedFbm2D(
 
     return sum / maxSum;     // [0,1]
 }
+
+static uint32_t hash3D(int x, int y, int z, uint32_t seed) {
+    uint32_t h = seed;
+    h ^= (uint32_t)x * 0x27d4eb2d;
+    h ^= (uint32_t)y * 0x85ebca6b;
+    h ^= (uint32_t)z * 0x165667b1;
+    h ^= h >> 15;
+    h *= 0x2c1b3c6d;
+    h ^= h >> 12;
+    return h;
+}
+
+static double grad3D(int ix, int iy, int iz, double x, double y, double z, uint32_t seed) {
+    uint32_t h = hash3D(ix, iy, iz, seed) & 15;
+
+    static const double grad[16][3] = {
+        {1,1,0},{-1,1,0},{1,-1,0},{-1,-1,0},
+        {1,0,1},{-1,0,1},{1,0,-1},{-1,0,-1},
+        {0,1,1},{0,-1,1},{0,1,-1},{0,-1,-1},
+        {1,1,0},{-1,1,0},{0,-1,1},{0,-1,-1}
+    };
+
+    return grad[h][0]*x + grad[h][1]*y + grad[h][2]*z;
+}
+
+
+double perlinNoise3D(double x, double y, double z, uint32_t seed) {
+    int x0 = (int)floor(x);
+    int y0 = (int)floor(y);
+    int z0 = (int)floor(z);
+    int x1 = x0 + 1;
+    int y1 = y0 + 1;
+    int z1 = z0 + 1;
+
+    double sx = x - x0;
+    double sy = y - y0;
+    double sz = z - z0;
+
+    double n000 = grad3D(x0, y0, z0, x - x0, y - y0, z - z0, seed);
+    double n100 = grad3D(x1, y0, z0, x - x1, y - y0, z - z0, seed);
+    double n010 = grad3D(x0, y1, z0, x - x0, y - y1, z - z0, seed);
+    double n110 = grad3D(x1, y1, z0, x - x1, y - y1, z - z0, seed);
+    double n001 = grad3D(x0, y0, z1, x - x0, y - y0, z - z1, seed);
+    double n101 = grad3D(x1, y0, z1, x - x1, y - y0, z - z1, seed);
+    double n011 = grad3D(x0, y1, z1, x - x0, y - y1, z - z1, seed);
+    double n111 = grad3D(x1, y1, z1, x - x1, y - y1, z - z1, seed);
+
+    double u = fade(sx);
+    double v = fade(sy);
+    double w = fade(sz);
+
+    double nx00 = lerp(n000, n100, u);
+    double nx10 = lerp(n010, n110, u);
+    double nx01 = lerp(n001, n101, u);
+    double nx11 = lerp(n011, n111, u);
+
+    double nxy0 = lerp(nx00, nx10, v);
+    double nxy1 = lerp(nx01, nx11, v);
+
+    return lerp(nxy0, nxy1, w);
+}
+
+float fbm3D(
+    float x, float y, float z,
+    uint32_t seed,
+    int octaves,
+    float lacunarity,
+    float gain
+) {
+    float sum = 0.0f;
+    float amplitude = 1.0f;
+    float frequency = 1.0f;
+    float maxSum = 0.0f;
+
+    for (int i = 0; i < octaves; i++) {
+        float n = perlinNoise3D(x * frequency, y * frequency, z * frequency, seed + i*1013);
+        sum += n * amplitude;
+        maxSum += amplitude;
+
+        amplitude *= gain;
+        frequency *= lacunarity;
+    }
+
+    return sum / maxSum;  // normalize to [-1,1]
+}

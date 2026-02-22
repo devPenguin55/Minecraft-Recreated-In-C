@@ -105,6 +105,24 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 stairHeight += (int)ridge;
                 curBlock->isAir = (y > stairHeight);
 
+                if (!curBlock->isAir) {
+                    if (y > 18 && y < 50) {
+                        int yboost = 15;  // small vertical shift
+
+                        float base = perlinNoise3D(
+                            worldX / 25.0f,
+                            (y + yboost) / 25.0f,
+                            worldZ / 25.0f,
+                            3
+                        );
+
+                        float ridged = 1.0f - fabs(base);
+
+                        curBlock->isAir = (ridged > 0.9f);
+                    }
+                }
+                
+
 
                 if (y == stairHeight)
                 {

@@ -22,4 +22,16 @@ float ridgedFbm2D(
     float lacunarity,
     float gain
 );
+
+static uint32_t hash3D(int x, int y, int z, uint32_t seed);
+static double grad3D(int ix, int iy, int iz, double x, double y, double z, uint32_t seed);
+double perlinNoise3D(double x, double y, double z, uint32_t seed);
+float fbm3D(
+    float x, float y, float z,
+    uint32_t seed,
+    int octaves,
+    float lacunarity,
+    float gain
+);
+
 #endif
