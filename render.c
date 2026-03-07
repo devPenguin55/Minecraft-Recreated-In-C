@@ -299,7 +299,7 @@ void face(
         glEnable(GL_TEXTURE_2D);
 
         glPopMatrix();
-        if (beginBlockBreakingBlockType == -1) {return;}
+        if (userBlockBreakingTimeElapsed == 0) {return;}
         glPushMatrix();
         glTranslatef(transformation[0], transformation[1], transformation[2]);
         glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
@@ -316,8 +316,9 @@ void face(
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        float crackAlpha = (stage / 20.0f);
-        crackAlpha = (crackAlpha > 0.5f) ? 0.5f : (crackAlpha * 1.5f);
+        // float crackAlpha = (stage / 9.0f);
+        // crackAlpha = (crackAlpha > 1.0f) ? 1.0f : crackAlpha;
+        float crackAlpha = 0.9;
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
         // Compute face normal from vertices
@@ -595,35 +596,20 @@ void drawGraphics()
 
     
 
-    
-    GLfloat proj[16];
-    GLfloat modelview[16];
-    GLfloat clip[16]; // combined matrix
+    // clip = modelview * projection
+    // clip = proj * modelview
+    GLfloat clip[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, clip);
 
-    glGetFloatv(GL_PROJECTION_MATRIX, proj);
+    GLfloat modelview[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
 
-    // clip = modelview * projection
-    clip[ 0] = modelview[0] * proj[0] + modelview[1] * proj[4] + modelview[2] * proj[8] + modelview[3] * proj[12];
-    clip[ 1] = modelview[0] * proj[1] + modelview[1] * proj[5] + modelview[2] * proj[9] + modelview[3] * proj[13];
-    clip[ 2] = modelview[0] * proj[2] + modelview[1] * proj[6] + modelview[2] * proj[10] + modelview[3] * proj[14];
-    clip[ 3] = modelview[0] * proj[3] + modelview[1] * proj[7] + modelview[2] * proj[11] + modelview[3] * proj[15];
-
-    clip[ 4] = modelview[4] * proj[0] + modelview[5] * proj[4] + modelview[6] * proj[8] + modelview[7] * proj[12];
-    clip[ 5] = modelview[4] * proj[1] + modelview[5] * proj[5] + modelview[6] * proj[9] + modelview[7] * proj[13];
-    clip[ 6] = modelview[4] * proj[2] + modelview[5] * proj[6] + modelview[6] * proj[10] + modelview[7] * proj[14];
-    clip[ 7] = modelview[4] * proj[3] + modelview[5] * proj[7] + modelview[6] * proj[11] + modelview[7] * proj[15];
-
-    clip[ 8] = modelview[8] * proj[0] + modelview[9] * proj[4] + modelview[10] * proj[8] + modelview[11] * proj[12];
-    clip[ 9] = modelview[8] * proj[1] + modelview[9] * proj[5] + modelview[10] * proj[9] + modelview[11] * proj[13];
-    clip[10] = modelview[8] * proj[2] + modelview[9] * proj[6] + modelview[10] * proj[10] + modelview[11] * proj[14];
-    clip[11] = modelview[8] * proj[3] + modelview[9] * proj[7] + modelview[10] * proj[11] + modelview[11] * proj[15];
-
-    clip[12] = modelview[12] * proj[0] + modelview[13] * proj[4] + modelview[14] * proj[8] + modelview[15] * proj[12];
-    clip[13] = modelview[12] * proj[1] + modelview[13] * proj[5] + modelview[14] * proj[9] + modelview[15] * proj[13];
-    clip[14] = modelview[12] * proj[2] + modelview[13] * proj[6] + modelview[14] * proj[10] + modelview[15] * proj[14];
-    clip[15] = modelview[12] * proj[3] + modelview[13] * proj[7] + modelview[14] * proj[11] + modelview[15] * proj[15];
-
+    glPushMatrix();
+    glLoadMatrixf(clip);
+    glMultMatrixf(modelview);
+    glGetFloatv(GL_MODELVIEW_MATRIX, clip);
+    glPopMatrix();
+    
     Plane frustum[6];
 
     // Left plane
@@ -673,28 +659,8 @@ void drawGraphics()
     {
         MeshQuad *curQuad = &(chunkMeshQuads.quads[quadIndex]);
 
-        int chunkX = (int)floor(curQuad->x / ChunkWidthX);
-        int chunkZ = (int)floor(curQuad->z / ChunkLengthZ);
-        float centerX = chunkX * ChunkWidthX + ChunkWidthX*0.5f;
-        float centerY = ChunkHeightY * 0.5f; // middle of the chunk vertically
-        float centerZ = chunkZ * ChunkLengthZ + ChunkLengthZ*0.5f;
-
-        // bounding sphere radius (half-diagonal of XZ + half-height)
-        float radius = sqrtf((ChunkWidthX*0.5f)*(ChunkWidthX*0.5f) +
-                             (ChunkHeightY*0.5f)*(ChunkHeightY*0.5f) +
-                             (ChunkLengthZ*0.5f)*(ChunkLengthZ*0.5f));
-
-        int isVisible = 1;
-        for (int i = 0; i < 6; i++) {
-            float distance = frustum[i].A*centerX +
-                             frustum[i].B*centerY +
-                             frustum[i].C*centerZ +
-                             frustum[i].D;
-            if (distance < -radius) {
-                isVisible = 0;
-                break;
-            }
-        }
+        int chunkX = floor(curQuad->x / (ChunkWidthX * BlockWidthX));
+        int chunkZ = floor(curQuad->z / (ChunkLengthZ * BlockLengthZ));
 
         GLfloat translation[3];
         translation[0] = curQuad->x;
