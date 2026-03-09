@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <GL/freeglut.h>
@@ -22,6 +23,7 @@ int main(int argc, char *argv[]) {
     glutInitWindowPosition(1000, 400);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH); // rgb model, double buffer -> (color, depth)
     glutCreateWindow("Minecraft");
+    glewInit();
     glutSetCursor(GLUT_CURSOR_NONE);
 
     initGraphics();

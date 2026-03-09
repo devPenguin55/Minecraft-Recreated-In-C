@@ -1,5 +1,8 @@
+#include <stdint.h>
+#include <GL/glew.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 #include <stdio.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -25,6 +28,17 @@ int frameCount = 0;
 
 SelectedBlockToRender selectedBlockToRender;
 
+GLuint worldVBO = 0;
+Vertex *worldVertices = NULL;
+int worldVertexCount = 0;
+
+GLuint blockTextureArray;
+
+int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
+int GRASS_TOP_TEXTURE_ARRAY_INDEX;
+int DIRT_TEXTURE_ARRAY_INDEX;
+int STONE_TEXTURE_ARRAY_INDEX;
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -38,6 +52,53 @@ static inline float clamp(float value, float minVal, float maxVal)
         return maxVal;
     return value;
 }
+
+GLuint worldShader;
+char* loadFile(const char* path)
+{
+    FILE* file = fopen(path,"rb");
+    fseek(file,0,SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+
+    char* data = malloc(size+1);
+    fread(data,1,size,file);
+    data[size]=0;
+    fclose(file);
+
+    return data;
+}
+
+GLuint compileShader(const char* path, GLenum type)
+{
+    char* src = loadFile(path);
+
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader,1,(const char**)&src,NULL);
+    glCompileShader(shader);
+
+    free(src);
+    
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char log[512];
+        glGetShaderInfoLog(shader, 512, NULL, log);
+        printf("Shader compile error: %s\n", log);
+    }
+
+    glGetProgramiv(worldShader, GL_LINK_STATUS, &success);
+
+    if (!success) {
+        char log[512];
+        glGetProgramInfoLog(worldShader, 512, NULL, log);
+        printf("Program link error: %s\n", log);
+    }
+
+    return shader;
+}
+
+
 
 GLuint loadTexture(const char *filename)
 {
@@ -83,6 +144,39 @@ GLuint loadTexture(const char *filename)
     return textureID;
 }
 
+GLuint loadTextureArray(const char* filenames[], int count) {
+    int width, height, channels;
+    unsigned char* data = stbi_load(filenames[0], &width, &height, &channels, 0);
+    if (!data) {
+        printf("Failed to load texture %s\n", filenames[0]);
+        return 0;
+    }
+
+    GLenum format = GL_RGBA;
+
+    GLuint texArray;
+    glGenTextures(1, &texArray);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texArray);
+
+    // Allocate the array
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, format, width, height, count, 0, format, GL_UNSIGNED_BYTE, NULL);
+
+    // Load each layer
+    for (int i = 0; i < count; i++) {
+        unsigned char* layerData = stbi_load(filenames[i], &width, &height, &channels, 4);
+        if (!layerData) { printf("Failed to load %s\n", filenames[i]); continue; }
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, format, GL_UNSIGNED_BYTE, layerData);
+        stbi_image_free(layerData);
+    }
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    return texArray;
+}
+
 void initGraphics()
 {
     glClearColor(0, 0, 0, 1);
@@ -109,6 +203,36 @@ void initGraphics()
     glEnable(GL_TEXTURE_2D);
 
     selectedBlockToRender.active = 0;
+
+
+
+
+    GLuint vs = compileShader("shader.vert", GL_VERTEX_SHADER);
+    GLuint fs = compileShader("shader.frag", GL_FRAGMENT_SHADER);
+
+    worldShader = glCreateProgram();
+
+    glAttachShader(worldShader, vs);
+    glAttachShader(worldShader, fs);
+
+    glBindAttribLocation(worldShader, 0, "position");
+    glBindAttribLocation(worldShader, 1, "texCoord");
+    glBindAttribLocation(worldShader, 2, "layer");
+    glLinkProgram(worldShader);
+
+
+    const char* blockTextures[] = {
+        "assets\\grassSide.png",
+        "assets\\grassTop.png",
+        "assets\\dirt.png",
+        "assets\\stone.png"
+    };
+    GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
+    GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
+    DIRT_TEXTURE_ARRAY_INDEX = 2;
+    STONE_TEXTURE_ARRAY_INDEX = 3;
+
+    blockTextureArray = loadTextureArray(blockTextures, 4);
 }
 
 void reshape(int width, int height)
@@ -534,12 +658,233 @@ void drawText(const char *text, float x, float y)
     }
 }
 
-void normalizePlane(Plane *p) {
-    float length = sqrtf(p->A * p->A + p->B * p->B + p->C * p->C);
-    p->A /= length;
-    p->B /= length;
-    p->C /= length;
-    p->D /= length;
+void buildWorldMesh()
+{
+    worldVertexCount = chunkMeshQuads.amtQuads * 6;
+    worldVertices = malloc(sizeof(Vertex) * worldVertexCount);
+
+    int v = 0;
+
+    for (int i = 0; i < chunkMeshQuads.amtQuads; i++)
+    {
+        MeshQuad *q = &chunkMeshQuads.quads[i];
+
+        float x = q->x;
+        float y = q->y;
+        float z = q->z;
+
+        float w = q->width;
+        float h = q->height;
+
+        Vertex v0, v1, v2, v3;
+        GLfloat Vertices[8][3] = {
+            // front face
+            {-0.5, 0.5, 0.5},
+            {0.5, 0.5, 0.5},
+            {0.5, -0.5, 0.5},
+            {-0.5, -0.5, 0.5},
+            // back face
+            {-0.5, 0.5, -0.5},
+            {0.5, 0.5, -0.5},
+            {0.5, -0.5, -0.5},
+            {-0.5, -0.5, -0.5},
+        };
+        switch(q->faceType)
+        {
+            case FACE_FRONT:
+                v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
+                v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
+                v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
+                v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
+                break;
+
+            case FACE_BACK:
+                v0 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], 0, 0};
+                v1 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], w, 0};
+                v2 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], w, h};
+                v3 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], 0, h};
+                break;
+
+            case FACE_LEFT:
+                v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
+                v1 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], w, 0};
+                v2 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], w, h};
+                v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
+                break;
+
+            case FACE_RIGHT:
+                v0 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], 0, 0};
+                v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
+                v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
+                v3 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], 0, h};
+                break;
+            case FACE_TOP:
+                v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
+                v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
+                v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
+                v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
+                break;
+
+            case FACE_BOTTOM:
+                v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
+                v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
+                v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
+                v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
+                break;
+        }
+
+        float minX = MIN4(v0.x,v1.x, v2.x, v3.x);
+        float maxX = MAX4(v0.x,v1.x, v2.x, v3.x);
+        float minY = MIN4(v0.y,v1.y, v2.y, v3.y);
+        float maxY = MAX4(v0.y,v1.y, v2.y, v3.y);
+        float minZ = MIN4(v0.z,v1.z, v2.z, v3.z);
+        float maxZ = MAX4(v0.z,v1.z, v2.z, v3.z);
+
+        float amtDx = maxX - minX;
+        float amtDy = maxY - minY;
+        float amtDz = maxZ - minZ;
+
+        float size[2] = {w, h};
+        // scale along face axes only
+
+        int sideTextureIndex;
+        int topTextureIndex;
+        int bottomTextureIndex;
+
+        switch (q->blockType)
+        {
+        case BLOCK_TYPE_GRASS:
+            sideTextureIndex = GRASS_SIDE_TEXTURE_ARRAY_INDEX;
+            topTextureIndex = GRASS_TOP_TEXTURE_ARRAY_INDEX;
+            bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+            break;
+        case BLOCK_TYPE_DIRT:
+            sideTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+            topTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+            bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+            break;
+        case BLOCK_TYPE_STONE:
+            sideTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+            topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+            bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+            break;
+        default:
+            printf("No correct block type entered!\n");
+            break;
+        }
+
+
+        if (amtDy == 0.0f)
+        {
+            // X–Z face
+            for (int i = 0; i < 4; i++)
+            {
+                Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                                        : i == 2   ? &v2
+                                                   : &v3);
+                v->x = (v->x + 0.5f) * size[0] - 0.5f;
+                v->z = (v->z + 0.5f) * size[1] - 0.5f;
+
+
+                v->u = v->x + 0.5f;
+                v->v = v->z + 0.5f;
+
+                v->layer = (q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex;          
+            }
+
+        }
+        else if (amtDx == 0.0f)
+        {
+            // Y–Z face
+            for (int i = 0; i < 4; i++)
+            {
+                Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                : i == 2   ? &v2
+                           : &v3);
+                v->y = (v->y + 0.5f) * size[0] - 0.5f;
+                v->z = (v->z + 0.5f) * size[1] - 0.5f;
+
+                v->u = v->z + 0.5f;
+                v->v = 1.0 - (v->y + 0.5f);
+
+                v->layer = sideTextureIndex;  
+            }
+        }
+        else
+        {
+            // X–Y face
+            for (int i = 0; i < 4; i++)
+            {
+                Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                : i == 2   ? &v2
+                           : &v3);
+                v->x = (v->x + 0.5f) * size[0] - 0.5f;
+                v->y = (v->y + 0.5f) * size[1] - 0.5f;
+
+                v->u = v->x + 0.5f;
+                v->v = 1.0 - (v->y + 0.5f);
+
+                v->layer = sideTextureIndex; 
+            } 
+        }
+
+
+        for (int i = 0; i < 4; i++)
+        {
+            Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+            : i == 2   ? &v2
+                       : &v3);
+            v->x += x;
+            v->y += y;
+            v->z += z;
+        }
+
+        worldVertices[v++] = v0;
+        worldVertices[v++] = v1;
+        worldVertices[v++] = v2;
+
+        worldVertices[v++] = v0;
+        worldVertices[v++] = v2;
+        worldVertices[v++] = v3;
+    }
+}
+
+
+GLuint worldVAO = 0;
+
+void uploadWorldMesh() {
+    if (worldVAO == 0) {
+        glGenVertexArrays(1, &worldVAO);
+    }
+    
+    glBindVertexArray(worldVAO);
+    
+    if (worldVBO == 0) {
+        glGenBuffers(1, &worldVBO);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, worldVBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * worldVertexCount, worldVertices, GL_STATIC_DRAW);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // texcoord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // layer attribute location
+    glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, layer)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0); // unbind
+}
+
+void drawWorldMesh() {
+    glBindVertexArray(worldVAO);
+    glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
+    glBindVertexArray(0);
 }
 
 void drawGraphics()
@@ -575,7 +920,7 @@ void drawGraphics()
         {0.5, -0.5, -0.5},
         {-0.5, -0.5, -0.5},
     };
-
+  
     // clear color buffer to clear background, uses preset color setup in initGraphics
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -608,104 +953,32 @@ void drawGraphics()
     glLoadMatrixf(clip);
     glMultMatrixf(modelview);
     glGetFloatv(GL_MODELVIEW_MATRIX, clip);
-    glPopMatrix();
-    
-    Plane frustum[6];
+    glPopMatrix(); 
 
-    // Left plane
-    frustum[0].A = clip[3] + clip[0];
-    frustum[0].B = clip[7] + clip[4];
-    frustum[0].C = clip[11] + clip[8];
-    frustum[0].D = clip[15] + clip[12];
-    normalizePlane(&frustum[0]);
-
-    // Right plane
-    frustum[1].A = clip[3] - clip[0];
-    frustum[1].B = clip[7] - clip[4];
-    frustum[1].C = clip[11] - clip[8];
-    frustum[1].D = clip[15] - clip[12];
-    normalizePlane(&frustum[1]);
-
-    // Bottom plane
-    frustum[2].A = clip[3] + clip[1];
-    frustum[2].B = clip[7] + clip[5];
-    frustum[2].C = clip[11] + clip[9];
-    frustum[2].D = clip[15] + clip[13];
-    normalizePlane(&frustum[2]);
-
-    // Top plane
-    frustum[3].A = clip[3] - clip[1];
-    frustum[3].B = clip[7] - clip[5];
-    frustum[3].C = clip[11] - clip[9];
-    frustum[3].D = clip[15] - clip[13];
-    normalizePlane(&frustum[3]);
-
-    // Near plane
-    frustum[4].A = clip[3] + clip[2];
-    frustum[4].B = clip[7] + clip[6];
-    frustum[4].C = clip[11] + clip[10];
-    frustum[4].D = clip[15] + clip[14];
-    normalizePlane(&frustum[4]);
-
-    // Far plane
-    frustum[5].A = clip[3] - clip[2];
-    frustum[5].B = clip[7] - clip[6];
-    frustum[5].C = clip[11] - clip[10];
-    frustum[5].D = clip[15] - clip[14];
-    normalizePlane(&frustum[5]);
-
-
-    for (int quadIndex = 0; quadIndex < chunkMeshQuads.amtQuads; quadIndex++)
-    {
-        MeshQuad *curQuad = &(chunkMeshQuads.quads[quadIndex]);
-
-        int chunkX = floor(curQuad->x / (ChunkWidthX * BlockWidthX));
-        int chunkZ = floor(curQuad->z / (ChunkLengthZ * BlockLengthZ));
-
-        GLfloat translation[3];
-        translation[0] = curQuad->x;
-        translation[1] = curQuad->y;
-        translation[2] = curQuad->z;
-
-        /*
-
-        * FACE GUIDE
-
-        switch (curQuad->faceType) {
-            case FACE_TOP:
-                xWidth = curQuad->width;
-                zLength = curQuad->height;
-                yHeight = 1;
-                break;
-            case FACE_BOTTOM:
-                xWidth = curQuad->width;
-                zLength = curQuad->height;
-                yHeight = 1;
-                break;
-            case FACE_LEFT:
-                xWidth = 1;
-                zLength = curQuad->height;
-                yHeight = curQuad->width;
-                break;
-            case FACE_RIGHT:
-                xWidth = 1;
-                zLength = curQuad->height;
-                yHeight = curQuad->width;
-                break;
-            case FACE_FRONT:
-                xWidth = curQuad->width;
-                zLength = 1;
-                yHeight = curQuad->height;
-                break;
-            case FACE_BACK:
-                xWidth = curQuad->width;
-                zLength = 1;
-                yHeight = curQuad->height;
-                break;
-        } */
-        GLfloat size[2] = {curQuad->width, curQuad->height};
-        cubeFace(Vertices, translation, size, curQuad->faceType, curQuad->blockType);
+    if (worldVBO == 0 && chunkMeshQuads.amtQuads >= 57000) {
+        buildWorldMesh();   // fills worldVertices and worldVertexCount
+        uploadWorldMesh();  // creates VBO + VAO and uploads the data
+        printf("bring %d", worldVertexCount);
     }
+
+    glUseProgram(worldShader);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextureArray);
+    glUniform1i(glGetUniformLocation(worldShader, "blockTextures"), 0);
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    
+    glBindVertexArray(worldVAO);
+    glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
+    glBindVertexArray(0);
+
+
+    glUseProgram(0);
 
     if (selectedBlockToRender.active)
     {
@@ -731,7 +1004,7 @@ void drawGraphics()
         }
 
         glColor3f(1.0f, 1.0f, 1.0f);
-    }
+    }  
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

@@ -1,13 +1,21 @@
 CC = gcc
-CFLAGS = -Iinclude
-LIBS = -lfreeglut -lopengl32 -lglu32 -lgdi32
+
+# Include both MSYS2 headers and your GLEW include folder
+CFLAGS = -I/mingw64/include -IC:/Users/aarav/OneDrive/Documents/glew-2.3.1-win32/glew-2.3.1/include
+
+# Library search paths
+LDFLAGS = -L/mingw64/lib -LC:/Users/aarav/OneDrive/Documents/glew-2.3.1-win32/glew-2.3.1/lib/Release/x64
+
+# Libraries to link
+LIBS = -lglew32 -lfreeglut -lopengl32 -lglu32 -lgdi32
+
 TARGET = main.exe
 SRC = main.c input.c render.c chunks.c chunkLoaderManager.c raycast.c noise.c
 
 all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(CC) $(SRC) -o $(TARGET) $(CFLAGS) $(LIBS)
+	$(CC) $(SRC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(LIBS)
 
 clean:
 	del $(TARGET)
