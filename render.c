@@ -14,10 +14,6 @@
 #include "raycast.h"
 
 GLfloat T = 0;
-GLuint grassSideTexture;
-GLuint grassTopTexture;
-GLuint dirtTexture;
-GLuint stoneTexture;
 
 GLuint destroyStageTextureArray[9];
 
@@ -185,11 +181,6 @@ void initGraphics()
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
-    grassSideTexture = loadTexture("assets\\grassSide.png");
-    grassTopTexture = loadTexture("assets\\grassTop.png");
-    dirtTexture = loadTexture("assets\\dirt.png");
-    stoneTexture = loadTexture("assets\\stone.png");
 
     destroyStageTextureArray[0] = loadTexture("assets\\destroy_stage_0.png");
     destroyStageTextureArray[1] = loadTexture("assets\\destroy_stage_1.png");
@@ -359,6 +350,7 @@ void face(
         glDisable(GL_BLEND);
 
         glPopMatrix();
+        
         ///////////////////////////
 
         glPushMatrix();
@@ -421,9 +413,10 @@ void face(
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_TEXTURE_2D);
-
+        glDisable(GL_BLEND);
         glPopMatrix();
-        if (userBlockBreakingTimeElapsed == 0) {return;}
+
+        if (userBlockBreakingTimeElapsed == 0) {glDepthMask(GL_TRUE); return;}
         glPushMatrix();
         glTranslatef(transformation[0], transformation[1], transformation[2]);
         glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
@@ -526,63 +519,6 @@ void face(
         return;
     }
 
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    if (pressedKeys['z'])
-    {
-        glBegin(GL_LINE_LOOP);
-    }
-    else
-    {
-        glBegin(GL_QUADS);
-    }
-
-    glDepthMask(GL_TRUE);
-
-    GLfloat U0, V0, U1, V1;
-    U0 = 0.0f;
-    V0 = 0.0f;
-    U1 = size[0];
-    V1 = size[1];
-
-    if (amtDy == 0.0f)
-    { // X–Z face
-        glTexCoord2f(vA[0] + 0.5f, vA[2] + 0.5f);
-        glVertex3fv(vA);
-        glTexCoord2f(vB[0] + 0.5f, vB[2] + 0.5f);
-        glVertex3fv(vB);
-        glTexCoord2f(vC[0] + 0.5f, vC[2] + 0.5f);
-        glVertex3fv(vC);
-        glTexCoord2f(vD[0] + 0.5f, vD[2] + 0.5f);
-        glVertex3fv(vD);
-    }
-    else if (amtDx == 0.0f)
-    { // Y–Z face
-        glTexCoord2f(vA[2] + 0.5f, 1.0f - (vA[1] + 0.5f));
-        glVertex3fv(vA);
-        glTexCoord2f(vB[2] + 0.5f, 1.0f - (vB[1] + 0.5f));
-        glVertex3fv(vB);
-        glTexCoord2f(vC[2] + 0.5f, 1.0f - (vC[1] + 0.5f));
-        glVertex3fv(vC);
-        glTexCoord2f(vD[2] + 0.5f, 1.0f - (vD[1] + 0.5f));
-        glVertex3fv(vD);
-    }
-    else
-    { // X–Y face
-        glTexCoord2f(vA[0] + 0.5f, 1.0f - (vA[1] + 0.5f));
-        glVertex3fv(vA);
-        glTexCoord2f(vB[0] + 0.5f, 1.0f - (vB[1] + 0.5f));
-        glVertex3fv(vB);
-        glTexCoord2f(vC[0] + 0.5f, 1.0f - (vC[1] + 0.5f));
-        glVertex3fv(vC);
-        glTexCoord2f(vD[0] + 0.5f, 1.0f - (vD[1] + 0.5f));
-        glVertex3fv(vD);
-    }
-
     glEnd();
     glPopMatrix();
 }
@@ -595,21 +531,6 @@ void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2]
 
     switch (blockType)
     {
-    case BLOCK_TYPE_GRASS:
-        sideTextureIndex = grassSideTexture;
-        topTextureIndex = grassTopTexture;
-        bottomTextureIndex = dirtTexture;
-        break;
-    case BLOCK_TYPE_DIRT:
-        sideTextureIndex = dirtTexture;
-        topTextureIndex = dirtTexture;
-        bottomTextureIndex = dirtTexture;
-        break;
-    case BLOCK_TYPE_STONE:
-        sideTextureIndex = stoneTexture;
-        topTextureIndex = stoneTexture;
-        bottomTextureIndex = stoneTexture;
-        break;
     case BLOCK_TYPE_SELECT:
         sideTextureIndex = BLOCK_TYPE_SELECT;
         topTextureIndex = BLOCK_TYPE_SELECT;
@@ -664,7 +585,7 @@ void buildWorldMesh()
     worldVertices = malloc(sizeof(Vertex) * worldVertexCount);
 
     int v = 0;
-
+    // chunkLoaderManager.renderChunks[0]->
     for (int i = 0; i < chunkMeshQuads.amtQuads; i++)
     {
         MeshQuad *q = &chunkMeshQuads.quads[i];
@@ -881,11 +802,6 @@ void uploadWorldMesh() {
     glBindVertexArray(0); // unbind
 }
 
-void drawWorldMesh() {
-    glBindVertexArray(worldVAO);
-    glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
-    glBindVertexArray(0);
-}
 
 void drawGraphics()
 {
@@ -979,7 +895,13 @@ void drawGraphics()
 
 
     glUseProgram(0);
-
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D_ARRAY);
+    glDisable(GL_TEXTURE_3D);
+    
+    for (int i = 0; i < 16; i++)
+        glDisableVertexAttribArray(i);
     if (selectedBlockToRender.active)
     {
         GLfloat translation[3];
@@ -1006,6 +928,12 @@ void drawGraphics()
         glColor3f(1.0f, 1.0f, 1.0f);
     }  
 
+    
+    
+    glUseProgram(0);
+    glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
+    glClear(GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1014,11 +942,15 @@ void drawGraphics()
     int windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 
     gluOrtho2D(0, windowWidth, windowHeight, 0);
+    
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
+
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+    glDepthMask(GL_FALSE);
 
     // draw 2d things
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -1038,6 +970,7 @@ void drawGraphics()
 
     glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
