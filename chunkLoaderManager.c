@@ -195,6 +195,7 @@ void loadChunks(GLfloat playerCoords[2]) {
                 // printf("deleting a chunk mesh!\n");
                 // printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
                 deleteChunkMesh(curChunk);
+                curChunk->triggerVertexDeletion = 1;
             }
         }
 
@@ -230,6 +231,7 @@ void triggerRenderChunkRebuild (Chunk *chunk) {
         deleteChunkMesh(chunk);   
 
         chunk->hasMesh = 1;
+        chunk->triggerVertexDeletion = 1;
         generateChunkMesh(chunk);
     }
 }

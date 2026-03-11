@@ -25,9 +25,11 @@ int frameCount = 0;
 SelectedBlockToRender selectedBlockToRender;
 
 GLuint worldVBO = 0;
+GLuint worldVAO = 0;
+
 Vertex *worldVertices = NULL;
 int worldVertexCount = 0;
-
+int vertexBuildingCounter = 0; // mini vertex
 GLuint blockTextureArray;
 
 int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
@@ -581,197 +583,259 @@ void drawText(const char *text, float x, float y)
 
 void buildWorldMesh()
 {
-    worldVertexCount = chunkMeshQuads.amtQuads * 6;
-    worldVertices = malloc(sizeof(Vertex) * worldVertexCount);
+    int changedVBO = 0;
+    for (int renderChunkIdx = 0; renderChunkIdx < chunkLoaderManager.renderChunks.amtRenderChunks; renderChunkIdx++) {
+         Chunk *renderChunk = (chunkLoaderManager.renderChunks.renderChunks[renderChunkIdx]);
 
-    int v = 0;
-    // chunkLoaderManager.renderChunks[0]->
-    for (int i = 0; i < chunkMeshQuads.amtQuads; i++)
-    {
-        MeshQuad *q = &chunkMeshQuads.quads[i];
+         if (!renderChunk->hasVertices && renderChunk->hasMesh) {
+            renderChunk->hasVertices = 1;
 
-        float x = q->x;
-        float y = q->y;
-        float z = q->z;
-
-        float w = q->width;
-        float h = q->height;
-
-        Vertex v0, v1, v2, v3;
-        GLfloat Vertices[8][3] = {
-            // front face
-            {-0.5, 0.5, 0.5},
-            {0.5, 0.5, 0.5},
-            {0.5, -0.5, 0.5},
-            {-0.5, -0.5, 0.5},
-            // back face
-            {-0.5, 0.5, -0.5},
-            {0.5, 0.5, -0.5},
-            {0.5, -0.5, -0.5},
-            {-0.5, -0.5, -0.5},
-        };
-        switch(q->faceType)
-        {
-            case FACE_FRONT:
-                v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
-                v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
-                v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
-                v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
-                break;
-
-            case FACE_BACK:
-                v0 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], 0, 0};
-                v1 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], w, 0};
-                v2 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], w, h};
-                v3 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], 0, h};
-                break;
-
-            case FACE_LEFT:
-                v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
-                v1 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], w, 0};
-                v2 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], w, h};
-                v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
-                break;
-
-            case FACE_RIGHT:
-                v0 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], 0, 0};
-                v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
-                v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
-                v3 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], 0, h};
-                break;
-            case FACE_TOP:
-                v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
-                v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
-                v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
-                v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
-                break;
-
-            case FACE_BOTTOM:
-                v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
-                v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
-                v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
-                v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
-                break;
-        }
-
-        float minX = MIN4(v0.x,v1.x, v2.x, v3.x);
-        float maxX = MAX4(v0.x,v1.x, v2.x, v3.x);
-        float minY = MIN4(v0.y,v1.y, v2.y, v3.y);
-        float maxY = MAX4(v0.y,v1.y, v2.y, v3.y);
-        float minZ = MIN4(v0.z,v1.z, v2.z, v3.z);
-        float maxZ = MAX4(v0.z,v1.z, v2.z, v3.z);
-
-        float amtDx = maxX - minX;
-        float amtDy = maxY - minY;
-        float amtDz = maxZ - minZ;
-
-        float size[2] = {w, h};
-        // scale along face axes only
-
-        int sideTextureIndex;
-        int topTextureIndex;
-        int bottomTextureIndex;
-
-        switch (q->blockType)
-        {
-        case BLOCK_TYPE_GRASS:
-            sideTextureIndex = GRASS_SIDE_TEXTURE_ARRAY_INDEX;
-            topTextureIndex = GRASS_TOP_TEXTURE_ARRAY_INDEX;
-            bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-            break;
-        case BLOCK_TYPE_DIRT:
-            sideTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-            topTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-            bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-            break;
-        case BLOCK_TYPE_STONE:
-            sideTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-            topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-            bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-            break;
-        default:
-            printf("No correct block type entered!\n");
-            break;
-        }
+            int firstQuadIndex = renderChunk->firstQuadIndex;
+            int lastQuadIndex = renderChunk->lastQuadIndex;
 
 
-        if (amtDy == 0.0f)
-        {
-            // X–Z face
-            for (int i = 0; i < 4; i++)
-            {
-                Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
-                                        : i == 2   ? &v2
-                                                   : &v3);
-                v->x = (v->x + 0.5f) * size[0] - 0.5f;
-                v->z = (v->z + 0.5f) * size[1] - 0.5f;
-
-
-                v->u = v->x + 0.5f;
-                v->v = v->z + 0.5f;
-
-                v->layer = (q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex;          
+            worldVertexCount += ((lastQuadIndex - firstQuadIndex + 1)) * 6;
+            if (worldVertices == NULL) {
+                worldVertices = malloc(sizeof(Vertex) * worldVertexCount);
+            } else {
+                worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCount);
             }
 
-        }
-        else if (amtDx == 0.0f)
-        {
-            // Y–Z face
-            for (int i = 0; i < 4; i++)
+            renderChunk->firstVertex = vertexBuildingCounter;
+            for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
             {
-                Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
-                : i == 2   ? &v2
-                           : &v3);
-                v->y = (v->y + 0.5f) * size[0] - 0.5f;
-                v->z = (v->z + 0.5f) * size[1] - 0.5f;
+                MeshQuad *q = &chunkMeshQuads.quads[i];
 
-                v->u = v->z + 0.5f;
-                v->v = 1.0 - (v->y + 0.5f);
+                float x = q->x;
+                float y = q->y;
+                float z = q->z;
 
-                v->layer = sideTextureIndex;  
+                float w = q->width;
+                float h = q->height;
+
+                Vertex v0, v1, v2, v3;
+                GLfloat Vertices[8][3] = {
+                    // front face
+                    {-0.5, 0.5, 0.5},
+                    {0.5, 0.5, 0.5},
+                    {0.5, -0.5, 0.5},
+                    {-0.5, -0.5, 0.5},
+                    // back face
+                    {-0.5, 0.5, -0.5},
+                    {0.5, 0.5, -0.5},
+                    {0.5, -0.5, -0.5},
+                    {-0.5, -0.5, -0.5},
+                };
+                switch(q->faceType)
+                {
+                    case FACE_FRONT:
+                        v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
+                        v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
+                        v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
+                        v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
+                        break;
+
+                    case FACE_BACK:
+                        v0 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], 0, 0};
+                        v1 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], w, 0};
+                        v2 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], w, h};
+                        v3 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], 0, h};
+                        break;
+
+                    case FACE_LEFT:
+                        v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
+                        v1 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], w, 0};
+                        v2 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], w, h};
+                        v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
+                        break;
+
+                    case FACE_RIGHT:
+                        v0 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], 0, 0};
+                        v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
+                        v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
+                        v3 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], 0, h};
+                        break;
+                    case FACE_TOP:
+                        v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
+                        v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
+                        v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
+                        v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
+                        break;
+
+                    case FACE_BOTTOM:
+                        v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
+                        v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
+                        v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
+                        v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
+                        break;
+                }
+
+                float minX = MIN4(v0.x,v1.x, v2.x, v3.x);
+                float maxX = MAX4(v0.x,v1.x, v2.x, v3.x);
+                float minY = MIN4(v0.y,v1.y, v2.y, v3.y);
+                float maxY = MAX4(v0.y,v1.y, v2.y, v3.y);
+                float minZ = MIN4(v0.z,v1.z, v2.z, v3.z);
+                float maxZ = MAX4(v0.z,v1.z, v2.z, v3.z);
+
+                float amtDx = maxX - minX;
+                float amtDy = maxY - minY;
+                float amtDz = maxZ - minZ;
+
+                float size[2] = {w, h};
+                // scale along face axes only
+
+                int sideTextureIndex;
+                int topTextureIndex;
+                int bottomTextureIndex;
+
+                switch (q->blockType)
+                {
+                case BLOCK_TYPE_GRASS:
+                    sideTextureIndex = GRASS_SIDE_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = GRASS_TOP_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+                    break;
+                case BLOCK_TYPE_DIRT:
+                    sideTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
+                    break;
+                case BLOCK_TYPE_STONE:
+                    sideTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+                    break;
+                default:
+                    printf("No correct block type entered!\n");
+                    break;
+                }
+
+
+                if (amtDy == 0.0f)
+                {
+                    // X–Z face
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                                                : i == 2   ? &v2
+                                                           : &v3);
+                        v->x = (v->x + 0.5f) * size[0] - 0.5f;
+                        v->z = (v->z + 0.5f) * size[1] - 0.5f;
+
+
+                        v->u = v->x + 0.5f;
+                        v->v = v->z + 0.5f;
+
+                        v->layer = (q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex;          
+                    }
+
+                }
+                else if (amtDx == 0.0f)
+                {
+                    // Y–Z face
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                        : i == 2   ? &v2
+                                   : &v3);
+                        v->y = (v->y + 0.5f) * size[0] - 0.5f;
+                        v->z = (v->z + 0.5f) * size[1] - 0.5f;
+
+                        v->u = v->z + 0.5f;
+                        v->v = 1.0 - (v->y + 0.5f);
+
+                        v->layer = sideTextureIndex;  
+                    }
+                }
+                else
+                {
+                    // X–Y face
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                        : i == 2   ? &v2
+                                   : &v3);
+                        v->x = (v->x + 0.5f) * size[0] - 0.5f;
+                        v->y = (v->y + 0.5f) * size[1] - 0.5f;
+
+                        v->u = v->x + 0.5f;
+                        v->v = 1.0 - (v->y + 0.5f);
+
+                        v->layer = sideTextureIndex; 
+                    } 
+                }
+
+
+                for (int i = 0; i < 4; i++)
+                {
+                    Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                    : i == 2   ? &v2
+                               : &v3);
+                    v->x += x;
+                    v->y += y;
+                    v->z += z;
+                }
+
+                worldVertices[vertexBuildingCounter++] = v0;
+                worldVertices[vertexBuildingCounter++] = v1;
+                worldVertices[vertexBuildingCounter++] = v2;
+                worldVertices[vertexBuildingCounter++] = v0;
+                worldVertices[vertexBuildingCounter++] = v2;
+                worldVertices[vertexBuildingCounter++] = v3;
             }
+            renderChunk->lastVertex = vertexBuildingCounter-1;
+
+            changedVBO = 1;
+         }
+    }
+
+    for (int loadedChunkIdx = 0; loadedChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; loadedChunkIdx++) {
+        Chunk *loadedChunk = (chunkLoaderManager.loadedChunks.loadedChunks[loadedChunkIdx]);
+
+        if (loadedChunk->triggerVertexDeletion) {
+            loadedChunk->triggerVertexDeletion = 0;
+            printf("removing a chunk\n");
+            printf("%d and %d\n", loadedChunk->firstVertex, loadedChunk->lastVertex);
+            loadedChunk->hasVertices = 0;
+
+            int amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
+            for (int i = loadedChunk->lastVertex+1; i<worldVertexCount; i++) {
+                // worldVertices[i-amtVerticesInChunk] = worldVertices[i];
+                memmove(&worldVertices[i-amtVerticesInChunk],
+                &worldVertices[i],
+                1 * sizeof(Vertex));
+            }
+
+            worldVertexCount -= amtVerticesInChunk;
+            vertexBuildingCounter -= amtVerticesInChunk;
+            worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCount);
+
+            changedVBO = 1;
+
+            for (int otherChunkIdx = 0; otherChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; otherChunkIdx++) {
+                Chunk *otherChunk = (chunkLoaderManager.loadedChunks.loadedChunks[otherChunkIdx]);
+                if (otherChunk->hasVertices) {
+                    if (otherChunk->firstVertex > loadedChunk->lastVertex) {
+                        otherChunk->firstVertex -= amtVerticesInChunk;
+                        otherChunk->lastVertex  -= amtVerticesInChunk;
+                    }
+                }
+            }
+
+            loadedChunk->firstVertex = -1;
+            loadedChunk->lastVertex  = -1;
         }
-        else
-        {
-            // X–Y face
-            for (int i = 0; i < 4; i++)
-            {
-                Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
-                : i == 2   ? &v2
-                           : &v3);
-                v->x = (v->x + 0.5f) * size[0] - 0.5f;
-                v->y = (v->y + 0.5f) * size[1] - 0.5f;
-
-                v->u = v->x + 0.5f;
-                v->v = 1.0 - (v->y + 0.5f);
-
-                v->layer = sideTextureIndex; 
-            } 
-        }
+    }
 
 
-        for (int i = 0; i < 4; i++)
-        {
-            Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
-            : i == 2   ? &v2
-                       : &v3);
-            v->x += x;
-            v->y += y;
-            v->z += z;
-        }
+    
 
-        worldVertices[v++] = v0;
-        worldVertices[v++] = v1;
-        worldVertices[v++] = v2;
-
-        worldVertices[v++] = v0;
-        worldVertices[v++] = v2;
-        worldVertices[v++] = v3;
+    if (changedVBO) {
+        uploadWorldMesh();
     }
 }
 
 
-GLuint worldVAO = 0;
 
 void uploadWorldMesh() {
     if (worldVAO == 0) {
@@ -871,11 +935,7 @@ void drawGraphics()
     glGetFloatv(GL_MODELVIEW_MATRIX, clip);
     glPopMatrix(); 
 
-    if (worldVBO == 0 && chunkMeshQuads.amtQuads >= 57000) {
-        buildWorldMesh();   // fills worldVertices and worldVertexCount
-        uploadWorldMesh();  // creates VBO + VAO and uploads the data
-        printf("bring %d", worldVertexCount);
-    }
+    buildWorldMesh();   // fills worldVertices and worldVertexCount
 
     glUseProgram(worldShader);
 

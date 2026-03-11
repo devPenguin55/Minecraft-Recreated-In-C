@@ -28,11 +28,14 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
     chunk->key = key;
     chunk->hasMesh = 0;
-
+    chunk->hasVertices = 0;
+    chunk->firstQuadIndex = -1;
+    chunk->lastQuadIndex = -1;
+    chunk->triggerVertexDeletion = 0;
     if (isFirstCreation)
     {
-        chunk->firstQuadIndex = -1;
-        chunk->lastQuadIndex = -1;
+        chunk->firstVertex = -1;
+        chunk->lastVertex  = -1;
     }
 
     for (int x = 0; x < ChunkWidthX; x++)

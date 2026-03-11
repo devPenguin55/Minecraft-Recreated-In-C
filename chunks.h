@@ -23,6 +23,10 @@ typedef struct Chunk
     int flag;
     int hasMesh;
     uint64_t key;
+    int hasVertices; 
+    int firstVertex;
+    int lastVertex;
+    int triggerVertexDeletion;
 } Chunk;
 
 typedef struct MeshQuad
