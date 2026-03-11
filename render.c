@@ -29,7 +29,7 @@ GLuint worldVAO = 0;
 
 Vertex *worldVertices = NULL;
 int worldVertexCount = 0;
-int vertexBuildingCounter = 0; // mini vertex
+int vertexBuildingCounter = 0; 
 GLuint blockTextureArray;
 
 int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
@@ -83,14 +83,6 @@ GLuint compileShader(const char* path, GLenum type)
         char log[512];
         glGetShaderInfoLog(shader, 512, NULL, log);
         printf("Shader compile error: %s\n", log);
-    }
-
-    glGetProgramiv(worldShader, GL_LINK_STATUS, &success);
-
-    if (!success) {
-        char log[512];
-        glGetProgramInfoLog(worldShader, 512, NULL, log);
-        printf("Program link error: %s\n", log);
     }
 
     return shader;
@@ -581,6 +573,49 @@ void drawText(const char *text, float x, float y)
     }
 }
 
+void checkForChunkVerticesDeletion() {
+    int changedVBO = 0;
+    for (int loadedChunkIdx = 0; loadedChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; loadedChunkIdx++) {
+        Chunk *loadedChunk = (chunkLoaderManager.loadedChunks.loadedChunks[loadedChunkIdx]);
+
+        if (loadedChunk->triggerVertexDeletion) {
+            loadedChunk->triggerVertexDeletion = 0;
+            loadedChunk->hasVertices = 0;
+
+            int amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
+            for (int i = loadedChunk->lastVertex+1; i<worldVertexCount; i++) {
+                // worldVertices[i-amtVerticesInChunk] = worldVertices[i];
+                memmove(&worldVertices[i-amtVerticesInChunk],
+                &worldVertices[i],
+                1 * sizeof(Vertex));
+            }
+
+            worldVertexCount -= amtVerticesInChunk;
+            vertexBuildingCounter -= amtVerticesInChunk;
+            worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCount);
+
+            changedVBO = 1;
+
+            for (int otherChunkIdx = 0; otherChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; otherChunkIdx++) {
+                Chunk *otherChunk = (chunkLoaderManager.loadedChunks.loadedChunks[otherChunkIdx]);
+                if (otherChunk->hasVertices) {
+                    if (otherChunk->firstVertex > loadedChunk->lastVertex) {
+                        otherChunk->firstVertex -= amtVerticesInChunk;
+                        otherChunk->lastVertex  -= amtVerticesInChunk;
+                    }
+                }
+            }
+
+            loadedChunk->firstVertex = -1;
+            loadedChunk->lastVertex  = -1;
+        }
+    }
+
+    if (changedVBO) {
+        uploadWorldMesh();
+    }
+}
+
 void buildWorldMesh()
 {
     int changedVBO = 0;
@@ -589,6 +624,7 @@ void buildWorldMesh()
 
          if (!renderChunk->hasVertices && renderChunk->hasMesh) {
             renderChunk->hasVertices = 1;
+            renderChunk->triggerVertexDeletion = 0;
 
             int firstQuadIndex = renderChunk->firstQuadIndex;
             int lastQuadIndex = renderChunk->lastQuadIndex;
@@ -789,50 +825,11 @@ void buildWorldMesh()
          }
     }
 
-    for (int loadedChunkIdx = 0; loadedChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; loadedChunkIdx++) {
-        Chunk *loadedChunk = (chunkLoaderManager.loadedChunks.loadedChunks[loadedChunkIdx]);
-
-        if (loadedChunk->triggerVertexDeletion) {
-            loadedChunk->triggerVertexDeletion = 0;
-            printf("removing a chunk\n");
-            printf("%d and %d\n", loadedChunk->firstVertex, loadedChunk->lastVertex);
-            loadedChunk->hasVertices = 0;
-
-            int amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
-            for (int i = loadedChunk->lastVertex+1; i<worldVertexCount; i++) {
-                // worldVertices[i-amtVerticesInChunk] = worldVertices[i];
-                memmove(&worldVertices[i-amtVerticesInChunk],
-                &worldVertices[i],
-                1 * sizeof(Vertex));
-            }
-
-            worldVertexCount -= amtVerticesInChunk;
-            vertexBuildingCounter -= amtVerticesInChunk;
-            worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCount);
-
-            changedVBO = 1;
-
-            for (int otherChunkIdx = 0; otherChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; otherChunkIdx++) {
-                Chunk *otherChunk = (chunkLoaderManager.loadedChunks.loadedChunks[otherChunkIdx]);
-                if (otherChunk->hasVertices) {
-                    if (otherChunk->firstVertex > loadedChunk->lastVertex) {
-                        otherChunk->firstVertex -= amtVerticesInChunk;
-                        otherChunk->lastVertex  -= amtVerticesInChunk;
-                    }
-                }
-            }
-
-            loadedChunk->firstVertex = -1;
-            loadedChunk->lastVertex  = -1;
-        }
-    }
-
-
-    
-
     if (changedVBO) {
         uploadWorldMesh();
     }
+
+    checkForChunkVerticesDeletion();
 }
 
 

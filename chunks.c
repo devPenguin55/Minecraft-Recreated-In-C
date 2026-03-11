@@ -32,6 +32,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->firstQuadIndex = -1;
     chunk->lastQuadIndex = -1;
     chunk->triggerVertexDeletion = 0;
+    
     if (isFirstCreation)
     {
         chunk->firstVertex = -1;

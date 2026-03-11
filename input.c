@@ -108,7 +108,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                     BucketEntry *result = getHashmapEntry(chunkKey);
                     blockIndex = ChunkWidthX-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
                     result->chunkEntry->blocks[blockIndex].isAir = 0;
-                    triggerRenderChunkRebuild(result->chunkEntry);
+                    triggerRenderChunkRebuild(result->chunkEntry); 
                 }
 
             } else if (selectedBlockToRender.hitFace == FACE_RIGHT) {

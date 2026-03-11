@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include "chunkLoaderManager.h"
+#include "render.h"
 
 ChunkLoaderManager chunkLoaderManager;
 
@@ -231,7 +232,11 @@ void triggerRenderChunkRebuild (Chunk *chunk) {
         deleteChunkMesh(chunk);   
 
         chunk->hasMesh = 1;
-        chunk->triggerVertexDeletion = 1;
         generateChunkMesh(chunk);
+    }
+
+    if (chunk->hasVertices) {
+        chunk->triggerVertexDeletion = 1;
+        checkForChunkVerticesDeletion();
     }
 }
