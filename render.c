@@ -36,6 +36,7 @@ int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
 int GRASS_TOP_TEXTURE_ARRAY_INDEX;
 int DIRT_TEXTURE_ARRAY_INDEX;
 int STONE_TEXTURE_ARRAY_INDEX;
+int WATER_TEXTURE_ARRAY_INDEX;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
@@ -210,14 +211,16 @@ void initGraphics()
         "assets\\grassSide.png",
         "assets\\grassTop.png",
         "assets\\dirt.png",
-        "assets\\stone.png"
+        "assets\\stone.png",
+        "assets\\water.png"
     };
     GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
     GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
     DIRT_TEXTURE_ARRAY_INDEX = 2;
     STONE_TEXTURE_ARRAY_INDEX = 3;
+    WATER_TEXTURE_ARRAY_INDEX = 4;
 
-    blockTextureArray = loadTextureArray(blockTextures, 4);
+    blockTextureArray = loadTextureArray(blockTextures, 5);
 }
 
 void reshape(int width, int height)
@@ -740,6 +743,11 @@ void buildWorldMesh()
                     sideTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
                     topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
                     bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
+                    break;
+                case BLOCK_TYPE_WATER:
+                    sideTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
                     break;
                 default:
                     printf("No correct block type entered!\n");

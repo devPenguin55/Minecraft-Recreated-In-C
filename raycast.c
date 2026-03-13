@@ -54,7 +54,7 @@ void raycastFromCamera() {
             continue;
         }
 
-        if (!curChunk->blocks[index].isAir) {
+        if (!curChunk->blocks[index].isAir && curChunk->blocks[index].blockType != BLOCK_TYPE_WATER) {
             hitBlock = &curChunk->blocks[index];
 
             // determine which face the ray entered from

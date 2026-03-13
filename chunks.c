@@ -8,6 +8,8 @@
 #include "chunkLoaderManager.h"
 #include "noise.h"
 
+#define SEA_LEVEL 35
+
 ChunkMeshQuads chunkMeshQuads;
 // int ChunkWidthX = 1;
 // int ChunkLengthZ = 1;
@@ -32,7 +34,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->firstQuadIndex = -1;
     chunk->lastQuadIndex = -1;
     chunk->triggerVertexDeletion = 0;
-    
+
     if (isFirstCreation)
     {
         chunk->firstVertex = -1;
@@ -86,7 +88,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             { 
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
 
-                
+                curBlock->blockType = -1;
                 curBlock->x = BlockWidthX * x + xAdd;
                 curBlock->z = BlockLengthZ * z + zAdd;
                 
@@ -127,19 +129,31 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 }
                 
 
-
-                if (y == stairHeight)
+                if (curBlock->isAir)
                 {
-                    curBlock->blockType = BLOCK_TYPE_GRASS;
-                }
-                else if (y < stairHeight && y >= (stairHeight - 3))
-                {
-                    curBlock->blockType = BLOCK_TYPE_DIRT;
+                    curBlock->blockType = -1;
                 }
                 else
                 {
-                    curBlock->blockType = BLOCK_TYPE_STONE;
+                    if (y == stairHeight)
+                    {
+                        curBlock->blockType = BLOCK_TYPE_GRASS;
+                    }
+                    else if (y < stairHeight && y >= (stairHeight - 3))
+                    {
+                        curBlock->blockType = BLOCK_TYPE_DIRT;
+                    }
+                    else
+                    {
+                        curBlock->blockType = BLOCK_TYPE_STONE;
+                    }
                 }
+
+                if (curBlock->isAir && y < SEA_LEVEL) {
+                    curBlock->isAir = 0;
+                    curBlock->blockType = BLOCK_TYPE_WATER;
+                }
+                
             }
             
             }
@@ -163,6 +177,37 @@ void handleProgramClose()
 {
     printf("\n\n\n[MEMORY INFO] Program closing -> freeing chunk quad memory\n\n\n");
     free(chunkMeshQuads.quads);
+}
+
+static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBlock)
+{
+    if (mainBlock->isAir)
+        return 0;
+
+    // normal solid block
+    if (mainBlock->blockType != BLOCK_TYPE_WATER)
+    {
+        if (neighborBlock->isAir)
+            return 1;
+
+        // show terrain against water
+        if (neighborBlock->blockType == BLOCK_TYPE_WATER)
+            return 1;
+
+        return 0;
+    }
+
+    // water block
+    if (mainBlock->blockType == BLOCK_TYPE_WATER)
+    {
+        // only render water surface
+        if (neighborBlock->isAir)
+            return 1;
+
+        return 0;
+    }
+
+    return 0;
 }
 
 void generateChunkMesh(Chunk *chunk)
@@ -189,6 +234,20 @@ void generateChunkMesh(Chunk *chunk)
     BucketEntry *rightNeighbor = getHashmapEntry(rightChunkNeighborKey);
     BucketEntry *upNeighbor    = getHashmapEntry(upChunkNeighborKey);
     BucketEntry *downNeighbor  = getHashmapEntry(downChunkNeighborKey);
+
+
+    // if (leftNeighbor == NULL) {
+    //     printf("left neighbor null\n");
+    // }
+    // if (rightNeighbor == NULL) {
+    //     printf("right neighbor null\n");
+    // }
+    // if (upNeighbor == NULL) {
+    //     printf("up neighbor null\n");
+    // }
+    // if (downNeighbor == NULL) {
+    //     printf("down neighbor null\n");
+    // }
 
     if (DEBUG)
     {
@@ -217,7 +276,7 @@ void generateChunkMesh(Chunk *chunk)
                 int backBlockIndex = blockIndex + ChunkWidthX;
 
                 if (
-                    (topBlockIndex < ChunkWidthX * ChunkLengthZ * ChunkHeightY && (!chunk->blocks[blockIndex].isAir && chunk->blocks[topBlockIndex].isAir)) ||
+                    (topBlockIndex < ChunkWidthX * ChunkLengthZ * ChunkHeightY && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[topBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && topBlockIndex >= ChunkWidthX * ChunkLengthZ * ChunkHeightY))
                 {
                     // existing block
@@ -229,7 +288,7 @@ void generateChunkMesh(Chunk *chunk)
                 }
 
                 if (
-                    (bottomBlockIndex >= 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[bottomBlockIndex].isAir)) ||
+                    (bottomBlockIndex >= 0 && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[bottomBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && bottomBlockIndex < 0))
                 {
                     // existing block
@@ -241,7 +300,7 @@ void generateChunkMesh(Chunk *chunk)
                 }
 
 
-                if ((x > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[leftBlockIndex].isAir)) ||
+                if ((x > 0 && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[leftBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && x == 0))
                 {
                     // existing block
@@ -252,7 +311,7 @@ void generateChunkMesh(Chunk *chunk)
                     lefts[y][z][x] = 0;
                 }
 
-                if ((x < (ChunkWidthX - 1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[rightBlockIndex].isAir)) ||
+                if ((x < (ChunkWidthX - 1) && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[rightBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && x == (ChunkWidthX - 1)))
                 {
                     // existing block
@@ -263,7 +322,7 @@ void generateChunkMesh(Chunk *chunk)
                     rights[y][z][x] = 0;
                 }
 
-                if ((z > 0 && (!chunk->blocks[blockIndex].isAir && chunk->blocks[frontBlockIndex].isAir)) ||
+                if ((z > 0 && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[frontBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && z == 0))
                 {
                     // existing block
@@ -274,7 +333,7 @@ void generateChunkMesh(Chunk *chunk)
                     fronts[x][y][z] = 0;
                 }
 
-                if ((z < (ChunkLengthZ - 1) && (!chunk->blocks[blockIndex].isAir && chunk->blocks[backBlockIndex].isAir)) ||
+                if ((z < (ChunkLengthZ - 1) && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[backBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && z == (ChunkLengthZ - 1)))
                 {
                     // existing block
@@ -447,6 +506,7 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     continue;
                 }
+                
 
                 curBlockType = lefts[y][z][x];
 
@@ -454,7 +514,11 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     // use ChunkWidthX-1 for the x because need to scan the right side for the left computations
                     // if the block on the left chunk's right side is solid then we don't need a face here!
-                    if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    Block *neighborBlock = &leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    if (
+                        !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock)
+                    )
                     {
                         continue;
                     }
@@ -465,7 +529,11 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (leftNeighbor != NULL && (x == 0))
                     {
-                        if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + (y+width) * (ChunkWidthX * ChunkLengthZ)];
+                        Block *neighborBlock = &leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)];
+                        if (
+                            !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock)
+                        )
                         {
                             break;
                         }
@@ -487,7 +555,11 @@ void generateChunkMesh(Chunk *chunk)
 
                         if (leftNeighbor != NULL && (x == 0))
                         {
-                            if (!leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            Block *mainBlock = &chunk->blocks[x + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *neighborBlock = &leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
+                            if (
+                                !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock)
+                            )
                             {
                                 done = 1;
                                 break;
@@ -545,14 +617,16 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     continue;
                 }
-
+                
                 curBlockType = rights[y][z][x];
 
                 if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                 {
                     // use 0 for the x because need to scan the left side for the right computations
                     // if the block on the right chunk's left side is solid then we don't need a face here!
-                    if (!rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    Block *neighborBlock = &rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                     {
                         continue;
                     }
@@ -563,7 +637,9 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                     {
-                        if (!rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + (y+width) * (ChunkWidthX * ChunkLengthZ)];
+                        Block *neighborBlock = &rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)];
+                        if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
                             break;
                         }
@@ -585,7 +661,9 @@ void generateChunkMesh(Chunk *chunk)
 
                         if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                         {
-                            if (!rightNeighbor->chunkEntry->blocks[0 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            Block *mainBlock = &chunk->blocks[x + (z+height) * ChunkWidthX + (y+dy) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *neighborBlock = &rightNeighbor->chunkEntry->blocks[0 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
+                            if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
                                 done = 1;
                                 break;
@@ -641,14 +719,15 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     continue;
                 }
-
                 curBlockType = fronts[x][y][z];
 
                 if (upNeighbor != NULL && (z == 0))
                 {
                     // use ChunkLengthZ-1 for the z because need to scan the bottom side for the up computations
                     // if the block on the up chunk's bottom side is solid then we don't need a face here!
-                    if (!upNeighbor->chunkEntry->blocks[x + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    Block *neighborBlock = &upNeighbor->chunkEntry->blocks[x + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                     {
                         continue;
                     }
@@ -659,7 +738,9 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (upNeighbor != NULL && (z == 0))
                     {
-                        if (!upNeighbor->chunkEntry->blocks[(x + width) + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        Block *mainBlock = &chunk->blocks[(x+width) + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                        Block *neighborBlock = &upNeighbor->chunkEntry->blocks[(x + width) + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                        if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
                             break;
                         }
@@ -678,10 +759,12 @@ void generateChunkMesh(Chunk *chunk)
                             done = 1;
                             break;
                         }
-
+ 
                         if (upNeighbor != NULL && (z == 0))
                         {
-                            if (!upNeighbor->chunkEntry->blocks[(x + dx) + ((ChunkLengthZ - 1)) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            Block *mainBlock = &chunk->blocks[(x+dx) + z * ChunkWidthX + (y+height) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *neighborBlock = &upNeighbor->chunkEntry->blocks[(x + dx) + ((ChunkLengthZ - 1)) * ChunkWidthX + (y+height) * (ChunkWidthX * ChunkLengthZ)];
+                            if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
                                 done = 1;
                                 break;
@@ -745,7 +828,9 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     // use 0 for the z because need to scan the top side for the bottom computations
                     // if the block on the bottom chunk's up side is solid then we don't need a face here!
-                    if (!downNeighbor->chunkEntry->blocks[x + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                    Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    Block *neighborBlock = &downNeighbor->chunkEntry->blocks[x + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                    if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                     {
                         continue;
                     }
@@ -756,7 +841,9 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                     {
-                        if (!downNeighbor->chunkEntry->blocks[(x + width) + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)].isAir)
+                        Block *mainBlock = &chunk->blocks[(x+width) + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                        Block *neighborBlock = &downNeighbor->chunkEntry->blocks[(x + width) + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                        if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
                             break;
                         }
@@ -778,7 +865,9 @@ void generateChunkMesh(Chunk *chunk)
 
                         if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                         {
-                            if (!downNeighbor->chunkEntry->blocks[(x + dx) + (0) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)].isAir)
+                            Block *mainBlock = &chunk->blocks[(x+dx) + z * ChunkWidthX + (y+height) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *neighborBlock = &downNeighbor->chunkEntry->blocks[(x + dx) + (0) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)];
+                            if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
                                 done = 1;
                                 break;

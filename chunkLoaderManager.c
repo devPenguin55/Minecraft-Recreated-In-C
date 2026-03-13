@@ -119,7 +119,7 @@ void deleteHashmapEntry(uint64_t key) {
     free(currentNode->chunkEntry);
     free(currentNode);
 }
-
+int initialAmtLoadedChunksUntilMeshing = 0;
 void loadChunks(GLfloat playerCoords[2]) {
     int playerChunkX = (int)floor(playerCoords[0] / (ChunkWidthX * BlockWidthX));
     int playerChunkZ = (int)floor(playerCoords[1] / (ChunkLengthZ * BlockLengthZ));
@@ -155,15 +155,18 @@ void loadChunks(GLfloat playerCoords[2]) {
                     loadedChunks->capacity *= 2;
                     loadedChunks->loadedChunks = realloc(loadedChunks->loadedChunks, loadedChunks->capacity*sizeof(Chunk *));
                 }
-    
+                printf("added a loaded chunk\n");
                 loadedChunks->loadedChunks[(loadedChunks->amtLoadedChunks)++] = result->chunkEntry;
+                if (initialAmtLoadedChunksUntilMeshing < 4*CHUNK_PRELOAD_RADIUS*CHUNK_PRELOAD_RADIUS) { initialAmtLoadedChunksUntilMeshing++; }
             }
 
             if (alreadyPreloadedOnce) { break; }
- 
+            
+            if (initialAmtLoadedChunksUntilMeshing < 4*CHUNK_PRELOAD_RADIUS*CHUNK_PRELOAD_RADIUS) { continue; }
+
             // see if a chunk is in the render radius
             if ((dx <= CHUNK_RENDER_RADIUS && dx >= -CHUNK_RENDER_RADIUS) && (dz <= CHUNK_RENDER_RADIUS && dz >= -CHUNK_RENDER_RADIUS)) {
-                if (result->chunkEntry->flag != CHUNK_FLAG_RENDERED_AND_LOADED) { alreadyPreloadedOnce = 1; }
+                if (result->chunkEntry->flag != CHUNK_FLAG_RENDERED_AND_LOADED) { alreadyPreloadedOnce = 1; printf("generated chunk mesh\n"); }
                 // if (chunkX == -1 && chunkZ == 0) {printf("rendering chunks for %d %d %d %d!\n", chunkX, chunkZ, dx, dz);printf("chunkKey = %" PRIu64 "\n", chunkKey);}
                 // if it is, allocate it
                 if (renderChunks->amtRenderChunks >= renderChunks->capacity) {
