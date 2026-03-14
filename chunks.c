@@ -36,57 +36,15 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->lastQuadIndex = -1;
     chunk->triggerVertexDeletion = 0;
 
-    if (isFirstCreation)
-    {
-        chunk->firstVertex = -1;
-        chunk->lastVertex  = -1;
-        chunk->firstWaterVertex = -1;
-        chunk->lastWaterVertex  = -1;
-    }
+    chunk->firstVertex = -1;
+    chunk->lastVertex  = -1;
+    chunk->firstWaterVertex = -1;
+    chunk->lastWaterVertex  = -1;
 
     for (int x = 0; x < ChunkWidthX; x++)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
-            if (0) {
-                
-            int baseHeight = 60;
-            int stairHeight = baseHeight + x + z;
-            if (stairHeight >= ChunkHeightY)
-            {
-                stairHeight = ChunkHeightY - 1;
-            }
-            for (int y = 0; y < ChunkHeightY; y++)
-            { 
-                Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
-
-                curBlock->x = BlockWidthX * x + xAdd;
-                curBlock->z = BlockLengthZ * z + zAdd;
-                curBlock->y = BlockHeightY * (y);
-
-                // fill everything below the staircase height
-                curBlock->isAir = (y > stairHeight);
-                if (x == 5 && (z == 5 && y == 63)) {
-                    curBlock->isAir = 0;
-                }
-
-                if (y == stairHeight)
-                {
-                    curBlock->blockType = BLOCK_TYPE_GRASS;
-                }
-                else if (y < stairHeight && y >= (stairHeight - 3))
-                {
-                    curBlock->blockType = BLOCK_TYPE_DIRT;
-                }
-                else
-                {
-                    curBlock->blockType = BLOCK_TYPE_STONE;
-                }
-            }
-
-            } else {
-            /////////////////////////////////////////////////////////////
-
             for (int y = 0; y < ChunkHeightY; y++)
             { 
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
@@ -157,8 +115,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     curBlock->blockType = BLOCK_TYPE_WATER;
                 }
                 
-            }
-            
             }
         }
     }

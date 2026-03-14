@@ -87,19 +87,20 @@ void handleMouse(int button, int state, int x_, int y_) {
                     return;
                 }
                 selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                
-
+                selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
             } else if (selectedBlockToRender.hitFace == FACE_BOTTOM) {
                 blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y-1);
                 if ((y-1) < 0) {
                     return;
                 }
                 selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
 
             } else if (selectedBlockToRender.hitFace == FACE_LEFT) {
                 if ((x-1) >= 0) {
                     blockIndex = x-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
@@ -115,6 +116,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 if ((x+1) < ChunkWidthX) {
                     blockIndex = x+1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
@@ -130,6 +132,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 if ((z + 1) < ChunkLengthZ) {
                     blockIndex = x + (ChunkWidthX)*(z+1) + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
@@ -145,6 +148,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 if ((z-1) >= 0) {
                     blockIndex = x + (ChunkWidthX)*(z-1) + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 

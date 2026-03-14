@@ -12,7 +12,7 @@ void main()
 
     if (fragLayer == 4)
     {
-        texColor.a = 0.8;
+        texColor.a = 0.6;
     }
 
     fragColor = texColor;
