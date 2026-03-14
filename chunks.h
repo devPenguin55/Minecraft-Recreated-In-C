@@ -24,8 +24,11 @@ typedef struct Chunk
     int hasMesh;
     uint64_t key;
     int hasVertices; 
+    int hasWaterVertices; 
     int firstVertex;
     int lastVertex;
+    int firstWaterVertex;
+    int lastWaterVertex;
     int triggerVertexDeletion;
 } Chunk;
 

@@ -26,12 +26,19 @@ SelectedBlockToRender selectedBlockToRender;
 
 GLuint worldVBO = 0;
 GLuint worldVAO = 0;
+GLuint waterVBO = 0;
+GLuint waterVAO = 0;
 
 Vertex *worldVertices = NULL;
 int worldVertexCount = 0;
-int vertexBuildingCounter = 0; 
-GLuint blockTextureArray;
+int worldVertexBuildingCounter = 0; 
+int worldVertexCapacity = 0;
+Vertex *waterVertices = NULL;
+int waterVertexCount = 0;
+int waterVertexBuildingCounter = 0; 
+int waterVertexCapacity = 0;
 
+GLuint blockTextureArray;
 int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
 int GRASS_TOP_TEXTURE_ARRAY_INDEX;
 int DIRT_TEXTURE_ARRAY_INDEX;
@@ -576,7 +583,7 @@ void drawText(const char *text, float x, float y)
     }
 }
 
-void checkForChunkVerticesDeletion() {
+void checkForWorldChunkVerticesDeletion() {
     int changedVBO = 0;
     for (int loadedChunkIdx = 0; loadedChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; loadedChunkIdx++) {
         Chunk *loadedChunk = (chunkLoaderManager.loadedChunks.loadedChunks[loadedChunkIdx]);
@@ -584,33 +591,70 @@ void checkForChunkVerticesDeletion() {
         if (loadedChunk->triggerVertexDeletion) {
             loadedChunk->triggerVertexDeletion = 0;
             loadedChunk->hasVertices = 0;
+            loadedChunk->hasWaterVertices = 0;
 
             int amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
-            for (int i = loadedChunk->lastVertex+1; i<worldVertexCount; i++) {
-                // worldVertices[i-amtVerticesInChunk] = worldVertices[i];
-                memmove(&worldVertices[i-amtVerticesInChunk],
-                &worldVertices[i],
-                1 * sizeof(Vertex));
+            if (loadedChunk->lastVertex != -1) {
+                int start = loadedChunk->firstVertex;
+                int end = loadedChunk->lastVertex + 1;
+
+                int moveCount = worldVertexCount - end;
+
+                if (moveCount > 0)
+                {
+                    memmove(&worldVertices[start],
+                            &worldVertices[end],
+                            moveCount * sizeof(Vertex));
+                }
+                
+                worldVertexCount -= amtVerticesInChunk;
+                worldVertexBuildingCounter -= amtVerticesInChunk;
+                changedVBO = 1;
             }
 
-            worldVertexCount -= amtVerticesInChunk;
-            vertexBuildingCounter -= amtVerticesInChunk;
-            worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCount);
+            int amtWaterVerticesInChunk = loadedChunk->lastWaterVertex - loadedChunk->firstWaterVertex + 1;
+            if (loadedChunk->lastWaterVertex != -1) {
+                int start = loadedChunk->firstWaterVertex;
+                int end = loadedChunk->lastWaterVertex + 1;
 
-            changedVBO = 1;
+                int moveCount = waterVertexCount - end;
+
+                if (moveCount > 0)
+                {
+                    memmove(&waterVertices[start],
+                            &waterVertices[end],
+                            moveCount * sizeof(Vertex));
+                }
+
+                waterVertexCount -= amtWaterVerticesInChunk;
+                waterVertexBuildingCounter -= amtWaterVerticesInChunk;
+                changedVBO = 1;
+            }
+
+
+
+            
 
             for (int otherChunkIdx = 0; otherChunkIdx < chunkLoaderManager.loadedChunks.amtLoadedChunks; otherChunkIdx++) {
                 Chunk *otherChunk = (chunkLoaderManager.loadedChunks.loadedChunks[otherChunkIdx]);
-                if (otherChunk->hasVertices) {
-                    if (otherChunk->firstVertex > loadedChunk->lastVertex) {
+                if (otherChunk->hasVertices && otherChunk->lastVertex != -1 && loadedChunk->lastVertex != -1) {
+                    if (otherChunk->firstVertex > loadedChunk->firstVertex) {
                         otherChunk->firstVertex -= amtVerticesInChunk;
                         otherChunk->lastVertex  -= amtVerticesInChunk;
+                    }
+                }
+                if (otherChunk->hasWaterVertices && otherChunk->lastWaterVertex != -1 && loadedChunk->lastWaterVertex != -1) {
+                    if (otherChunk->firstWaterVertex > loadedChunk->firstWaterVertex) {
+                        otherChunk->firstWaterVertex -= amtWaterVerticesInChunk;
+                        otherChunk->lastWaterVertex  -= amtWaterVerticesInChunk;
                     }
                 }
             }
 
             loadedChunk->firstVertex = -1;
             loadedChunk->lastVertex  = -1;
+            loadedChunk->firstWaterVertex = -1;
+            loadedChunk->lastWaterVertex  = -1;
         }
     }
 
@@ -627,23 +671,33 @@ void buildWorldMesh()
 
          if (!renderChunk->hasVertices && renderChunk->hasMesh) {
             renderChunk->hasVertices = 1;
+            renderChunk->hasWaterVertices = 0;
             renderChunk->triggerVertexDeletion = 0;
 
             int firstQuadIndex = renderChunk->firstQuadIndex;
             int lastQuadIndex = renderChunk->lastQuadIndex;
 
 
-            worldVertexCount += ((lastQuadIndex - firstQuadIndex + 1)) * 6;
-            if (worldVertices == NULL) {
-                worldVertices = malloc(sizeof(Vertex) * worldVertexCount);
-            } else {
-                worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCount);
-            }
+            
 
-            renderChunk->firstVertex = vertexBuildingCounter;
+            renderChunk->firstVertex = worldVertexBuildingCounter;
             for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
             {
                 MeshQuad *q = &chunkMeshQuads.quads[i];
+                if (q->blockType == BLOCK_TYPE_WATER) { 
+                    continue;
+                }
+                worldVertexCount += 6;
+                if (worldVertices == NULL) {
+                    worldVertexCapacity = 1024;
+                    worldVertices = malloc(sizeof(Vertex) * worldVertexCapacity);
+                } else {
+                    if (worldVertexBuildingCounter + 6 > worldVertexCapacity)
+                    {
+                        worldVertexCapacity = worldVertexCapacity * 2 + 1024;
+                        worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCapacity);
+                    }
+                }
 
                 float x = q->x;
                 float y = q->y;
@@ -744,11 +798,6 @@ void buildWorldMesh()
                     topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
                     bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
                     break;
-                case BLOCK_TYPE_WATER:
-                    sideTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
-                    break;
                 default:
                     printf("No correct block type entered!\n");
                     break;
@@ -815,29 +864,225 @@ void buildWorldMesh()
                     Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
                     : i == 2   ? &v2
                                : &v3);
+
                     v->x += x;
                     v->y += y;
                     v->z += z;
                 }
 
-                worldVertices[vertexBuildingCounter++] = v0;
-                worldVertices[vertexBuildingCounter++] = v1;
-                worldVertices[vertexBuildingCounter++] = v2;
-                worldVertices[vertexBuildingCounter++] = v0;
-                worldVertices[vertexBuildingCounter++] = v2;
-                worldVertices[vertexBuildingCounter++] = v3;
+                worldVertices[worldVertexBuildingCounter++] = v0;
+                worldVertices[worldVertexBuildingCounter++] = v1;
+                worldVertices[worldVertexBuildingCounter++] = v2;
+                worldVertices[worldVertexBuildingCounter++] = v0;
+                worldVertices[worldVertexBuildingCounter++] = v2;
+                worldVertices[worldVertexBuildingCounter++] = v3;
             }
-            renderChunk->lastVertex = vertexBuildingCounter-1;
+            renderChunk->lastVertex = worldVertexBuildingCounter-1;
 
             changedVBO = 1;
          }
+
+         if (!renderChunk->hasWaterVertices && renderChunk->hasMesh) {
+             renderChunk->hasWaterVertices = 1;
+             renderChunk->triggerVertexDeletion = 0;
+
+             int firstQuadIndex = renderChunk->firstQuadIndex;
+             int lastQuadIndex = renderChunk->lastQuadIndex;
+
+
+             
+
+             renderChunk->firstWaterVertex = waterVertexBuildingCounter;
+             for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
+             {
+                 MeshQuad *q = &chunkMeshQuads.quads[i];
+                 if (q->blockType != BLOCK_TYPE_WATER) { 
+                     continue;
+                 }
+                 waterVertexCount += 6;
+                 if (waterVertices == NULL) {
+                     waterVertexCapacity = 1024;
+                     waterVertices = malloc(sizeof(Vertex) * waterVertexCapacity);
+                 } else {
+                     if (waterVertexBuildingCounter + 6 > waterVertexCapacity)
+                     {
+                         waterVertexCapacity = waterVertexCapacity * 2 + 1024;
+                         waterVertices = realloc(waterVertices, sizeof(Vertex) * waterVertexCapacity);
+                     }
+                 }
+                
+                 float x = q->x;
+                 float y = q->y;
+                 float z = q->z;
+
+                 float w = q->width;
+                 float h = q->height;
+
+                 Vertex v0, v1, v2, v3;
+                 GLfloat Vertices[8][3] = {
+                     // front face
+                     {-0.5, 0.5, 0.5},
+                     {0.5, 0.5, 0.5},
+                     {0.5, -0.5, 0.5},
+                     {-0.5, -0.5, 0.5},
+                     // back face
+                     {-0.5, 0.5, -0.5},
+                     {0.5, 0.5, -0.5},
+                     {0.5, -0.5, -0.5},
+                     {-0.5, -0.5, -0.5},
+                 };
+                 switch(q->faceType)
+                 {
+                     case FACE_FRONT:
+                         v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
+                         v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
+                         v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
+                         v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
+                         break;
+
+                     case FACE_BACK:
+                         v0 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], 0, 0};
+                         v1 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], w, 0};
+                         v2 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], w, h};
+                         v3 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], 0, h};
+                         break;
+
+                     case FACE_LEFT:
+                         v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
+                         v1 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], w, 0};
+                         v2 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], w, h};
+                         v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
+                         break;
+
+                     case FACE_RIGHT:
+                         v0 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], 0, 0};
+                         v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
+                         v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
+                         v3 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], 0, h};
+                         break;
+                     case FACE_TOP:
+                         v0 = (Vertex){Vertices[0][0], Vertices[0][1], Vertices[0][2], 0, 0};
+                         v1 = (Vertex){Vertices[1][0], Vertices[1][1], Vertices[1][2], w, 0};
+                         v2 = (Vertex){Vertices[5][0], Vertices[5][1], Vertices[5][2], w, h};
+                         v3 = (Vertex){Vertices[4][0], Vertices[4][1], Vertices[4][2], 0, h};
+                         break;
+
+                     case FACE_BOTTOM:
+                         v0 = (Vertex){Vertices[7][0], Vertices[7][1], Vertices[7][2], 0, 0};
+                         v1 = (Vertex){Vertices[6][0], Vertices[6][1], Vertices[6][2], w, 0};
+                         v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
+                         v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
+                         break;
+                 }
+
+                 float minX = MIN4(v0.x,v1.x, v2.x, v3.x);
+                 float maxX = MAX4(v0.x,v1.x, v2.x, v3.x);
+                 float minY = MIN4(v0.y,v1.y, v2.y, v3.y);
+                 float maxY = MAX4(v0.y,v1.y, v2.y, v3.y);
+                 float minZ = MIN4(v0.z,v1.z, v2.z, v3.z);
+                 float maxZ = MAX4(v0.z,v1.z, v2.z, v3.z);
+
+                 float amtDx = maxX - minX;
+                 float amtDy = maxY - minY;
+                 float amtDz = maxZ - minZ;
+
+                 float size[2] = {w, h};
+                 // scale along face axes only
+
+                 int sideTextureIndex   = WATER_TEXTURE_ARRAY_INDEX;
+                 int topTextureIndex    = WATER_TEXTURE_ARRAY_INDEX;
+                 int bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+
+                 if (amtDy == 0.0f)
+                 {
+                     // X–Z face
+                     for (int i = 0; i < 4; i++)
+                     {
+                         Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                                                 : i == 2   ? &v2
+                                                            : &v3);
+                         v->x = (v->x + 0.5f) * size[0] - 0.5f;
+                         v->z = (v->z + 0.5f) * size[1] - 0.5f;
+
+
+                         v->u = v->x + 0.5f;
+                         v->v = v->z + 0.5f;
+
+                         v->layer = (q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex;          
+                     }
+
+                 }
+                 else if (amtDx == 0.0f)
+                 {
+                     // Y–Z face
+                     for (int i = 0; i < 4; i++)
+                     {
+                         Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                         : i == 2   ? &v2
+                                    : &v3);
+                         v->y = (v->y + 0.5f) * size[0] - 0.5f;
+                         v->z = (v->z + 0.5f) * size[1] - 0.5f;
+
+                         v->u = v->z + 0.5f;
+                         v->v = 1.0 - (v->y + 0.5f);
+
+                         v->layer = sideTextureIndex;  
+                     }
+                 }
+                 else
+                 {
+                     // X–Y face
+                     for (int i = 0; i < 4; i++)
+                     {
+                         Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                         : i == 2   ? &v2
+                                    : &v3);
+                         v->x = (v->x + 0.5f) * size[0] - 0.5f;
+                         v->y = (v->y + 0.5f) * size[1] - 0.5f;
+
+                         v->u = v->x + 0.5f;
+                         v->v = 1.0 - (v->y + 0.5f);
+
+                         v->layer = sideTextureIndex; 
+                     } 
+                 }
+
+
+                 for (int i = 0; i < 4; i++)
+                 {
+                     Vertex *v = (i == 0 ? &v0 : i == 1 ? &v1
+                     : i == 2   ? &v2
+                                : &v3);
+
+                     v->x += x;
+                     v->y += y;
+                     v->z += z;
+
+
+                     if (v->y > 0.0f) // top vertices of cube
+                     {
+                         v->y -= 0.1;
+                     }
+                 }
+
+                 waterVertices[waterVertexBuildingCounter++] = v0;
+                 waterVertices[waterVertexBuildingCounter++] = v1;
+                 waterVertices[waterVertexBuildingCounter++] = v2;
+                 waterVertices[waterVertexBuildingCounter++] = v0;
+                 waterVertices[waterVertexBuildingCounter++] = v2;
+                 waterVertices[waterVertexBuildingCounter++] = v3;
+             }
+             renderChunk->lastWaterVertex = waterVertexBuildingCounter-1;
+
+             changedVBO = 1;
+          }
     }
 
     if (changedVBO) {
         uploadWorldMesh();
     }
 
-    checkForChunkVerticesDeletion();
+    checkForWorldChunkVerticesDeletion();
 }
 
 
@@ -856,6 +1101,36 @@ void uploadWorldMesh() {
     glBindBuffer(GL_ARRAY_BUFFER, worldVBO);
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * worldVertexCount, worldVertices, GL_STATIC_DRAW);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // texcoord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // layer attribute location
+    glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, layer)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0); // unbind
+
+
+    // * ////////////////////////////////////////////////////////
+
+    if (waterVAO == 0) {
+        glGenVertexArrays(1, &waterVAO);
+    }
+    
+    glBindVertexArray(waterVAO);
+    
+    if (waterVBO == 0) {
+        glGenBuffers(1, &waterVBO);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, waterVBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * waterVertexCount, waterVertices, GL_STATIC_DRAW);
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     glEnableVertexAttribArray(0);
@@ -940,6 +1215,7 @@ void drawGraphics()
     glGetFloatv(GL_MODELVIEW_MATRIX, clip);
     glPopMatrix(); 
 
+    
     buildWorldMesh();   // fills worldVertices and worldVertexCount
 
     glUseProgram(worldShader);
@@ -957,7 +1233,17 @@ void drawGraphics()
     glBindVertexArray(worldVAO);
     glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
     glBindVertexArray(0);
+    
+    // * ////////////
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBindVertexArray(waterVAO);
+    glDrawArrays(GL_TRIANGLES, 0, waterVertexCount);
+    glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
 
     glUseProgram(0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);

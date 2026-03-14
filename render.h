@@ -59,7 +59,7 @@ void face(
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType, int blockType);
 void drawText(const char *text, float x, float y);
 void drawGraphics();
-void checkForChunkVerticesDeletion();
+void checkForWorldChunkVerticesDeletion();
 void uploadWorldMesh();
 
 #endif

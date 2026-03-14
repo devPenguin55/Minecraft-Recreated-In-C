@@ -6,6 +6,14 @@ out vec4 fragColor;
 
 uniform sampler2DArray blockTextures;
 
-void main() {
-    fragColor = texture(blockTextures, vec3(fragUV, float(fragLayer)));
+void main()
+{
+    vec4 texColor = texture(blockTextures, vec3(fragUV, fragLayer));
+
+    if (fragLayer == 4)
+    {
+        texColor.a = 0.8;
+    }
+
+    fragColor = texColor;
 }

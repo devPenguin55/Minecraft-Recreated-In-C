@@ -31,6 +31,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->key = key;
     chunk->hasMesh = 0;
     chunk->hasVertices = 0;
+    chunk->hasWaterVertices = 0;
     chunk->firstQuadIndex = -1;
     chunk->lastQuadIndex = -1;
     chunk->triggerVertexDeletion = 0;
@@ -39,6 +40,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     {
         chunk->firstVertex = -1;
         chunk->lastVertex  = -1;
+        chunk->firstWaterVertex = -1;
+        chunk->lastWaterVertex  = -1;
     }
 
     for (int x = 0; x < ChunkWidthX; x++)

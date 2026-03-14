@@ -240,6 +240,6 @@ void triggerRenderChunkRebuild (Chunk *chunk) {
 
     if (chunk->hasVertices) {
         chunk->triggerVertexDeletion = 1;
-        checkForChunkVerticesDeletion();
+        checkForWorldChunkVerticesDeletion();
     }
 }
