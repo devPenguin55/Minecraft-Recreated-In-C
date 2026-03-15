@@ -1239,12 +1239,13 @@ void drawGraphics()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
+    glDepthFunc(GL_LEQUAL);
 
     glBindVertexArray(waterVAO);
     glDrawArrays(GL_TRIANGLES, 0, waterVertexCount);
     glBindVertexArray(0);
     
-    glDepthMask(GL_TRUE);
+    // glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 
     glUseProgram(0);
