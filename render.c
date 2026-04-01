@@ -44,6 +44,7 @@ int GRASS_TOP_TEXTURE_ARRAY_INDEX;
 int DIRT_TEXTURE_ARRAY_INDEX;
 int STONE_TEXTURE_ARRAY_INDEX;
 int WATER_TEXTURE_ARRAY_INDEX;
+int SAND_TEXTURE_ARRAY_INDEX;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
@@ -175,6 +176,35 @@ GLuint loadTextureArray(const char* filenames[], int count) {
     return texArray;
 }
 
+int isCameraInWater() {
+    int voxelX = (int)round(CameraX / BlockWidthX);
+    int voxelY = (int)round(CameraY / BlockHeightY);
+    int voxelZ = (int)round(CameraZ / BlockLengthZ);
+
+    int chunkX = (voxelX >= 0) ? voxelX / ChunkWidthX : (voxelX - (ChunkWidthX-1)) / ChunkWidthX;
+    int chunkZ = (voxelZ >= 0) ? voxelZ / ChunkLengthZ : (voxelZ - (ChunkLengthZ-1)) / ChunkLengthZ;
+
+    voxelX = voxelX - chunkX * ChunkWidthX;
+    voxelY = voxelY;
+    voxelZ = voxelZ - chunkZ * ChunkLengthZ;
+     
+    uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
+    BucketEntry* result = getHashmapEntry(chunkKey);
+    if (!result) { return 0; };
+
+    Chunk *curChunk = result->chunkEntry;
+    int index = voxelX + ChunkWidthX * voxelZ + (ChunkWidthX*ChunkLengthZ)*voxelY;
+
+    Block *block = &curChunk->blocks[index];
+    return (block != NULL && block->blockType == BLOCK_TYPE_WATER);
+}
+
+float getWaterScreenY(int windowHeight) {
+    float waterY = (SEA_LEVEL > CameraY) ? windowHeight * 0.3f : windowHeight * 0.7f;
+
+    return waterY;
+}
+
 void initGraphics()
 {
     glClearColor(0, 0, 0, 1);
@@ -219,15 +249,17 @@ void initGraphics()
         "assets\\grassTop.png",
         "assets\\dirt.png",
         "assets\\stone.png",
-        "assets\\water.png"
+        "assets\\water.png",
+        "assets\\sand.png"
     };
     GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
     GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
     DIRT_TEXTURE_ARRAY_INDEX = 2;
     STONE_TEXTURE_ARRAY_INDEX = 3;
     WATER_TEXTURE_ARRAY_INDEX = 4;
+    SAND_TEXTURE_ARRAY_INDEX = 5;
 
-    blockTextureArray = loadTextureArray(blockTextures, 5);
+    blockTextureArray = loadTextureArray(blockTextures, 6);
 }
 
 void reshape(int width, int height)
@@ -798,6 +830,11 @@ void buildWorldMesh()
                     topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
                     bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
                     break;
+                case BLOCK_TYPE_SAND:
+                    sideTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
+                    break;
                 default:
                     printf("No correct block type entered!\n");
                     break;
@@ -1245,7 +1282,7 @@ void drawGraphics()
     glDrawArrays(GL_TRIANGLES, 0, waterVertexCount);
     glBindVertexArray(0);
     
-    // glDepthMask(GL_TRUE);
+    glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 
     glUseProgram(0);
@@ -1322,6 +1359,42 @@ void drawGraphics()
     glColor3f(1, 1, 1);
     drawText(text, 5, 15);
 
+    // glColor3f(1.0f, 1.0f, 1.0f);
+
+
+
+    int inWater = isCameraInWater(); 
+    if (inWater) { 
+        float waterScreenY = getWaterScreenY(windowHeight); 
+        glEnable(GL_BLEND); 
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+        // nice water tint 
+        glColor4f(0.0f, 0.3f, 0.6f, 0.25f); 
+        glBegin(GL_QUADS); 
+        // OPTION A: full screen when deep underwater 
+        if (CameraY < SEA_LEVEL - 0.2f) { 
+            glVertex2f(0, 0); 
+            glVertex2f(windowWidth, 0); 
+            glVertex2f(windowWidth, windowHeight); 
+            glVertex2f(0, windowHeight); 
+            printf("full\n"); 
+        } 
+        // OPTION B: partial (waterline effect) 
+        else { 
+            glVertex2f(0, waterScreenY); 
+            glVertex2f(windowWidth, waterScreenY); 
+            glVertex2f(windowWidth, windowHeight); 
+            glVertex2f(0, windowHeight); 
+            printf("partial\n"); 
+        } 
+        glEnd(); 
+        glDisable(GL_BLEND); 
+    }
+
+
+
+
+
     glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
@@ -1331,6 +1404,10 @@ void drawGraphics()
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
+
+
+
+    
 
     // switch the content of color and depth buffers
     glutSwapBuffers();

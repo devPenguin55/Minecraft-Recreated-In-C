@@ -89,7 +89,7 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists) {
     currentNode = currentNode->next; // move to the new node
     currentNode->key = key;
     currentNode->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
-    createChunk(currentNode->chunkEntry, chunkX * ChunkWidthX, chunkZ * ChunkLengthZ, 1, CHUNK_FLAG_LOADED, key);
+    createChunk(currentNode->chunkEntry, chunkX * ChunkWidthX * BlockWidthX, chunkZ * ChunkLengthZ * BlockLengthZ, 1, CHUNK_FLAG_LOADED, key);
     currentNode->exists = exists;
     currentNode->next = NULL;
 }
@@ -130,11 +130,15 @@ void loadChunks(GLfloat playerCoords[2]) {
     LoadedChunks *loadedChunks        = &(chunkLoaderManager.loadedChunks);
     RenderChunks *renderChunks        = &(chunkLoaderManager.renderChunks);
     ChunksToUnload *chunksToUnload    = &(chunkLoaderManager.chunksToUnload);
+    
     renderChunks->amtRenderChunks     = 0;
     chunksToUnload->amtChunksToUnload = 0;
-
+    renderChunks->capacity            = 16;
+    chunksToUnload->capacity          = 16;
+    
     int alreadyPreloadedOnce = 0;
     for (int dx = -CHUNK_PRELOAD_RADIUS; dx < CHUNK_PRELOAD_RADIUS+1; dx++) {
+        if (alreadyPreloadedOnce) { break; }
         for (int dz = -CHUNK_PRELOAD_RADIUS; dz < CHUNK_PRELOAD_RADIUS+1; dz++) {
             int chunkX, chunkZ;
             chunkX = playerChunkX + dx; 
@@ -162,10 +166,20 @@ void loadChunks(GLfloat playerCoords[2]) {
 
             
             if (alreadyPreloadedOnce) { break; }
+
+            if (result == NULL) continue;
             
             if (initialAmtLoadedChunksUntilMeshing < (2*CHUNK_PRELOAD_RADIUS+1)*(2*CHUNK_PRELOAD_RADIUS+1)) { continue; }
             // see if a chunk is in the render radius
             if ((dx <= CHUNK_RENDER_RADIUS && dx >= -CHUNK_RENDER_RADIUS) && (dz <= CHUNK_RENDER_RADIUS && dz >= -CHUNK_RENDER_RADIUS)) {
+                if (
+                    getHashmapEntry(packChunkKey(chunkX+1, chunkZ)) == NULL ||
+                    getHashmapEntry(packChunkKey(chunkX-1, chunkZ)) == NULL ||
+                    getHashmapEntry(packChunkKey(chunkX, chunkZ+1)) == NULL ||
+                    getHashmapEntry(packChunkKey(chunkX, chunkZ-1)) == NULL
+                ) {
+                    continue;
+                }
                 if (result->chunkEntry->flag != CHUNK_FLAG_RENDERED_AND_LOADED) { alreadyPreloadedOnce = 1; }
                 // if (chunkX == -1 && chunkZ == 0) {printf("rendering chunks for %d %d %d %d!\n", chunkX, chunkZ, dx, dz);printf("chunkKey = %" PRIu64 "\n", chunkKey);}
                 // if it is, allocate it

@@ -67,6 +67,7 @@ typedef struct ChunkMeshQuads
 #define BLOCK_TYPE_DIRT 2
 #define BLOCK_TYPE_STONE 3
 #define BLOCK_TYPE_WATER 4
+#define BLOCK_TYPE_SAND 5
 
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
@@ -74,6 +75,8 @@ typedef struct ChunkMeshQuads
 
 #define CHUNK_FLAG_LOADED 1
 #define CHUNK_FLAG_RENDERED_AND_LOADED 2
+
+#define SEA_LEVEL 35
 
 extern float BlockWidthX;
 extern float BlockLengthZ;

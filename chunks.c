@@ -8,7 +8,7 @@
 #include "chunkLoaderManager.h"
 #include "noise.h"
 
-#define SEA_LEVEL 35
+
 
 ChunkMeshQuads chunkMeshQuads;
 // int ChunkWidthX = 1;
@@ -98,11 +98,30 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 {
                     if (y == stairHeight)
                     {
-                        curBlock->blockType = BLOCK_TYPE_GRASS;
+                        // surface block
+                        if (stairHeight <= SEA_LEVEL + 1)
+                        {
+                            // shoreline
+                            curBlock->blockType = BLOCK_TYPE_SAND;
+                        }
+                        else
+                        {
+                            curBlock->blockType = BLOCK_TYPE_GRASS;
+                        }
                     }
-                    else if (y < stairHeight && y >= (stairHeight - 3))
+                    else if (y < stairHeight && y >= stairHeight - 1)
                     {
-                        curBlock->blockType = BLOCK_TYPE_DIRT;
+                        // just under surface
+                        if (y < SEA_LEVEL)
+                        {
+                            // underwater seabed
+                            curBlock->blockType = BLOCK_TYPE_SAND;
+                        }
+                        else
+                        {
+                            // inland soil
+                            curBlock->blockType = BLOCK_TYPE_DIRT;
+                        }
                     }
                     else
                     {
@@ -130,6 +149,7 @@ void initChunkMeshingSystem()
     blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS] = 100;
     blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]  = 100;
     blockBreakingTimeByBlockType[BLOCK_TYPE_STONE] = 200;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]  =  50;
 }
 
 void handleProgramClose()
