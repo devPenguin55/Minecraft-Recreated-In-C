@@ -1380,7 +1380,8 @@ void drawGraphics()
     if (inWater) { 
         glEnable(GL_BLEND); 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-        glColor4f(0.0f, 0.3f, 0.8f, 0.5f); 
+        float depthAlpha = MAX(MIN((SEA_LEVEL+2 - CameraY)/25, 0.55), 0.25);
+        glColor4f(0.0f, 0.3f, 0.8f, depthAlpha); 
         glBegin(GL_QUADS);
         glVertex2f(0, 0);
         glVertex2f(0, windowHeight);
