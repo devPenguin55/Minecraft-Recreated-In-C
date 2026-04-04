@@ -936,6 +936,11 @@ void buildWorldMesh()
                  if (q->blockType != BLOCK_TYPE_WATER) { 
                      continue;
                  }
+
+                 if ((q->y < (float)SEA_LEVEL-1)) {
+                     continue;
+                  }
+
                  waterVertexCount += 6;
                  if (waterVertices == NULL) {
                      waterVertexCapacity = 1024;
@@ -968,6 +973,7 @@ void buildWorldMesh()
                      {0.5, -0.5, -0.5},
                      {-0.5, -0.5, -0.5},
                  };
+
                  switch(q->faceType)
                  {
                      case FACE_FRONT:
@@ -1018,6 +1024,8 @@ void buildWorldMesh()
                  float maxY = MAX4(v0.y,v1.y, v2.y, v3.y);
                  float minZ = MIN4(v0.z,v1.z, v2.z, v3.z);
                  float maxZ = MAX4(v0.z,v1.z, v2.z, v3.z);
+
+                 
 
                  float amtDx = maxX - minX;
                  float amtDy = maxY - minY;
@@ -1278,10 +1286,13 @@ void drawGraphics()
     glDepthMask(GL_FALSE);
     glDepthFunc(GL_LEQUAL);
 
+      
+    glDisable(GL_CULL_FACE); 
     glBindVertexArray(waterVAO);
     glDrawArrays(GL_TRIANGLES, 0, waterVertexCount);
     glBindVertexArray(0);
-    
+    glEnable(GL_CULL_FACE); 
+
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 
@@ -1293,6 +1304,8 @@ void drawGraphics()
     
     for (int i = 0; i < 16; i++)
         glDisableVertexAttribArray(i);
+
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
     if (selectedBlockToRender.active)
     {
         GLfloat translation[3];
@@ -1317,8 +1330,8 @@ void drawGraphics()
         }
 
         glColor3f(1.0f, 1.0f, 1.0f);
-    }  
-
+    } 
+    glPopAttrib();
     
     
     glUseProgram(0);
@@ -1365,29 +1378,15 @@ void drawGraphics()
 
     int inWater = isCameraInWater(); 
     if (inWater) { 
-        float waterScreenY = getWaterScreenY(windowHeight); 
         glEnable(GL_BLEND); 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-        // nice water tint 
-        glColor4f(0.0f, 0.3f, 0.6f, 0.25f); 
-        glBegin(GL_QUADS); 
-        // OPTION A: full screen when deep underwater 
-        if (CameraY < SEA_LEVEL - 0.2f) { 
-            glVertex2f(0, 0); 
-            glVertex2f(windowWidth, 0); 
-            glVertex2f(windowWidth, windowHeight); 
-            glVertex2f(0, windowHeight); 
-            printf("full\n"); 
-        } 
-        // OPTION B: partial (waterline effect) 
-        else { 
-            glVertex2f(0, waterScreenY); 
-            glVertex2f(windowWidth, waterScreenY); 
-            glVertex2f(windowWidth, windowHeight); 
-            glVertex2f(0, windowHeight); 
-            printf("partial\n"); 
-        } 
-        glEnd(); 
+        glColor4f(0.0f, 0.3f, 0.8f, 0.5f); 
+        glBegin(GL_QUADS);
+        glVertex2f(0, 0);
+        glVertex2f(0, windowHeight);
+        glVertex2f(windowWidth, windowHeight);
+        glVertex2f(windowWidth, 0);
+        glEnd();
         glDisable(GL_BLEND); 
     }
 
