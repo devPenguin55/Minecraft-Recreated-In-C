@@ -622,8 +622,7 @@ void checkForWorldChunkVerticesDeletion() {
 
         if (loadedChunk->triggerVertexDeletion) {
             loadedChunk->triggerVertexDeletion = 0;
-            loadedChunk->hasVertices = 0;
-            loadedChunk->hasWaterVertices = 0;
+            
 
             int amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
             if (loadedChunk->lastVertex != -1) {
@@ -687,9 +686,13 @@ void checkForWorldChunkVerticesDeletion() {
             loadedChunk->lastVertex  = -1;
             loadedChunk->firstWaterVertex = -1;
             loadedChunk->lastWaterVertex  = -1;
+            loadedChunk->hasVertices = 0;
+            loadedChunk->hasWaterVertices = 0;
+            printf("chunk deleted! %f %f\n", loadedChunk->chunkStartX, loadedChunk->chunkStartZ);
         }
     }
-
+    
+    
     if (changedVBO) {
         uploadWorldMesh();
     }
@@ -697,6 +700,8 @@ void checkForWorldChunkVerticesDeletion() {
 
 void buildWorldMesh()
 {
+    checkForWorldChunkVerticesDeletion();
+
     int changedVBO = 0;
     for (int renderChunkIdx = 0; renderChunkIdx < chunkLoaderManager.renderChunks.amtRenderChunks; renderChunkIdx++) {
          Chunk *renderChunk = (chunkLoaderManager.renderChunks.renderChunks[renderChunkIdx]);
@@ -1123,11 +1128,12 @@ void buildWorldMesh()
           }
     }
 
+    
+
     if (changedVBO) {
         uploadWorldMesh();
     }
 
-    checkForWorldChunkVerticesDeletion();
 }
 
 

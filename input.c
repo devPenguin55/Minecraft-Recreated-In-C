@@ -80,7 +80,7 @@ void handleMouse(int button, int state, int x_, int y_) {
         } else {
             // place blocks
             int blockIndex;
-
+            printf("%d %d %d %d\n", x, y, z, selectedBlockToRender.hitFace);
             if (selectedBlockToRender.hitFace == FACE_TOP) {
                 blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y+1);
                 if ((y+1) >= ChunkHeightY) {
@@ -160,42 +160,45 @@ void handleMouse(int button, int state, int x_, int y_) {
                     triggerRenderChunkRebuild(result->chunkEntry);
                 }
             }
+            printf("starting\n");
+            triggerRenderChunkRebuild(selectedBlockToRender.chunk);
+            printf("end\n");
         }
         
         
-        if (x == 0 ) {
-            uint64_t chunkKey = packChunkKey(
-                (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
-                (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
-            );
-            BucketEntry *result = getHashmapEntry(chunkKey);
-            triggerRenderChunkRebuild(result->chunkEntry);
-        } else if (x == ChunkWidthX-1) {
-            uint64_t chunkKey = packChunkKey(
-                (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
-                (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
-            );
-            BucketEntry *result = getHashmapEntry(chunkKey);
-            triggerRenderChunkRebuild(result->chunkEntry);
-        }
+        // if (x == 0 ) {
+        //     uint64_t chunkKey = packChunkKey(
+        //         (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
+        //         (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+        //     );
+        //     BucketEntry *result = getHashmapEntry(chunkKey);
+        //     triggerRenderChunkRebuild(result->chunkEntry);
+        // } else if (x == ChunkWidthX-1) {
+        //     uint64_t chunkKey = packChunkKey(
+        //         (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
+        //         (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
+        //     );
+        //     BucketEntry *result = getHashmapEntry(chunkKey);
+        //     triggerRenderChunkRebuild(result->chunkEntry);
+        // }
 
-        if (z == 0 ) {
-            uint64_t chunkKey = packChunkKey(
-                (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
-                (int)((selectedBlockToRender.chunk->chunkStartZ - chunkZUnit) / (chunkZUnit))
-            );
-            BucketEntry *result = getHashmapEntry(chunkKey);
-            triggerRenderChunkRebuild(result->chunkEntry);
-        } else if (z == ChunkLengthZ-1) {
-            uint64_t chunkKey = packChunkKey(
-                (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
-                (int)((selectedBlockToRender.chunk->chunkStartZ + chunkZUnit) / (chunkZUnit))
-            );
-            BucketEntry *result = getHashmapEntry(chunkKey);
-            triggerRenderChunkRebuild(result->chunkEntry);
-        }
+        // if (z == 0 ) {
+        //     uint64_t chunkKey = packChunkKey(
+        //         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+        //         (int)((selectedBlockToRender.chunk->chunkStartZ - chunkZUnit) / (chunkZUnit))
+        //     );
+        //     BucketEntry *result = getHashmapEntry(chunkKey);
+        //     triggerRenderChunkRebuild(result->chunkEntry);
+        // } else if (z == ChunkLengthZ-1) {
+        //     uint64_t chunkKey = packChunkKey(
+        //         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
+        //         (int)((selectedBlockToRender.chunk->chunkStartZ + chunkZUnit) / (chunkZUnit))
+        //     );
+        //     BucketEntry *result = getHashmapEntry(chunkKey);
+        //     triggerRenderChunkRebuild(result->chunkEntry);
+        // }
 
-        triggerRenderChunkRebuild(selectedBlockToRender.chunk);
+        
     } else {
         userBlockBreakingTimeElapsed = 0;
     }

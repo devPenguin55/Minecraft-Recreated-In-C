@@ -247,13 +247,14 @@ void loadChunks(GLfloat playerCoords[2]) {
 void triggerRenderChunkRebuild (Chunk *chunk) {
     if (chunk->hasMesh) {
         deleteChunkMesh(chunk);   
-        
-        chunk->hasMesh = 1;
+        chunk->hasMesh = 0;
         generateChunkMesh(chunk);
+        chunk->hasMesh = 1;
     }
     
     if (chunk->hasVertices) {
         chunk->triggerVertexDeletion = 1;
         checkForWorldChunkVerticesDeletion();
+        // buildWorldMesh();
     }
 }
