@@ -30,6 +30,7 @@ typedef struct Chunk
     int firstWaterVertex;
     int lastWaterVertex;
     int triggerVertexDeletion;
+    int triggerVertexRecreation;
 } Chunk;
 
 typedef struct MeshQuad

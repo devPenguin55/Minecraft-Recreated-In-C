@@ -42,7 +42,17 @@ extern GLuint worldVBO;
 extern GLuint worldVAO;
 extern Vertex *worldVertices;
 extern int worldVertexCount;
-extern int vertexBuildingCounter; 
+extern int worldVertexCapacity;
+extern Vertex *waterVertices;
+extern int waterVertexCount;
+extern int waterVertexCapacity;
+extern int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
+extern int GRASS_TOP_TEXTURE_ARRAY_INDEX;
+extern int DIRT_TEXTURE_ARRAY_INDEX;
+extern int STONE_TEXTURE_ARRAY_INDEX;
+extern int WATER_TEXTURE_ARRAY_INDEX;
+extern int SAND_TEXTURE_ARRAY_INDEX;
+
 
 void initGraphics();
 void reshape(int width, int height);

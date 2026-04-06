@@ -31,11 +31,9 @@ GLuint waterVAO = 0;
 
 Vertex *worldVertices = NULL;
 int worldVertexCount = 0;
-int worldVertexBuildingCounter = 0; 
 int worldVertexCapacity = 0;
 Vertex *waterVertices = NULL;
 int waterVertexCount = 0;
-int waterVertexBuildingCounter = 0; 
 int waterVertexCapacity = 0;
 
 GLuint blockTextureArray;
@@ -639,7 +637,6 @@ void checkForWorldChunkVerticesDeletion() {
                 }
                 
                 worldVertexCount -= amtVerticesInChunk;
-                worldVertexBuildingCounter -= amtVerticesInChunk;
                 changedVBO = 1;
             }
 
@@ -658,7 +655,6 @@ void checkForWorldChunkVerticesDeletion() {
                 }
 
                 waterVertexCount -= amtWaterVerticesInChunk;
-                waterVertexBuildingCounter -= amtWaterVerticesInChunk;
                 changedVBO = 1;
             }
 
@@ -688,7 +684,6 @@ void checkForWorldChunkVerticesDeletion() {
             loadedChunk->lastWaterVertex  = -1;
             loadedChunk->hasVertices = 0;
             loadedChunk->hasWaterVertices = 0;
-            printf("chunk deleted! %f %f\n", loadedChunk->chunkStartX, loadedChunk->chunkStartZ);
         }
     }
     
@@ -714,22 +709,19 @@ void buildWorldMesh()
             int firstQuadIndex = renderChunk->firstQuadIndex;
             int lastQuadIndex = renderChunk->lastQuadIndex;
 
-
-            
-
-            renderChunk->firstVertex = worldVertexBuildingCounter;
+            renderChunk->firstVertex = worldVertexCount;
             for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
             {
                 MeshQuad *q = &chunkMeshQuads.quads[i];
                 if (q->blockType == BLOCK_TYPE_WATER) { 
                     continue;
                 }
-                worldVertexCount += 6;
+
                 if (worldVertices == NULL) {
                     worldVertexCapacity = 1024;
                     worldVertices = malloc(sizeof(Vertex) * worldVertexCapacity);
                 } else {
-                    if (worldVertexBuildingCounter + 6 > worldVertexCapacity)
+                    if ((worldVertexCount + 6) > worldVertexCapacity)
                     {
                         worldVertexCapacity = worldVertexCapacity * 2 + 1024;
                         worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCapacity);
@@ -912,14 +904,14 @@ void buildWorldMesh()
                     v->z += z;
                 }
 
-                worldVertices[worldVertexBuildingCounter++] = v0;
-                worldVertices[worldVertexBuildingCounter++] = v1;
-                worldVertices[worldVertexBuildingCounter++] = v2;
-                worldVertices[worldVertexBuildingCounter++] = v0;
-                worldVertices[worldVertexBuildingCounter++] = v2;
-                worldVertices[worldVertexBuildingCounter++] = v3;
+                worldVertices[worldVertexCount++] = v0;
+                worldVertices[worldVertexCount++] = v1;
+                worldVertices[worldVertexCount++] = v2;
+                worldVertices[worldVertexCount++] = v0;
+                worldVertices[worldVertexCount++] = v2;
+                worldVertices[worldVertexCount++] = v3;
             }
-            renderChunk->lastVertex = worldVertexBuildingCounter-1;
+            renderChunk->lastVertex = worldVertexCount-1;
 
             changedVBO = 1;
          }
@@ -934,7 +926,7 @@ void buildWorldMesh()
 
              
 
-             renderChunk->firstWaterVertex = waterVertexBuildingCounter;
+             renderChunk->firstWaterVertex = waterVertexCount;
              for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
              {
                  MeshQuad *q = &chunkMeshQuads.quads[i];
@@ -946,12 +938,11 @@ void buildWorldMesh()
                      continue;
                   }
 
-                 waterVertexCount += 6;
                  if (waterVertices == NULL) {
                      waterVertexCapacity = 1024;
                      waterVertices = malloc(sizeof(Vertex) * waterVertexCapacity);
                  } else {
-                     if (waterVertexBuildingCounter + 6 > waterVertexCapacity)
+                     if (waterVertexCount + 6 > waterVertexCapacity)
                      {
                          waterVertexCapacity = waterVertexCapacity * 2 + 1024;
                          waterVertices = realloc(waterVertices, sizeof(Vertex) * waterVertexCapacity);
@@ -1115,14 +1106,14 @@ void buildWorldMesh()
                      }
                  }
 
-                 waterVertices[waterVertexBuildingCounter++] = v0;
-                 waterVertices[waterVertexBuildingCounter++] = v1;
-                 waterVertices[waterVertexBuildingCounter++] = v2;
-                 waterVertices[waterVertexBuildingCounter++] = v0;
-                 waterVertices[waterVertexBuildingCounter++] = v2;
-                 waterVertices[waterVertexBuildingCounter++] = v3;
+                 waterVertices[waterVertexCount++] = v0;
+                 waterVertices[waterVertexCount++] = v1;
+                 waterVertices[waterVertexCount++] = v2;
+                 waterVertices[waterVertexCount++] = v0;
+                 waterVertices[waterVertexCount++] = v2;
+                 waterVertices[waterVertexCount++] = v3;
              }
-             renderChunk->lastWaterVertex = waterVertexBuildingCounter-1;
+             renderChunk->lastWaterVertex = waterVertexCount-1;
 
              changedVBO = 1;
           }

@@ -35,6 +35,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->firstQuadIndex = -1;
     chunk->lastQuadIndex = -1;
     chunk->triggerVertexDeletion = 0;
+    chunk->triggerVertexRecreation = 0;
 
     chunk->firstVertex = -1;
     chunk->lastVertex  = -1;
@@ -70,6 +71,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 stairHeight = (int)(noise * BlockHeightY * 20 + 30);
                 float ridge = ridgedFbm2D(worldX/150.0f, worldZ/150.0f, 9, 4, 2.0, 0.5) * 20;
                 stairHeight += (int)ridge;
+
                 curBlock->isAir = (y > stairHeight);
 
                 if (!curBlock->isAir) {
@@ -128,7 +130,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                         curBlock->blockType = BLOCK_TYPE_STONE;
                     }
                 }
-
+                
                 if (curBlock->isAir && y < SEA_LEVEL) {
                     curBlock->isAir = 0;
                     curBlock->blockType = BLOCK_TYPE_WATER;
