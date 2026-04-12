@@ -24,11 +24,15 @@ typedef struct SelectedBlockToRender {
     Chunk *chunk;
 } SelectedBlockToRender;
 
-typedef struct {
+typedef struct Vertex {
     float x, y, z;   // position
     float u, v;      // texcoords
     int layer;
 } Vertex;
+
+typedef struct BlockType {
+    
+} BlockType;
 
 extern GLfloat T;
 extern GLfloat CameraX;
@@ -52,7 +56,9 @@ extern int DIRT_TEXTURE_ARRAY_INDEX;
 extern int STONE_TEXTURE_ARRAY_INDEX;
 extern int WATER_TEXTURE_ARRAY_INDEX;
 extern int SAND_TEXTURE_ARRAY_INDEX;
-
+extern int OAK_SIDE_TEXTURE_ARRAY_INDEX;
+extern int OAK_TOP_TEXTURE_ARRAY_INDEX;
+extern int LEAVES_TEXTURE_ARRAY_INDEX;
 
 void initGraphics();
 void reshape(int width, int height);

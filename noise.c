@@ -2,17 +2,17 @@
 #include <stdint.h>
 #include "noise.h"
 
-/* Fade curve */
+
 static double fade(double t) {
     return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 }
 
-/* Linear interpolation */
+
 static double lerp(double a, double b, double t) {
     return a + t * (b - a);
 }
 
-/* Seeded integer hash */
+
 static uint32_t hash2D(int x, int y, uint32_t seed) {
     uint32_t h = seed;
     h ^= (uint32_t)x * 0x27d4eb2d;
@@ -23,18 +23,17 @@ static uint32_t hash2D(int x, int y, uint32_t seed) {
     return h;
 }
 
-/* Gradient selection */
+
 static double grad(int ix, int iy, double x, double y, uint32_t seed) {
     uint32_t h = hash2D(ix, iy, seed) & 7;
 
-    /* 8 unit gradients */
     static const double gradX[8] = { 1, -1,  1, -1,  0,  0,  0.7071, -0.7071 };
     static const double gradY[8] = { 0,  0,  1, -1,  1, -1,  0.7071, -0.7071 };
 
     return gradX[h] * x + gradY[h] * y;
 }
 
-/* 2D Perlin noise */
+
 double perlinNoise(double x, double y, uint32_t seed) {
     int x0 = (int)floor(x);
     int y0 = (int)floor(y);
@@ -64,7 +63,7 @@ float fbm2D(
     float y,
     uint32_t seed,
     int octaves,
-    float lacunarity,  // frequency multiplier (usually 2.0)
+    float lacunarity,  // frequency multiplier (usually 2)
     float gain         // amplitude multiplier (usually 0.5)
 ) {
     float sum = 0.0f;
@@ -86,7 +85,6 @@ float fbm2D(
         frequency *= lacunarity;
     }
 
-    /* normalize to [-1,1] */
     sum /= maxSum;
     
     return sum;
@@ -120,7 +118,7 @@ float ridgedFbm2D(
         frequency *= lacunarity;
     }
 
-    return sum / maxSum;     // [0,1]
+    return sum / maxSum; 
 }
 
 static uint32_t hash3D(int x, int y, int z, uint32_t seed) {
@@ -205,5 +203,5 @@ float fbm3D(
         frequency *= lacunarity;
     }
 
-    return sum / maxSum;  // normalize to [-1,1]
+    return sum / maxSum;
 }

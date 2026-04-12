@@ -69,6 +69,8 @@ typedef struct ChunkMeshQuads
 #define BLOCK_TYPE_STONE 3
 #define BLOCK_TYPE_WATER 4
 #define BLOCK_TYPE_SAND 5
+#define BLOCK_TYPE_OAK 6
+#define BLOCK_TYPE_LEAVES 7
 
 #define ChunkWidthX 16
 #define ChunkLengthZ 16

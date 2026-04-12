@@ -43,6 +43,9 @@ int DIRT_TEXTURE_ARRAY_INDEX;
 int STONE_TEXTURE_ARRAY_INDEX;
 int WATER_TEXTURE_ARRAY_INDEX;
 int SAND_TEXTURE_ARRAY_INDEX;
+int OAK_SIDE_TEXTURE_ARRAY_INDEX;
+int OAK_TOP_TEXTURE_ARRAY_INDEX;
+int LEAVES_TEXTURE_ARRAY_INDEX;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
@@ -248,7 +251,10 @@ void initGraphics()
         "assets\\dirt.png",
         "assets\\stone.png",
         "assets\\water.png",
-        "assets\\sand.png"
+        "assets\\sand.png",
+        "assets\\oak_log.png",
+        "assets\\oak_log_top.png",
+        "assets\\leaves.png"
     };
     GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
     GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
@@ -256,8 +262,11 @@ void initGraphics()
     STONE_TEXTURE_ARRAY_INDEX = 3;
     WATER_TEXTURE_ARRAY_INDEX = 4;
     SAND_TEXTURE_ARRAY_INDEX = 5;
+    OAK_SIDE_TEXTURE_ARRAY_INDEX = 6;
+    OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
+    LEAVES_TEXTURE_ARRAY_INDEX = 8;
 
-    blockTextureArray = loadTextureArray(blockTextures, 6);
+    blockTextureArray = loadTextureArray(blockTextures, 9);
 }
 
 void reshape(int width, int height)
@@ -469,7 +478,7 @@ void face(
 
         // float crackAlpha = (stage / 9.0f);
         // crackAlpha = (crackAlpha > 1.0f) ? 1.0f : crackAlpha;
-        float crackAlpha = 0.9;
+        float crackAlpha = 0.6;
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
         // Compute face normal from vertices
@@ -831,6 +840,16 @@ void buildWorldMesh()
                     sideTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
                     topTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
                     bottomTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
+                    break;
+                case BLOCK_TYPE_OAK:
+                    sideTextureIndex = OAK_SIDE_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
+                    break;
+                case BLOCK_TYPE_LEAVES:
+                    sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
                     break;
                 default:
                     printf("No correct block type entered!\n");
@@ -1270,12 +1289,17 @@ void drawGraphics()
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     
     glBindVertexArray(worldVAO);
     glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
     glBindVertexArray(0);
     
+    // glDisable(GL_BLEND);
+
     // * ////////////
 
     glEnable(GL_BLEND);
@@ -1364,7 +1388,7 @@ void drawGraphics()
     glEnd();
 
     char text[64];
-    snprintf(text, sizeof(text), "FPS: %.1f, Quads: %d", fps, chunkMeshQuads.amtQuads);
+    snprintf(text, sizeof(text), "FPS: %.1f, Vertices: %d", fps, worldVertexCount+waterVertexCount);
 
     glColor3f(1, 1, 1);
     drawText(text, 5, 15);

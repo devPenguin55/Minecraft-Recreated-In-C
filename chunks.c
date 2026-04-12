@@ -57,22 +57,18 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 curBlock->y = BlockHeightY * (y);
                 float scale = 100;
 
-                // fill everything below the staircase height
-                int stairHeight;
-                // stairHeight = fade(perlin(curBlock->x / scale, curBlock->z / scale))*10 + 30;
-                // stairHeight = powf(perlin((curBlock->x + chunk->chunkStartX) / scale, (curBlock->z + chunk->chunkStartZ) / scale), 1.3) * BlockHeightY * 10 + 30;
-                // curBlock->isAir = (y > stairHeight);   
-
+                int generatedBlockNoiseHeight;
+            
                 float worldX = curBlock->x;
                 float worldZ = curBlock->z;
 
                 float noise = fbm2D(worldX / scale, worldZ / scale, 5, 2, 2.0, 5.0);
                 
-                stairHeight = (int)(noise * BlockHeightY * 20 + 30);
+                generatedBlockNoiseHeight = (int)(noise * BlockHeightY * 20 + 30);
                 float ridge = ridgedFbm2D(worldX/150.0f, worldZ/150.0f, 9, 4, 2.0, 0.5) * 20;
-                stairHeight += (int)ridge;
+                generatedBlockNoiseHeight += (int)ridge;
 
-                curBlock->isAir = (y > stairHeight);
+                curBlock->isAir = (y > generatedBlockNoiseHeight);
 
                 if (!curBlock->isAir) {
                     if (y > 18 && y < 50) {
@@ -98,10 +94,10 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 }
                 else
                 {
-                    if (y == stairHeight)
+                    if (y == generatedBlockNoiseHeight)
                     {
                         // surface block
-                        if (stairHeight <= SEA_LEVEL + 1)
+                        if (generatedBlockNoiseHeight <= SEA_LEVEL + 1)
                         {
                             // shoreline
                             curBlock->blockType = BLOCK_TYPE_SAND;
@@ -111,7 +107,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                             curBlock->blockType = BLOCK_TYPE_GRASS;
                         }
                     }
-                    else if (y < stairHeight && y >= stairHeight - 1)
+                    else if (y < generatedBlockNoiseHeight && y >= generatedBlockNoiseHeight - 1)
                     {
                         // just under surface
                         if (y < SEA_LEVEL)
@@ -130,13 +126,66 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                         curBlock->blockType = BLOCK_TYPE_STONE;
                     }
                 }
-                
+
                 if (curBlock->isAir && y < SEA_LEVEL) {
                     curBlock->isAir = 0;
                     curBlock->blockType = BLOCK_TYPE_WATER;
-                }
-                
+                }                
             }
+        }
+    }
+
+    for (int x = 0; x < ChunkWidthX; x++) {
+        for (int z = 0; z < ChunkLengthZ; z++) {
+            int surfaceY = -1;
+
+            for (int y = ChunkHeightY - 2; y >= 0; y--) {
+                Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
+                Block *above = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (y+1)]);
+
+                if (!b->isAir && above->isAir && b->blockType == BLOCK_TYPE_GRASS) {
+                    surfaceY = y+1;
+                    break;
+                }
+            }
+
+            if (surfaceY == -1) { continue; }
+            float worldX = x+chunk->chunkStartX;
+            float worldZ = z+chunk->chunkStartZ;
+
+            if (fbm2D(worldX / 1.5, worldZ / 1.5, 5, 2, 2.0, 5.0) > 0.4 && (x >= 3 && x <= ChunkWidthX-3 && z >= 3 && z <= ChunkLengthZ-3)) {
+                for (int yAdd = 0; yAdd < 5; yAdd++) {
+                    Block *baseBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (surfaceY+yAdd)]);
+                    baseBlock->blockType = BLOCK_TYPE_OAK;
+                    baseBlock->isAir = 0;
+                }
+                int radius = 3;
+
+                for (int yAdd = -2; yAdd <= 3; yAdd++) {
+                    for (int xAdd = -3; xAdd <= 3; xAdd++) {
+                        for (int zAdd = -3; zAdd <= 3; zAdd++) {
+                            if (xAdd == 0 && zAdd == 0 && yAdd == 0) continue;
+                            if ((xAdd == 0 && zAdd == 0) && yAdd <= 0) continue;
+
+
+                            int distSq = xAdd*xAdd + (yAdd-1)*(yAdd-1) + zAdd*zAdd;
+
+                            if (distSq > radius * radius) continue; // sphere cutoff
+
+                            Block *baseBlock = &(chunk->blocks[
+                                (x + xAdd) +
+                                ChunkWidthX * (z + zAdd) +
+                                (ChunkWidthX * ChunkLengthZ) * (surfaceY + 5 + yAdd)
+                            ]);
+
+                            baseBlock->blockType = BLOCK_TYPE_LEAVES;
+                            baseBlock->isAir = 0;
+                        }
+                    }
+                }
+            }
+
+
         }
     }
 }
@@ -148,10 +197,12 @@ void initChunkMeshingSystem()
     chunkMeshQuads.quads = malloc(sizeof(MeshQuad) * chunkMeshQuads.capacity);
 
 
-    blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS] = 100;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]  = 100;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_STONE] = 200;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]  =  50;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS]  =  100;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]   =  100;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_STONE]  =  200;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]   =   50;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_OAK]    =  150;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_LEAVES] =   30;
 }
 
 void handleProgramClose()

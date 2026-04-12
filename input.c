@@ -80,7 +80,6 @@ void handleMouse(int button, int state, int x_, int y_) {
         } else {
             // place blocks
             int blockIndex;
-            printf("%d %d %d %d\n", x, y, z, selectedBlockToRender.hitFace);
             if (selectedBlockToRender.hitFace == FACE_TOP) {
                 blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y+1);
                 if ((y+1) >= ChunkHeightY) {
@@ -160,9 +159,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                     triggerRenderChunkRebuild(result->chunkEntry);
                 }
             }
-            printf("starting\n");
             triggerRenderChunkRebuild(selectedBlockToRender.chunk);
-            printf("end\n");
         }
         
         

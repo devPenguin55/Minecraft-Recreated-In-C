@@ -1,0 +1,56 @@
+Date : 2026-04-07 22:18:39
+Directory : c:\AaravC-Projects\MinecraftRecreated
+Total : 23 files,  1895 codes, 72 comments, 491 blanks, all 2458 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C        |          7 |      1,694 |         69 |        438 |      2,201 |
+| C++      |          6 |         98 |          0 |         14 |        112 |
+| Markdown |          4 |         59 |          0 |         26 |         85 |
+| GLSL     |          2 |         26 |          0 |          9 |         35 |
+| CSV      |          2 |         16 |          0 |          0 |         16 |
+| Makefile |          1 |          1 |          3 |          4 |          8 |
+| JSON     |          1 |          1 |          0 |          0 |          1 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                     | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                        |         23 |      1,895 |         72 |        491 |      2,458 |
+| . (Files)                                                                                |         16 |      1,819 |         72 |        465 |      2,356 |
+| .VSCodeCounter                                                                           |          7 |         76 |          0 |         26 |        102 |
+| .VSCodeCounter\2025-12-14_15-09-43                                                       |          7 |         76 |          0 |         26 |        102 |
++------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                 | language | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\details.md      | Markdown |         21 |          0 |          6 |         27 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\diff-details.md | Markdown |          9 |          0 |          6 |         15 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\diff.csv        | CSV      |          2 |          0 |          0 |          2 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\diff.md         | Markdown |         12 |          0 |          7 |         19 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\results.csv     | CSV      |         14 |          0 |          0 |         14 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\results.json    | JSON     |          1 |          0 |          0 |          1 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2025-12-14_15-09-43\results.md      | Markdown |         17 |          0 |          7 |         24 |
+| c:\AaravC-Projects\MinecraftRecreated\MakeFile                                           | Makefile |          1 |          3 |          4 |          8 |
+| c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.c                               | C        |        447 |         16 |        104 |        567 |
+| c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.h                               | C++      |          1 |          0 |          0 |          1 |
+| c:\AaravC-Projects\MinecraftRecreated\chunks.c                                           | C        |        101 |         42 |         31 |        174 |
+| c:\AaravC-Projects\MinecraftRecreated\chunks.h                                           | C++      |         13 |          0 |          3 |         16 |
+| c:\AaravC-Projects\MinecraftRecreated\input.c                                            | C        |        165 |         33 |         23 |        221 |
+| c:\AaravC-Projects\MinecraftRecreated\input.h                                            | C++      |          3 |          0 |          1 |          4 |
+| c:\AaravC-Projects\MinecraftRecreated\main.c                                             | C        |          3 |          0 |          0 |          3 |
+| c:\AaravC-Projects\MinecraftRecreated\noise.c                                            | C        |        160 |          7 |         42 |        209 |
+| c:\AaravC-Projects\MinecraftRecreated\noise.h                                            | C++      |         34 |          0 |          3 |         37 |
+| c:\AaravC-Projects\MinecraftRecreated\raycast.c                                          | C        |         87 |          1 |         22 |        110 |
+| c:\AaravC-Projects\MinecraftRecreated\raycast.h                                          | C++      |          4 |          0 |          2 |          6 |
+| c:\AaravC-Projects\MinecraftRecreated\render.c                                           | C        |        731 |        -30 |        216 |        917 |
+| c:\AaravC-Projects\MinecraftRecreated\render.h                                           | C++      |         43 |          0 |          5 |         48 |
+| c:\AaravC-Projects\MinecraftRecreated\shader.frag                                        | GLSL     |         14 |          0 |          5 |         19 |
+| c:\AaravC-Projects\MinecraftRecreated\shader.vert                                        | GLSL     |         12 |          0 |          4 |         16 |
+| Total                                                                                    |          |      1,895 |         72 |        491 |      2,458 |
++------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

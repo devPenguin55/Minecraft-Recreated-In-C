@@ -456,6 +456,16 @@ void loadChunks(GLfloat playerCoords[2]) {
                         topTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
                         bottomTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
                         break;
+                    case BLOCK_TYPE_OAK:
+                        sideTextureIndex = OAK_SIDE_TEXTURE_ARRAY_INDEX;
+                        topTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
+                        bottomTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
+                        break;
+                    case BLOCK_TYPE_LEAVES:
+                        sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                        topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                        bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                        break;
                     default:
                         printf("No correct block type entered!\n");
                         break;
