@@ -722,7 +722,7 @@ void buildWorldMesh()
             for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
             {
                 MeshQuad *q = &chunkMeshQuads.quads[i];
-                if (q->blockType == BLOCK_TYPE_WATER) { 
+                if (q->blockType == BLOCK_TYPE_WATER || q->blockType == BLOCK_TYPE_LEAVES) { 
                     continue;
                 }
 
@@ -949,7 +949,7 @@ void buildWorldMesh()
              for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
              {
                  MeshQuad *q = &chunkMeshQuads.quads[i];
-                 if (q->blockType != BLOCK_TYPE_WATER) { 
+                 if (q->blockType != BLOCK_TYPE_WATER || q->blockType != BLOCK_TYPE_LEAVES) { 
                      continue;
                  }
 
@@ -1049,9 +1049,19 @@ void buildWorldMesh()
                  float size[2] = {w, h};
                  // scale along face axes only
 
-                 int sideTextureIndex   = WATER_TEXTURE_ARRAY_INDEX;
-                 int topTextureIndex    = WATER_TEXTURE_ARRAY_INDEX;
-                 int bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                 int sideTextureIndex;   
+                 int topTextureIndex;    
+                 int bottomTextureIndex;
+                 if (q->blockType == BLOCK_TYPE_WATER) {
+                    sideTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                 } else {
+                    sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                 }
+
 
                  if (amtDy == 0.0f)
                  {
