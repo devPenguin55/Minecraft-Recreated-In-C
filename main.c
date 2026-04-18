@@ -8,7 +8,7 @@
 #include "input.h"
 #include "render.h"
 #include "chunks.h"
-#include "chunkLoaderManager.h"
+#include "chunkLoaderManager.h" 
 
 int main(int argc, char *argv[]) {
     initChunkLoaderManager();

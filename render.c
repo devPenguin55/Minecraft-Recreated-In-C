@@ -46,6 +46,7 @@ int SAND_TEXTURE_ARRAY_INDEX;
 int OAK_SIDE_TEXTURE_ARRAY_INDEX;
 int OAK_TOP_TEXTURE_ARRAY_INDEX;
 int LEAVES_TEXTURE_ARRAY_INDEX;
+int ORCHID_TEXTURE_ARRAY_INDEX;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
@@ -254,7 +255,8 @@ void initGraphics()
         "assets\\sand.png",
         "assets\\oak_log.png",
         "assets\\oak_log_top.png",
-        "assets\\leaves.png"
+        "assets\\leaves.png",
+        "assets\\blue_orchid.png"
     };
     GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
     GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
@@ -265,8 +267,9 @@ void initGraphics()
     OAK_SIDE_TEXTURE_ARRAY_INDEX = 6;
     OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
     LEAVES_TEXTURE_ARRAY_INDEX = 8;
+    ORCHID_TEXTURE_ARRAY_INDEX = 9;
 
-    blockTextureArray = loadTextureArray(blockTextures, 9);
+    blockTextureArray = loadTextureArray(blockTextures, 10);
 }
 
 void reshape(int width, int height)

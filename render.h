@@ -58,7 +58,8 @@ extern int WATER_TEXTURE_ARRAY_INDEX;
 extern int SAND_TEXTURE_ARRAY_INDEX;
 extern int OAK_SIDE_TEXTURE_ARRAY_INDEX;
 extern int OAK_TOP_TEXTURE_ARRAY_INDEX;
-extern int LEAVES_TEXTURE_ARRAY_INDEX;
+extern int LEAVES_TEXTURE_ARRAY_INDEX; 
+extern int ORCHID_TEXTURE_ARRAY_INDEX; 
 
 void initGraphics();
 void reshape(int width, int height);

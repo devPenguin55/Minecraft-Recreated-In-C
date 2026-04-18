@@ -160,9 +160,27 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             float worldX = x + chunk->chunkStartX;
             float worldZ = z + chunk->chunkStartZ;
 
-    
-            if (fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) <= 0.45f)
+            // tree constraint
+
+            int treeValid = !(fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) <= 0.45f);
+            int flowerValid = fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) > 0.36f;
+            
+            if (flowerValid && !treeValid) {
+                // flowers addition
+                Block *b = &(chunk->blocks[
+                    x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY
+                ]);
+
+                b->blockType = BLOCK_TYPE_ORCHID;
+                b->isAir = 0;
                 continue;
+            } 
+
+            if (!treeValid) { 
+                continue;
+            }
+            
+            
 
       
             int trunkHeight = 5 + (int)(fbm2D(worldX, worldZ, 1, 1, 1, 1) * 2);
@@ -287,6 +305,7 @@ void initChunkMeshingSystem()
     blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]   =   75;
     blockBreakingTimeByBlockType[BLOCK_TYPE_OAK]    =  150;
     blockBreakingTimeByBlockType[BLOCK_TYPE_LEAVES] =   50;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_ORCHID] =   1;
 }
 
 void handleProgramClose()
