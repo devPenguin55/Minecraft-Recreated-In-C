@@ -259,8 +259,8 @@ void initGraphics()
     GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
     GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
     DIRT_TEXTURE_ARRAY_INDEX = 2;
-    STONE_TEXTURE_ARRAY_INDEX = 3;
-    WATER_TEXTURE_ARRAY_INDEX = 4;
+    STONE_TEXTURE_ARRAY_INDEX = 3; 
+    WATER_TEXTURE_ARRAY_INDEX = 4; 
     SAND_TEXTURE_ARRAY_INDEX = 5;
     OAK_SIDE_TEXTURE_ARRAY_INDEX = 6;
     OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
@@ -478,7 +478,7 @@ void face(
 
         // float crackAlpha = (stage / 9.0f);
         // crackAlpha = (crackAlpha > 1.0f) ? 1.0f : crackAlpha;
-        float crackAlpha = 0.6;
+        float crackAlpha = ((selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ*ChunkWidthX) + (int)(selectedBlockToRender.localY*ChunkLengthZ*ChunkWidthX)].blockType == BLOCK_TYPE_LEAVES || selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ*ChunkWidthX) + (int)(selectedBlockToRender.localY*ChunkLengthZ*ChunkWidthX)].blockType == BLOCK_TYPE_SAND) ? 0.3 : 0.6);
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
         // Compute face normal from vertices
@@ -722,7 +722,7 @@ void buildWorldMesh()
             for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
             {
                 MeshQuad *q = &chunkMeshQuads.quads[i];
-                if (q->blockType == BLOCK_TYPE_WATER || q->blockType == BLOCK_TYPE_LEAVES) { 
+                if (q->blockType == BLOCK_TYPE_WATER) { 
                     continue;
                 }
 
@@ -949,7 +949,7 @@ void buildWorldMesh()
              for (int i = firstQuadIndex; i < (lastQuadIndex+1); i++)
              {
                  MeshQuad *q = &chunkMeshQuads.quads[i];
-                 if (q->blockType != BLOCK_TYPE_WATER || q->blockType != BLOCK_TYPE_LEAVES) { 
+                 if (q->blockType != BLOCK_TYPE_WATER) { 
                      continue;
                  }
 
@@ -1049,19 +1049,9 @@ void buildWorldMesh()
                  float size[2] = {w, h};
                  // scale along face axes only
 
-                 int sideTextureIndex;   
-                 int topTextureIndex;    
-                 int bottomTextureIndex;
-                 if (q->blockType == BLOCK_TYPE_WATER) {
-                    sideTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
-                 } else {
-                    sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                 }
-
+                 int sideTextureIndex   = WATER_TEXTURE_ARRAY_INDEX;
+                 int topTextureIndex    = WATER_TEXTURE_ARRAY_INDEX;
+                 int bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
 
                  if (amtDy == 0.0f)
                  {
@@ -1299,17 +1289,12 @@ void drawGraphics()
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     
     glBindVertexArray(worldVAO);
     glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
     glBindVertexArray(0);
     
-    // glDisable(GL_BLEND);
-
     // * ////////////
 
     glEnable(GL_BLEND);

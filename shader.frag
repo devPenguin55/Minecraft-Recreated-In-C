@@ -15,5 +15,10 @@ void main()
         texColor.a = 0.6;
     }
 
+    if (fragLayer == 8 && texColor.a < 0.1)
+    {
+        discard;
+    }
+
     fragColor = texColor;
 }

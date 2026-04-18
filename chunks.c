@@ -153,7 +153,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             float worldX = x+chunk->chunkStartX;
             float worldZ = z+chunk->chunkStartZ;
 
-            if (fbm2D(worldX / 1.5, worldZ / 1.5, 5, 2, 2.0, 5.0) > 0.4 && (x >= 3 && x <= ChunkWidthX-3 && z >= 3 && z <= ChunkLengthZ-3)) {
+            if (fbm2D(worldX / 1.5, worldZ / 1.5, 5, 2, 2.0, 5.0) > 0.5 && (x >= 3 && x <= ChunkWidthX-3 && z >= 3 && z <= ChunkLengthZ-3)) {
                 for (int yAdd = 0; yAdd < 5; yAdd++) {
                     Block *baseBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (surfaceY+yAdd)]);
                     baseBlock->blockType = BLOCK_TYPE_OAK;
@@ -200,9 +200,9 @@ void initChunkMeshingSystem()
     blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS]  =  100;
     blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]   =  100;
     blockBreakingTimeByBlockType[BLOCK_TYPE_STONE]  =  200;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]   =   50;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]   =   75;
     blockBreakingTimeByBlockType[BLOCK_TYPE_OAK]    =  150;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_LEAVES] =   30;
+    blockBreakingTimeByBlockType[BLOCK_TYPE_LEAVES] =   50;
 }
 
 void handleProgramClose()
@@ -215,6 +215,11 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
 {
     if (mainBlock->isAir)
         return 0;
+
+    if (!mainBlock->isAir && !neighborBlock->isAir && mainBlock->blockType == BLOCK_TYPE_LEAVES && neighborBlock->blockType == BLOCK_TYPE_LEAVES) {
+        return 1;
+    }
+    
 
     // normal solid block
     if (mainBlock->blockType != BLOCK_TYPE_WATER)
