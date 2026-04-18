@@ -137,55 +137,139 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
     for (int x = 0; x < ChunkWidthX; x++) {
         for (int z = 0; z < ChunkLengthZ; z++) {
+
             int surfaceY = -1;
 
+        
             for (int y = ChunkHeightY - 2; y >= 0; y--) {
                 Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
-                Block *above = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (y+1)]);
+                Block *above = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (y + 1)]);
 
                 if (!b->isAir && above->isAir && b->blockType == BLOCK_TYPE_GRASS) {
-                    surfaceY = y+1;
+                    surfaceY = y + 1;
                     break;
                 }
             }
 
-            if (surfaceY == -1) { continue; }
-            float worldX = x+chunk->chunkStartX;
-            float worldZ = z+chunk->chunkStartZ;
+            if (surfaceY == -1) continue;
 
-            if (fbm2D(worldX / 1.5, worldZ / 1.5, 5, 2, 2.0, 5.0) > 0.5 && (x >= 3 && x <= ChunkWidthX-3 && z >= 3 && z <= ChunkLengthZ-3)) {
-                for (int yAdd = 0; yAdd < 5; yAdd++) {
-                    Block *baseBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (surfaceY+yAdd)]);
-                    baseBlock->blockType = BLOCK_TYPE_OAK;
-                    baseBlock->isAir = 0;
-                }
-                int radius = 3;
+        
+            if (x < 4 || x >= ChunkWidthX - 4 || z < 4 || z >= ChunkLengthZ - 4)
+                continue;
 
-                for (int yAdd = -2; yAdd <= 3; yAdd++) {
-                    for (int xAdd = -3; xAdd <= 3; xAdd++) {
-                        for (int zAdd = -3; zAdd <= 3; zAdd++) {
-                            if (xAdd == 0 && zAdd == 0 && yAdd == 0) continue;
-                            if ((xAdd == 0 && zAdd == 0) && yAdd <= 0) continue;
+            float worldX = x + chunk->chunkStartX;
+            float worldZ = z + chunk->chunkStartZ;
 
+    
+            if (fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) <= 0.45f)
+                continue;
 
-                            int distSq = xAdd*xAdd + (yAdd-1)*(yAdd-1) + zAdd*zAdd;
+      
+            int trunkHeight = 5 + (int)(fbm2D(worldX, worldZ, 1, 1, 1, 1) * 2);
 
-                            if (distSq > radius * radius) continue; // sphere cutoff
+            for (int yAdd = 0; yAdd < trunkHeight; yAdd++) {
+                int newY = surfaceY + yAdd;
+                if (newY >= ChunkHeightY) break;
 
-                            Block *baseBlock = &(chunk->blocks[
-                                (x + xAdd) +
-                                ChunkWidthX * (z + zAdd) +
-                                (ChunkWidthX * ChunkLengthZ) * (surfaceY + 5 + yAdd)
-                            ]);
+                Block *b = &(chunk->blocks[
+                    x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * newY
+                ]);
 
-                            baseBlock->blockType = BLOCK_TYPE_LEAVES;
-                            baseBlock->isAir = 0;
-                        }
+                b->blockType = BLOCK_TYPE_OAK;
+                b->isAir = 0;
+            }
+
+            int topY = surfaceY + trunkHeight-2;
+
+            
+
+            for (int yOff = 0; yOff <= 1; yOff++) {
+                int layerY = topY + yOff;
+
+                if (layerY < 0 || layerY >= ChunkHeightY)
+                    continue;
+        
+                for (int xOff = -2; xOff <= 2; xOff++) {
+                    for (int zOff = -2; zOff <= 2; zOff++) {
+
+                        int newX = x + xOff;
+                        int newZ = z + zOff;
+
+                        if (newX < 0 || newX >= ChunkWidthX ||
+                            newZ < 0 || newZ >= ChunkLengthZ)
+                            continue;
+
+                        
+
+                        Block *b = &(chunk->blocks[
+                            newX +
+                            ChunkWidthX * newZ +
+                            (ChunkWidthX * ChunkLengthZ) * layerY
+                        ]);
+
+                        if (b->blockType == BLOCK_TYPE_OAK) continue;
+
+                        b->blockType = BLOCK_TYPE_LEAVES;
+                        b->isAir = 0;
                     }
                 }
             }
 
+            int layerY = topY + 2;
 
+            if (layerY < 0 || layerY >= ChunkHeightY)
+                continue;
+        
+            for (int xOff = -1; xOff <= 1; xOff++) {
+                for (int zOff = -1; zOff <= 1; zOff++) {
+
+                    int newX = x + xOff;
+                    int newZ = z + zOff;
+
+                    if (newX < 0 || newX >= ChunkWidthX ||
+                        newZ < 0 || newZ >= ChunkLengthZ)
+                        continue;
+
+                
+                    Block *b = &(chunk->blocks[
+                        newX +
+                        ChunkWidthX * newZ +
+                        (ChunkWidthX * ChunkLengthZ) * layerY
+                    ]);
+
+                    if (b->blockType == BLOCK_TYPE_OAK) continue;
+
+                    b->blockType = BLOCK_TYPE_LEAVES;
+                    b->isAir = 0;
+                }
+            }
+
+            int topLayerY = topY+3;
+            if (topLayerY < ChunkHeightY) {
+                for (int xOff = 0; xOff <= 0; xOff++) {
+                    for (int zOff = 0; zOff <= 0; zOff++) {
+
+                        int newX = x + xOff;
+                        int newZ = z + zOff;
+
+                        if (newX < 0 || newX >= ChunkWidthX ||
+                            newZ < 0 || newZ >= ChunkLengthZ)
+                            continue;
+
+
+                        Block *b = &(chunk->blocks[
+                            newX +
+                            ChunkWidthX * newZ +
+                            (ChunkWidthX * ChunkLengthZ) * topLayerY
+                        ]);
+
+                        if (b->blockType == BLOCK_TYPE_OAK) continue;
+
+                        b->blockType = BLOCK_TYPE_LEAVES;
+                        b->isAir = 0;
+                    }
+                }
+            }
         }
     }
 }
@@ -217,6 +301,9 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
         return 0;
 
     if (!mainBlock->isAir && !neighborBlock->isAir && mainBlock->blockType == BLOCK_TYPE_LEAVES && neighborBlock->blockType == BLOCK_TYPE_LEAVES) {
+        return 1;
+    }
+    if (!mainBlock->isAir && !neighborBlock->isAir && mainBlock->blockType == BLOCK_TYPE_OAK && neighborBlock->blockType == BLOCK_TYPE_LEAVES) {
         return 1;
     }
     
