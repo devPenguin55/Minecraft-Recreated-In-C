@@ -760,6 +760,8 @@ void buildWorldMesh()
                     {0.5, -0.5, -0.5},
                     {-0.5, -0.5, -0.5},
                 };
+
+              
                 switch(q->faceType)
                 {
                     case FACE_FRONT:
@@ -802,6 +804,67 @@ void buildWorldMesh()
                         v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
                         v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
                         break;
+
+                    case FACE_CROSS:
+                        {
+                            Vertex c0 = (Vertex){-0.5f, -0.5f, -0.5f, 0, 1};
+                            Vertex c1 = (Vertex){ 0.5f, -0.5f,  0.5f, 1, 1};
+                            Vertex c2 = (Vertex){ 0.5f,  0.5f,  0.5f, 1, 0};
+                            Vertex c3 = (Vertex){-0.5f,  0.5f, -0.5f, 0, 0};
+
+                            Vertex d0 = (Vertex){-0.5f, -0.5f,  0.5f, 0, 1};
+                            Vertex d1 = (Vertex){ 0.5f, -0.5f, -0.5f, 1, 1};
+                            Vertex d2 = (Vertex){ 0.5f,  0.5f, -0.5f, 1, 0};
+                            Vertex d3 = (Vertex){-0.5f,  0.5f,  0.5f, 0, 0};
+
+                            Vertex* verts[8] = {&c0,&c1,&c2,&c3,&d0,&d1,&d2,&d3};
+                            for (int i = 0; i < 8; i++) {
+                                verts[i]->x += x;
+                                verts[i]->y += y;
+                                verts[i]->z += z;
+                                verts[i]->layer = ORCHID_TEXTURE_ARRAY_INDEX;
+                            }
+
+                            if ((worldVertexCount + 24) > worldVertexCapacity) {
+                                worldVertexCapacity = worldVertexCapacity * 2 + 1024;
+                                worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCapacity);
+                            }
+
+                            // FRONT
+                            worldVertices[worldVertexCount++] = c0;
+                            worldVertices[worldVertexCount++] = c1;
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c0;
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c3;
+
+                            // BACK
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c1;
+                            worldVertices[worldVertexCount++] = c0;
+                            worldVertices[worldVertexCount++] = c3;
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c0;
+
+                   
+                            // FRONT
+                            worldVertices[worldVertexCount++] = d0;
+                            worldVertices[worldVertexCount++] = d1;
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d0;
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d3;
+
+                            // BACK
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d1;
+                            worldVertices[worldVertexCount++] = d0;
+                            worldVertices[worldVertexCount++] = d3;
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d0;
+
+                            continue; 
+                        }
                 }
 
                 float minX = MIN4(v0.x,v1.x, v2.x, v3.x);
@@ -853,6 +916,11 @@ void buildWorldMesh()
                     sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
                     topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
                     bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
+                    break;
+                case BLOCK_TYPE_ORCHID:
+                    sideTextureIndex = ORCHID_TEXTURE_ARRAY_INDEX;
+                    topTextureIndex = ORCHID_TEXTURE_ARRAY_INDEX;
+                    bottomTextureIndex = ORCHID_TEXTURE_ARRAY_INDEX;
                     break;
                 default:
                     printf("No correct block type entered!\n");
@@ -1292,11 +1360,12 @@ void drawGraphics()
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     
+   
     glBindVertexArray(worldVAO);
     glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
     glBindVertexArray(0);
+    
     
     // * ////////////
 

@@ -58,6 +58,7 @@ typedef struct ChunkMeshQuads
 #define FACE_RIGHT 4
 #define FACE_FRONT 5
 #define FACE_BACK 6
+#define FACE_CROSS 7
 
 #define PLANE_X 1
 #define PLANE_Y 2

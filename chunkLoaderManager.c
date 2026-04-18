@@ -414,6 +414,69 @@ void loadChunks(GLfloat playerCoords[2]) {
                             v2 = (Vertex){Vertices[2][0], Vertices[2][1], Vertices[2][2], w, h};
                             v3 = (Vertex){Vertices[3][0], Vertices[3][1], Vertices[3][2], 0, h};
                             break;
+                        case FACE_CROSS:
+                            // --- QUAD 1 (\ diagonal) ---
+                            Vertex c0 = (Vertex){-0.5f, -0.5f, -0.5f, 0, h};
+                            Vertex c1 = (Vertex){ 0.5f, -0.5f,  0.5f, w, h};
+                            Vertex c2 = (Vertex){ 0.5f,  0.5f,  0.5f, w, 0};
+                            Vertex c3 = (Vertex){-0.5f,  0.5f, -0.5f, 0, 0};
+
+                            // --- QUAD 2 (/ diagonal) ---
+                            Vertex d0 = (Vertex){-0.5f, -0.5f,  0.5f, 0, h};
+                            Vertex d1 = (Vertex){ 0.5f, -0.5f, -0.5f, w, h};
+                            Vertex d2 = (Vertex){ 0.5f,  0.5f, -0.5f, w, 0};
+                            Vertex d3 = (Vertex){-0.5f,  0.5f,  0.5f, 0, 0};
+
+                            // Apply world position + texture layer
+                            Vertex* verts[8] = {&c0,&c1,&c2,&c3,&d0,&d1,&d2,&d3};
+                            for (int i = 0; i < 8; i++) {
+                                verts[i]->x += x;
+                                verts[i]->y += y;
+                                verts[i]->z += z;
+                                verts[i]->layer = ORCHID_TEXTURE_ARRAY_INDEX;
+                            }
+
+                            // Ensure capacity (24 verts total)
+                            if ((worldVertexCount + 24) > worldVertexCapacity) {
+                                worldVertexCapacity = worldVertexCapacity * 2 + 1024;
+                                worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCapacity);
+                            }
+
+                            // ===== QUAD 1 =====
+                            // FRONT
+                            worldVertices[worldVertexCount++] = c0;
+                            worldVertices[worldVertexCount++] = c1;
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c0;
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c3;
+
+                            // BACK
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c1;
+                            worldVertices[worldVertexCount++] = c0;
+                            worldVertices[worldVertexCount++] = c3;
+                            worldVertices[worldVertexCount++] = c2;
+                            worldVertices[worldVertexCount++] = c0;
+
+                            // ===== QUAD 2 =====
+                            // FRONT
+                            worldVertices[worldVertexCount++] = d0;
+                            worldVertices[worldVertexCount++] = d1;
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d0;
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d3;
+
+                            // BACK
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d1;
+                            worldVertices[worldVertexCount++] = d0;
+                            worldVertices[worldVertexCount++] = d3;
+                            worldVertices[worldVertexCount++] = d2;
+                            worldVertices[worldVertexCount++] = d0;
+
+                            continue; // skip normal cube logic
                     }
 
                     float minX = MIN4(v0.x,v1.x, v2.x, v3.x);
