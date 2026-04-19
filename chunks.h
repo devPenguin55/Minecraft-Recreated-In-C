@@ -51,6 +51,15 @@ typedef struct ChunkMeshQuads
     int amtQuads;
 } ChunkMeshQuads;
 
+typedef struct BlockType
+{
+    int id; // essentially BLOCK_TYPE_GRASS or smt
+    int topTexture;
+    int bottomTexture;
+    int sideTexture;
+    int isSolid;
+} BlockType;
+
 // these are the face types
 #define FACE_TOP 1
 #define FACE_BOTTOM 2
@@ -58,7 +67,7 @@ typedef struct ChunkMeshQuads
 #define FACE_RIGHT 4
 #define FACE_FRONT 5
 #define FACE_BACK 6
-#define FACE_CROSS 7
+#define FACE_CROSS 7 // use for things like flowers 
 
 #define PLANE_X 1
 #define PLANE_Y 2
@@ -87,6 +96,8 @@ extern float BlockWidthX;
 extern float BlockLengthZ;
 extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
+
+extern BlockType blockRegistry[100]; 
 
 extern int blockBreakingTimeByBlockType[100];
 

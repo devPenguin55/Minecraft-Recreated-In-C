@@ -269,6 +269,8 @@ void initGraphics()
     LEAVES_TEXTURE_ARRAY_INDEX = 8;
     ORCHID_TEXTURE_ARRAY_INDEX = 9;
 
+    
+
     blockTextureArray = loadTextureArray(blockTextures, 10);
 }
 

@@ -30,9 +30,6 @@ typedef struct Vertex {
     int layer;
 } Vertex;
 
-typedef struct BlockType {
-    
-} BlockType;
 
 extern GLfloat T;
 extern GLfloat CameraX;

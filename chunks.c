@@ -11,6 +11,7 @@
 
 
 ChunkMeshQuads chunkMeshQuads;
+BlockType blockRegistry[100];
 // int ChunkWidthX = 1;
 // int ChunkLengthZ = 1;
 // int ChunkHeightY = 10;
