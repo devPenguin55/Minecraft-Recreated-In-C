@@ -1491,6 +1491,25 @@ void drawGraphics()
     glDepthMask(GL_FALSE);
 
     // draw 2d things
+    int inWater = isCameraInWater(); 
+    if (inWater) { 
+        glEnable(GL_BLEND); 
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+        float depthAlpha = MAX(MIN((SEA_LEVEL+2 - CameraY)/25, 0.55), 0.25);
+        glColor4f(0.0f, 0.3f, 0.8f, depthAlpha); 
+        glBegin(GL_QUADS);
+        glVertex2f(0, 0);
+        glVertex2f(0, windowHeight);
+        glVertex2f(windowWidth, windowHeight);
+        glVertex2f(windowWidth, 0);
+        glEnd();
+        glDisable(GL_BLEND); 
+    }
+
+
+
+
+
     glColor3f(1.0f, 0.0f, 0.0f);
     glLineWidth(2.0f);
     glBegin(GL_LINES);
@@ -1510,20 +1529,7 @@ void drawGraphics()
 
 
 
-    int inWater = isCameraInWater(); 
-    if (inWater) { 
-        glEnable(GL_BLEND); 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-        float depthAlpha = MAX(MIN((SEA_LEVEL+2 - CameraY)/25, 0.55), 0.25);
-        glColor4f(0.0f, 0.3f, 0.8f, depthAlpha); 
-        glBegin(GL_QUADS);
-        glVertex2f(0, 0);
-        glVertex2f(0, windowHeight);
-        glVertex2f(windowWidth, windowHeight);
-        glVertex2f(windowWidth, 0);
-        glEnd();
-        glDisable(GL_BLEND); 
-    }
+    
 
 
 
