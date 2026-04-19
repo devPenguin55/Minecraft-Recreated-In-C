@@ -247,7 +247,8 @@ void initGraphics()
         "assets\\oak_log.png", // 6
         "assets\\oak_log_top.png", // 7
         "assets\\leaves.png", // 8
-        "assets\\blue_orchid.png" // 9
+        "assets\\blue_orchid.png", // 9 
+        "assets\\short_grass.png" // 10
     };
 
 
@@ -261,13 +262,16 @@ void initGraphics()
     int OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
     int LEAVES_TEXTURE_ARRAY_INDEX = 8;
     int ORCHID_TEXTURE_ARRAY_INDEX = 9;
+    int SHORT_GRASS_TEXTURE_ARRAY_INDEX = 10;
 
     blockRegistry[BLOCK_TYPE_GRASS] = (BlockType){
         .id = BLOCK_TYPE_GRASS,
         .sideTexture = GRASS_SIDE_TEXTURE_ARRAY_INDEX,
         .topTexture = GRASS_TOP_TEXTURE_ARRAY_INDEX,
         .bottomTexture = DIRT_TEXTURE_ARRAY_INDEX,
-        .isSolid = 1
+        .isSolid = 1,
+        .blockBreakingTime = 100,
+        .isCross = 0
     };
 
     blockRegistry[BLOCK_TYPE_DIRT] = (BlockType){
@@ -275,7 +279,9 @@ void initGraphics()
         .sideTexture = DIRT_TEXTURE_ARRAY_INDEX,
         .topTexture = DIRT_TEXTURE_ARRAY_INDEX,
         .bottomTexture = DIRT_TEXTURE_ARRAY_INDEX,
-        .isSolid = 1
+        .isSolid = 1,
+        .blockBreakingTime = 100,
+        .isCross = 0
     };
 
     blockRegistry[BLOCK_TYPE_STONE] = (BlockType){
@@ -283,7 +289,9 @@ void initGraphics()
         .sideTexture = STONE_TEXTURE_ARRAY_INDEX,
         .topTexture = STONE_TEXTURE_ARRAY_INDEX,
         .bottomTexture = STONE_TEXTURE_ARRAY_INDEX,
-        .isSolid = 1
+        .isSolid = 1,
+        .blockBreakingTime = 200,
+        .isCross = 0
     };
 
     blockRegistry[BLOCK_TYPE_WATER] = (BlockType){
@@ -291,7 +299,9 @@ void initGraphics()
         .sideTexture = WATER_TEXTURE_ARRAY_INDEX,
         .topTexture = WATER_TEXTURE_ARRAY_INDEX,
         .bottomTexture = WATER_TEXTURE_ARRAY_INDEX,
-        .isSolid = 0
+        .isSolid = 0,
+        .blockBreakingTime = 99999,
+        .isCross = 0
     };
     
     blockRegistry[BLOCK_TYPE_SAND] = (BlockType){
@@ -299,7 +309,9 @@ void initGraphics()
         .sideTexture = SAND_TEXTURE_ARRAY_INDEX,
         .topTexture = SAND_TEXTURE_ARRAY_INDEX,
         .bottomTexture = SAND_TEXTURE_ARRAY_INDEX,
-        .isSolid = 1
+        .isSolid = 1,
+        .blockBreakingTime = 75,
+        .isCross = 0
     };
 
 
@@ -308,7 +320,9 @@ void initGraphics()
         .sideTexture = OAK_SIDE_TEXTURE_ARRAY_INDEX,
         .topTexture = OAK_TOP_TEXTURE_ARRAY_INDEX,
         .bottomTexture = OAK_TOP_TEXTURE_ARRAY_INDEX,
-        .isSolid = 1
+        .isSolid = 1,
+        .blockBreakingTime = 150,
+        .isCross = 0
     };
 
     blockRegistry[BLOCK_TYPE_LEAVES] = (BlockType){
@@ -316,7 +330,9 @@ void initGraphics()
         .sideTexture = LEAVES_TEXTURE_ARRAY_INDEX,
         .topTexture = LEAVES_TEXTURE_ARRAY_INDEX,
         .bottomTexture = LEAVES_TEXTURE_ARRAY_INDEX,
-        .isSolid = 0
+        .isSolid = 0,
+        .blockBreakingTime = 50,
+        .isCross = 0
     };
 
     blockRegistry[BLOCK_TYPE_ORCHID] = (BlockType){
@@ -324,10 +340,22 @@ void initGraphics()
         .sideTexture = ORCHID_TEXTURE_ARRAY_INDEX,
         .topTexture = ORCHID_TEXTURE_ARRAY_INDEX,
         .bottomTexture = ORCHID_TEXTURE_ARRAY_INDEX,
-        .isSolid = 0
+        .isSolid = 0,
+        .blockBreakingTime = 10,
+        .isCross = 1
     };
 
-    blockTextureArray = loadTextureArray(blockTextures, 10);
+    blockRegistry[BLOCK_TYPE_SHORT_GRASS] = (BlockType){
+        .id = BLOCK_TYPE_SHORT_GRASS,
+        .sideTexture = SHORT_GRASS_TEXTURE_ARRAY_INDEX,
+        .topTexture = SHORT_GRASS_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = SHORT_GRASS_TEXTURE_ARRAY_INDEX,
+        .isSolid = 0,
+        .blockBreakingTime = 10,
+        .isCross = 1
+    };
+
+    blockTextureArray = loadTextureArray(blockTextures, sizeof(blockTextures)/sizeof(blockTextures[0]));
 }
 
 void reshape(int width, int height)
@@ -526,7 +554,7 @@ void face(
         glScalef(BlockWidthX, BlockHeightY, BlockLengthZ);
 
 
-        int stage = 9 * ((float)userBlockBreakingTimeElapsed / blockBreakingTimeByBlockType[beginBlockBreakingBlockType]);
+        int stage = 9 * ((float)userBlockBreakingTimeElapsed / blockRegistry[beginBlockBreakingBlockType].blockBreakingTime);
         if (stage > 8)
             stage = 8;
 
@@ -539,7 +567,7 @@ void face(
 
         // float crackAlpha = (stage / 9.0f);
         // crackAlpha = (crackAlpha > 1.0f) ? 1.0f : crackAlpha;
-        float crackAlpha = ((selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ*ChunkWidthX) + (int)(selectedBlockToRender.localY*ChunkLengthZ*ChunkWidthX)].blockType == BLOCK_TYPE_LEAVES || selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ*ChunkWidthX) + (int)(selectedBlockToRender.localY*ChunkLengthZ*ChunkWidthX)].blockType == BLOCK_TYPE_SAND) ? 0.3 : 0.6);
+        float crackAlpha = ((!blockRegistry[selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ*ChunkWidthX) + (int)(selectedBlockToRender.localY*ChunkLengthZ*ChunkWidthX)].blockType].isSolid || selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ*ChunkWidthX) + (int)(selectedBlockToRender.localY*ChunkLengthZ*ChunkWidthX)].blockType == BLOCK_TYPE_SAND) ? 0.3 : 0.6);
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
         // Compute face normal from vertices
@@ -880,7 +908,7 @@ void buildWorldMesh()
                                 verts[i]->x += x;
                                 verts[i]->y += y;
                                 verts[i]->z += z;
-                                verts[i]->layer = blockRegistry[BLOCK_TYPE_ORCHID].sideTexture;
+                                verts[i]->layer = blockRegistry[q->blockType].sideTexture;
                             }
 
                             if ((worldVertexCount + 24) > worldVertexCapacity) {

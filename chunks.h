@@ -58,6 +58,8 @@ typedef struct BlockType
     int bottomTexture;
     int sideTexture;
     int isSolid;
+    int blockBreakingTime;
+    int isCross;
 } BlockType;
 
 // these are the face types
@@ -82,6 +84,7 @@ typedef struct BlockType
 #define BLOCK_TYPE_OAK 6
 #define BLOCK_TYPE_LEAVES 7
 #define BLOCK_TYPE_ORCHID 8
+#define BLOCK_TYPE_SHORT_GRASS 9
 
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
@@ -98,8 +101,6 @@ extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
 
 extern BlockType blockRegistry[100]; 
-
-extern int blockBreakingTimeByBlockType[100];
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key);
 void initChunkMeshingSystem();

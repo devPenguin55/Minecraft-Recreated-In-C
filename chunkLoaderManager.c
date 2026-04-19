@@ -433,7 +433,7 @@ void loadChunks(GLfloat playerCoords[2]) {
                                 verts[i]->x += x;
                                 verts[i]->y += y;
                                 verts[i]->z += z;
-                                verts[i]->layer = blockRegistry[BLOCK_TYPE_ORCHID].sideTexture;
+                                verts[i]->layer = blockRegistry[q->blockType].sideTexture;
                             }
 
                        

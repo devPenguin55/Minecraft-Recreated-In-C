@@ -22,8 +22,6 @@ float BlockLengthZ = 1;
 
 int DEBUG = 0;
 
-int blockBreakingTimeByBlockType[100];
-
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key)
 {
     chunk->chunkStartX = xAdd;
@@ -164,15 +162,27 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             // tree constraint
 
             int treeValid = !(fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) <= 0.45f);
-            int flowerValid = fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) > 0.36f;
-            
-            if (flowerValid && !treeValid) {
+            int flowerValid = fbm2D(worldX / 10.f, worldZ / 10.f, 5, 2, 2.0, 5.0) > 0.37f;
+            int shortGrassValid = fbm2D(worldX / 1.2f, worldZ / 10.f, 5, 2, 2.0, 5.0) > 0.37f;
+
+            if (flowerValid && !treeValid && !shortGrassValid) {
                 // flowers addition
                 Block *b = &(chunk->blocks[
                     x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY
                 ]);
 
                 b->blockType = BLOCK_TYPE_ORCHID;
+                b->isAir = 0;
+                continue;
+            } 
+
+            if (shortGrassValid && !treeValid) {
+                // short grass addition
+                Block *b = &(chunk->blocks[
+                    x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY
+                ]);
+
+                b->blockType = BLOCK_TYPE_SHORT_GRASS;
                 b->isAir = 0;
                 continue;
             } 
@@ -298,15 +308,6 @@ void initChunkMeshingSystem()
     chunkMeshQuads.capacity = 16;
     chunkMeshQuads.amtQuads = 0;
     chunkMeshQuads.quads = malloc(sizeof(MeshQuad) * chunkMeshQuads.capacity);
-
-
-    blockBreakingTimeByBlockType[BLOCK_TYPE_GRASS]  =  100;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_DIRT]   =  100;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_STONE]  =  200;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_SAND]   =   75;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_OAK]    =  150;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_LEAVES] =   50;
-    blockBreakingTimeByBlockType[BLOCK_TYPE_ORCHID] =   1;
 }
 
 void handleProgramClose()
@@ -424,7 +425,7 @@ void generateChunkMesh(Chunk *chunk)
                 int frontBlockIndex = blockIndex - ChunkWidthX;
                 int backBlockIndex = blockIndex + ChunkWidthX;
 
-                if (!chunk->blocks[blockIndex].isAir && chunk->blocks[blockIndex].blockType == BLOCK_TYPE_ORCHID) {
+                if (!chunk->blocks[blockIndex].isAir && blockRegistry[chunk->blocks[blockIndex].blockType].isCross) {
                     crosses[blockIndex] = 1;
                     continue;
                 }
