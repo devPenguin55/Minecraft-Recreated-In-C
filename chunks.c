@@ -320,15 +320,14 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
     if (mainBlock->isAir)
         return 0;
 
-    if (!mainBlock->isAir && !neighborBlock->isAir && mainBlock->blockType == BLOCK_TYPE_LEAVES && neighborBlock->blockType == BLOCK_TYPE_LEAVES) {
+    
+    if (!mainBlock->isAir && !neighborBlock->isAir && !blockRegistry[mainBlock->blockType].isSolid && !blockRegistry[neighborBlock->blockType].isSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER) {
         return 1;
     }
-    if (!mainBlock->isAir && !neighborBlock->isAir && mainBlock->blockType == BLOCK_TYPE_OAK && neighborBlock->blockType == BLOCK_TYPE_LEAVES) {
+    if (!mainBlock->isAir && !neighborBlock->isAir && blockRegistry[mainBlock->blockType].isSolid && !blockRegistry[neighborBlock->blockType].isSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER) {
         return 1;
     }
-    if (!mainBlock->isAir && !neighborBlock->isAir && neighborBlock->blockType == BLOCK_TYPE_ORCHID) {
-        return 1;
-    }
+    
     
 
     // normal solid block

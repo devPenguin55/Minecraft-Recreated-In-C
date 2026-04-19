@@ -433,7 +433,7 @@ void loadChunks(GLfloat playerCoords[2]) {
                                 verts[i]->x += x;
                                 verts[i]->y += y;
                                 verts[i]->z += z;
-                                verts[i]->layer = ORCHID_TEXTURE_ARRAY_INDEX;
+                                verts[i]->layer = blockRegistry[BLOCK_TYPE_ORCHID].sideTexture;
                             }
 
                        
@@ -489,46 +489,9 @@ void loadChunks(GLfloat playerCoords[2]) {
                     float size[2] = {w, h};
                     // scale along face axes only
 
-                    int sideTextureIndex;
-                    int topTextureIndex;
-                    int bottomTextureIndex;
-
-                    switch (q->blockType)
-                    {
-                    case BLOCK_TYPE_GRASS:
-                        sideTextureIndex = GRASS_SIDE_TEXTURE_ARRAY_INDEX;
-                        topTextureIndex = GRASS_TOP_TEXTURE_ARRAY_INDEX;
-                        bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                        break;
-                    case BLOCK_TYPE_DIRT:
-                        sideTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                        topTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                        bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                        break;
-                    case BLOCK_TYPE_STONE:
-                        sideTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-                        topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-                        bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-                        break;
-                    case BLOCK_TYPE_SAND:
-                        sideTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
-                        topTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
-                        bottomTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
-                        break;
-                    case BLOCK_TYPE_OAK:
-                        sideTextureIndex = OAK_SIDE_TEXTURE_ARRAY_INDEX;
-                        topTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
-                        bottomTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
-                        break;
-                    case BLOCK_TYPE_LEAVES:
-                        sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                        topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                        bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                        break;
-                    default:
-                        printf("No correct block type entered!\n");
-                        break;
-                    }
+                    int sideTextureIndex   = blockRegistry[q->blockType].sideTexture;
+                    int topTextureIndex    = blockRegistry[q->blockType].topTexture;
+                    int bottomTextureIndex = blockRegistry[q->blockType].bottomTexture;
 
 
                     if (amtDy == 0.0f)
@@ -719,9 +682,9 @@ void loadChunks(GLfloat playerCoords[2]) {
                     float size[2] = {w, h};
                     // scale along face axes only
 
-                    int sideTextureIndex   = WATER_TEXTURE_ARRAY_INDEX;
-                    int topTextureIndex    = WATER_TEXTURE_ARRAY_INDEX;
-                    int bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                    int sideTextureIndex   = blockRegistry[BLOCK_TYPE_WATER].sideTexture;
+                    int topTextureIndex    = blockRegistry[BLOCK_TYPE_WATER].sideTexture;
+                    int bottomTextureIndex = blockRegistry[BLOCK_TYPE_WATER].sideTexture;
 
                     if (amtDy == 0.0f)
                     {

@@ -37,16 +37,7 @@ int waterVertexCount = 0;
 int waterVertexCapacity = 0;
 
 GLuint blockTextureArray;
-int GRASS_SIDE_TEXTURE_ARRAY_INDEX;
-int GRASS_TOP_TEXTURE_ARRAY_INDEX;
-int DIRT_TEXTURE_ARRAY_INDEX;
-int STONE_TEXTURE_ARRAY_INDEX;
-int WATER_TEXTURE_ARRAY_INDEX;
-int SAND_TEXTURE_ARRAY_INDEX;
-int OAK_SIDE_TEXTURE_ARRAY_INDEX;
-int OAK_TOP_TEXTURE_ARRAY_INDEX;
-int LEAVES_TEXTURE_ARRAY_INDEX;
-int ORCHID_TEXTURE_ARRAY_INDEX;
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
@@ -247,29 +238,94 @@ void initGraphics()
 
 
     const char* blockTextures[] = {
-        "assets\\grassSide.png",
-        "assets\\grassTop.png",
-        "assets\\dirt.png",
-        "assets\\stone.png",
-        "assets\\water.png",
-        "assets\\sand.png",
-        "assets\\oak_log.png",
-        "assets\\oak_log_top.png",
-        "assets\\leaves.png",
-        "assets\\blue_orchid.png"
+        "assets\\grassSide.png", // 0
+        "assets\\grassTop.png", // 1
+        "assets\\dirt.png", // 2
+        "assets\\stone.png", // 3
+        "assets\\water.png", // 4
+        "assets\\sand.png", // 5
+        "assets\\oak_log.png", // 6
+        "assets\\oak_log_top.png", // 7
+        "assets\\leaves.png", // 8
+        "assets\\blue_orchid.png" // 9
     };
-    GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
-    GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
-    DIRT_TEXTURE_ARRAY_INDEX = 2;
-    STONE_TEXTURE_ARRAY_INDEX = 3; 
-    WATER_TEXTURE_ARRAY_INDEX = 4; 
-    SAND_TEXTURE_ARRAY_INDEX = 5;
-    OAK_SIDE_TEXTURE_ARRAY_INDEX = 6;
-    OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
-    LEAVES_TEXTURE_ARRAY_INDEX = 8;
-    ORCHID_TEXTURE_ARRAY_INDEX = 9;
 
+
+    int GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
+    int GRASS_TOP_TEXTURE_ARRAY_INDEX = 1;
+    int DIRT_TEXTURE_ARRAY_INDEX = 2;
+    int STONE_TEXTURE_ARRAY_INDEX = 3; 
+    int WATER_TEXTURE_ARRAY_INDEX = 4; 
+    int SAND_TEXTURE_ARRAY_INDEX = 5;
+    int OAK_SIDE_TEXTURE_ARRAY_INDEX = 6;
+    int OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
+    int LEAVES_TEXTURE_ARRAY_INDEX = 8;
+    int ORCHID_TEXTURE_ARRAY_INDEX = 9;
+
+    blockRegistry[BLOCK_TYPE_GRASS] = (BlockType){
+        .id = BLOCK_TYPE_GRASS,
+        .sideTexture = GRASS_SIDE_TEXTURE_ARRAY_INDEX,
+        .topTexture = GRASS_TOP_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = DIRT_TEXTURE_ARRAY_INDEX,
+        .isSolid = 1
+    };
+
+    blockRegistry[BLOCK_TYPE_DIRT] = (BlockType){
+        .id = BLOCK_TYPE_DIRT,
+        .sideTexture = DIRT_TEXTURE_ARRAY_INDEX,
+        .topTexture = DIRT_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = DIRT_TEXTURE_ARRAY_INDEX,
+        .isSolid = 1
+    };
+
+    blockRegistry[BLOCK_TYPE_STONE] = (BlockType){
+        .id = BLOCK_TYPE_STONE,
+        .sideTexture = STONE_TEXTURE_ARRAY_INDEX,
+        .topTexture = STONE_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = STONE_TEXTURE_ARRAY_INDEX,
+        .isSolid = 1
+    };
+
+    blockRegistry[BLOCK_TYPE_WATER] = (BlockType){
+        .id = BLOCK_TYPE_WATER,
+        .sideTexture = WATER_TEXTURE_ARRAY_INDEX,
+        .topTexture = WATER_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = WATER_TEXTURE_ARRAY_INDEX,
+        .isSolid = 0
+    };
     
+    blockRegistry[BLOCK_TYPE_SAND] = (BlockType){
+        .id = BLOCK_TYPE_SAND,
+        .sideTexture = SAND_TEXTURE_ARRAY_INDEX,
+        .topTexture = SAND_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = SAND_TEXTURE_ARRAY_INDEX,
+        .isSolid = 1
+    };
+
+
+    blockRegistry[BLOCK_TYPE_OAK] = (BlockType){
+        .id = BLOCK_TYPE_OAK,
+        .sideTexture = OAK_SIDE_TEXTURE_ARRAY_INDEX,
+        .topTexture = OAK_TOP_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = OAK_TOP_TEXTURE_ARRAY_INDEX,
+        .isSolid = 1
+    };
+
+    blockRegistry[BLOCK_TYPE_LEAVES] = (BlockType){
+        .id = BLOCK_TYPE_LEAVES,
+        .sideTexture = LEAVES_TEXTURE_ARRAY_INDEX,
+        .topTexture = LEAVES_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = LEAVES_TEXTURE_ARRAY_INDEX,
+        .isSolid = 0
+    };
+
+    blockRegistry[BLOCK_TYPE_ORCHID] = (BlockType){
+        .id = BLOCK_TYPE_ORCHID,
+        .sideTexture = ORCHID_TEXTURE_ARRAY_INDEX,
+        .topTexture = ORCHID_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = ORCHID_TEXTURE_ARRAY_INDEX,
+        .isSolid = 0
+    };
 
     blockTextureArray = loadTextureArray(blockTextures, 10);
 }
@@ -824,7 +880,7 @@ void buildWorldMesh()
                                 verts[i]->x += x;
                                 verts[i]->y += y;
                                 verts[i]->z += z;
-                                verts[i]->layer = ORCHID_TEXTURE_ARRAY_INDEX;
+                                verts[i]->layer = blockRegistry[BLOCK_TYPE_ORCHID].sideTexture;
                             }
 
                             if ((worldVertexCount + 24) > worldVertexCapacity) {
@@ -883,51 +939,11 @@ void buildWorldMesh()
                 float size[2] = {w, h};
                 // scale along face axes only
 
-                int sideTextureIndex;
-                int topTextureIndex;
-                int bottomTextureIndex;
+                int sideTextureIndex = blockRegistry[q->blockType].sideTexture;
+                int topTextureIndex = blockRegistry[q->blockType].topTexture;
+                int bottomTextureIndex = blockRegistry[q->blockType].bottomTexture;
 
-                switch (q->blockType)
-                {
-                case BLOCK_TYPE_GRASS:
-                    sideTextureIndex = GRASS_SIDE_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = GRASS_TOP_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                    break;
-                case BLOCK_TYPE_DIRT:
-                    sideTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = DIRT_TEXTURE_ARRAY_INDEX;
-                    break;
-                case BLOCK_TYPE_STONE:
-                    sideTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = STONE_TEXTURE_ARRAY_INDEX;
-                    break;
-                case BLOCK_TYPE_SAND:
-                    sideTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = SAND_TEXTURE_ARRAY_INDEX;
-                    break;
-                case BLOCK_TYPE_OAK:
-                    sideTextureIndex = OAK_SIDE_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = OAK_TOP_TEXTURE_ARRAY_INDEX;
-                    break;
-                case BLOCK_TYPE_LEAVES:
-                    sideTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = LEAVES_TEXTURE_ARRAY_INDEX;
-                    break;
-                case BLOCK_TYPE_ORCHID:
-                    sideTextureIndex = ORCHID_TEXTURE_ARRAY_INDEX;
-                    topTextureIndex = ORCHID_TEXTURE_ARRAY_INDEX;
-                    bottomTextureIndex = ORCHID_TEXTURE_ARRAY_INDEX;
-                    break;
-                default:
-                    printf("No correct block type entered!\n");
-                    break;
-                }
+                
 
 
                 if (amtDy == 0.0f)
@@ -1122,9 +1138,9 @@ void buildWorldMesh()
                  float size[2] = {w, h};
                  // scale along face axes only
 
-                 int sideTextureIndex   = WATER_TEXTURE_ARRAY_INDEX;
-                 int topTextureIndex    = WATER_TEXTURE_ARRAY_INDEX;
-                 int bottomTextureIndex = WATER_TEXTURE_ARRAY_INDEX;
+                 int sideTextureIndex   = blockRegistry[BLOCK_TYPE_WATER].sideTexture;
+                 int topTextureIndex    = blockRegistry[BLOCK_TYPE_WATER].sideTexture;
+                 int bottomTextureIndex = blockRegistry[BLOCK_TYPE_WATER].sideTexture;
 
                  if (amtDy == 0.0f)
                  {
