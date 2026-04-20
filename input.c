@@ -210,6 +210,13 @@ void handleMovingMouse(int x, int y) {
         if (userBlockBreakingTimeElapsed >= blockRegistry[blockType].blockBreakingTime && beginBlockBreakingIndex == (x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y)) {
             selectedBlockToRender.chunk->blocks[x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y].isAir = 1;
             userBlockBreakingTimeElapsed = 0;
+            
+            for (int i=0; i<9; i++) {
+                if (hotbarBlocks[i] == blockType) { break; }
+                if (hotbarBlocks[i] == -1) { hotbarBlocks[i] = blockType; break; }  
+            }
+
+
             triggerRenderChunkRebuild(selectedBlockToRender.chunk);
         } else {
             if (beginBlockBreakingIndex == -1) {
