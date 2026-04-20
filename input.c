@@ -79,6 +79,11 @@ void handleMouse(int button, int state, int x_, int y_) {
             beginBlockBreakingBlockType = selectedBlockToRender.chunk->blocks[beginBlockBreakingIndex].blockType;
         } else {
             // place blocks
+
+            if (hotbarBlocks[hotbarActiveSlot] == -1) {
+                return;
+            }
+
             int blockIndex;
             if (selectedBlockToRender.hitFace == FACE_TOP) {
                 blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y+1);
@@ -86,20 +91,20 @@ void handleMouse(int button, int state, int x_, int y_) {
                     return;
                 }
                 selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
+                selectedBlockToRender.chunk->blocks[blockIndex].blockType = hotbarBlocks[hotbarActiveSlot];
             } else if (selectedBlockToRender.hitFace == FACE_BOTTOM) {
                 blockIndex = x + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*(y-1);
                 if ((y-1) < 0) {
                     return;
                 }
                 selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
+                selectedBlockToRender.chunk->blocks[blockIndex].blockType = hotbarBlocks[hotbarActiveSlot];
 
             } else if (selectedBlockToRender.hitFace == FACE_LEFT) {
                 if ((x-1) >= 0) {
                     blockIndex = x-1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = hotbarBlocks[hotbarActiveSlot];
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
@@ -115,7 +120,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 if ((x+1) < ChunkWidthX) {
                     blockIndex = x+1 + (ChunkWidthX)*z + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = hotbarBlocks[hotbarActiveSlot];
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
@@ -131,7 +136,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 if ((z + 1) < ChunkLengthZ) {
                     blockIndex = x + (ChunkWidthX)*(z+1) + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = hotbarBlocks[hotbarActiveSlot];
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
@@ -147,7 +152,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 if ((z-1) >= 0) {
                     blockIndex = x + (ChunkWidthX)*(z-1) + (ChunkWidthX * ChunkLengthZ)*y;
                     selectedBlockToRender.chunk->blocks[blockIndex].isAir = 0;
-                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = BLOCK_TYPE_DIRT;
+                    selectedBlockToRender.chunk->blocks[blockIndex].blockType = hotbarBlocks[hotbarActiveSlot];
                 } else {
                     uint64_t chunkKey = packChunkKey(
                         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
@@ -160,42 +165,7 @@ void handleMouse(int button, int state, int x_, int y_) {
                 }
             }
             triggerRenderChunkRebuild(selectedBlockToRender.chunk);
-        }
-        
-        
-        // if (x == 0 ) {
-        //     uint64_t chunkKey = packChunkKey(
-        //         (int)((selectedBlockToRender.chunk->chunkStartX - chunkXUnit) / (chunkXUnit)), 
-        //         (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
-        //     );
-        //     BucketEntry *result = getHashmapEntry(chunkKey);
-        //     triggerRenderChunkRebuild(result->chunkEntry);
-        // } else if (x == ChunkWidthX-1) {
-        //     uint64_t chunkKey = packChunkKey(
-        //         (int)((selectedBlockToRender.chunk->chunkStartX + chunkXUnit) / (chunkXUnit)), 
-        //         (int)((selectedBlockToRender.chunk->chunkStartZ) / (chunkZUnit))
-        //     );
-        //     BucketEntry *result = getHashmapEntry(chunkKey);
-        //     triggerRenderChunkRebuild(result->chunkEntry);
-        // }
-
-        // if (z == 0 ) {
-        //     uint64_t chunkKey = packChunkKey(
-        //         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
-        //         (int)((selectedBlockToRender.chunk->chunkStartZ - chunkZUnit) / (chunkZUnit))
-        //     );
-        //     BucketEntry *result = getHashmapEntry(chunkKey);
-        //     triggerRenderChunkRebuild(result->chunkEntry);
-        // } else if (z == ChunkLengthZ-1) {
-        //     uint64_t chunkKey = packChunkKey(
-        //         (int)((selectedBlockToRender.chunk->chunkStartX) / (chunkXUnit)), 
-        //         (int)((selectedBlockToRender.chunk->chunkStartZ + chunkZUnit) / (chunkZUnit))
-        //     );
-        //     BucketEntry *result = getHashmapEntry(chunkKey);
-        //     triggerRenderChunkRebuild(result->chunkEntry);
-        // }
-
-        
+        }        
     } else {
         userBlockBreakingTimeElapsed = 0;
     }
@@ -313,4 +283,15 @@ void handleUserMovement() {
     if (pressedKeys['f']) {
         CameraY -= 0.8 * PLAYER_SPEED;
     }
+
+    // hotbar selection (keys 1–9)
+    if (pressedKeys['1']) hotbarActiveSlot = 0;
+    if (pressedKeys['2']) hotbarActiveSlot = 1;
+    if (pressedKeys['3']) hotbarActiveSlot = 2;
+    if (pressedKeys['4']) hotbarActiveSlot = 3;
+    if (pressedKeys['5']) hotbarActiveSlot = 4;
+    if (pressedKeys['6']) hotbarActiveSlot = 5;
+    if (pressedKeys['7']) hotbarActiveSlot = 6;
+    if (pressedKeys['8']) hotbarActiveSlot = 7;
+    if (pressedKeys['9']) hotbarActiveSlot = 8;
 }

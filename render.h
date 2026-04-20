@@ -47,6 +47,8 @@ extern int worldVertexCapacity;
 extern Vertex *waterVertices;
 extern int waterVertexCount;
 extern int waterVertexCapacity;
+extern int hotbarBlocks[9];
+extern int hotbarActiveSlot;
 
 void initGraphics();
 void reshape(int width, int height);

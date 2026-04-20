@@ -39,6 +39,9 @@ int waterVertexCapacity = 0;
 GLuint blockTextureArray;
 
 
+int hotbarBlocks[9];
+int hotbarActiveSlot = -1;
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MIN4(a, b, c, d) (MIN(MIN(a, b), MIN(c, d)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -220,7 +223,15 @@ void initGraphics()
 
     selectedBlockToRender.active = 0;
 
+    for (int i = 0; i < 9; i++)
+    {
+        hotbarBlocks[i] = -1;
+    }
+    hotbarBlocks[0] = BLOCK_TYPE_DIRT;
+    hotbarBlocks[1] = BLOCK_TYPE_GRASS;
+    hotbarBlocks[2] = BLOCK_TYPE_LEAVES;
 
+    hotbarActiveSlot = 2;
 
 
     GLuint vs = compileShader("shader.vert", GL_VERTEX_SHADER);
@@ -1527,10 +1538,125 @@ void drawGraphics()
 
     // glColor3f(1.0f, 1.0f, 1.0f);
 
+    ////////////////////////////////////////
 
+
+    float slotSize = 40.0f;   
+    float padding  = 4.0f;      
+    int slotCount  = 9;
+
+    float barWidth = slotCount * slotSize + (slotCount - 1) * padding;
+    float barHeight = slotSize;
+
+    float barLeft = (windowWidth - barWidth) / 2.0f;
+
+    float barBottom = windowHeight - 50.0f;
+    float barTop = barBottom + barHeight;
+
+    // --- setup ---
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+    // --- background ---
+    glColor4f(0.0f, 0.0f, 0.0f, 0.55f);
+    glBegin(GL_QUADS);
+    glVertex2f(barLeft, barBottom);
+    glVertex2f(barLeft, barTop);
+    glVertex2f(barLeft + barWidth, barTop);
+    glVertex2f(barLeft + barWidth, barBottom);
+    glEnd();
+
+    // --- outer border ---
+    glColor3f(0.6f, 0.6f, 0.6f);
+    glLineWidth(2.0f);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(barLeft,  barBottom);
+    glVertex2f(barLeft,  barTop);
+    glVertex2f(barLeft + barWidth, barTop);
+    glVertex2f(barLeft + barWidth, barBottom);
+    glEnd();
 
     
 
+    
+    for (int i = 0; i < slotCount; i++)
+    {
+        float x0 = barLeft + i * (slotSize + padding);
+        float x1 = x0 + slotSize;
+
+        glColor3f(0.7f, 0.7f, 0.7f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(x0, barBottom);
+        glVertex2f(x0, barTop);
+        glVertex2f(x1, barTop);
+        glVertex2f(x1, barBottom);
+        glEnd();
+
+        if (hotbarBlocks[i] == -1)
+            continue;
+
+
+        int layer = blockRegistry[hotbarBlocks[i]].sideTexture;
+
+        float pad = 6.0f;
+        float ix0 = x0 + pad;
+        float ix1 = x1 - pad;
+        float iy0 = barBottom + pad;
+        float iy1 = barTop - pad;
+
+        glUseProgram(worldShader);
+        glBindAttribLocation(worldShader, 2, "layer");
+        glBindTexture(GL_TEXTURE_2D_ARRAY, blockTextureArray);
+
+        glBegin(GL_TRIANGLES);
+
+        glVertexAttrib2f(1, 0.0f, 0.0f);
+        glVertexAttribI1i(2, layer);
+        glVertex2f(ix0, iy0);
+
+        glVertexAttrib2f(1, 1.0f, 0.0f);
+        glVertexAttribI1i(2, layer);
+        glVertex2f(ix1, iy0);
+
+        glVertexAttrib2f(1, 1.0f, 1.0f);
+        glVertexAttribI1i(2, layer);
+        glVertex2f(ix1, iy1);
+
+        glVertexAttrib2f(1, 0.0f, 0.0f);
+        glVertexAttribI1i(2, layer);
+        glVertex2f(ix0, iy0);
+
+        glVertexAttrib2f(1, 1.0f, 1.0f);
+        glVertexAttribI1i(2, layer);
+        glVertex2f(ix1, iy1);
+
+        glVertexAttrib2f(1, 0.0f, 1.0f);
+        glVertexAttribI1i(2, layer);
+        glVertex2f(ix0, iy1);
+
+        glEnd();
+        glUseProgram(0); 
+    }
+
+    if (hotbarActiveSlot != -1) {
+        int selected = hotbarActiveSlot;
+    
+        float selX0 = barLeft + selected * (slotSize + padding);
+        float selX1 = selX0 + slotSize;
+    
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glLineWidth(3.0f);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(selX0, barBottom);
+        glVertex2f(selX0, barTop);
+        glVertex2f(selX1, barTop);
+        glVertex2f(selX1, barBottom);
+        glEnd();
+    }
+
+    ////////////////////
 
 
 
