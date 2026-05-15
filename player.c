@@ -90,10 +90,11 @@ int playerCollides(Player* player)
 
 void updatePlayerPhysics(Player* player)
 {
-    const float gravity = 20.0f;
+    const float gravity = (player->isInWater) ? (5.0f) : (20.0f);
+
 
     player->velocity.y -= gravity * DELTA_TIME;
-    
+
     player->isOnGround = 0;
 
   

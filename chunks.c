@@ -8,8 +8,6 @@
 #include "chunkLoaderManager.h"
 #include "noise.h"
 
-
-
 ChunkMeshQuads chunkMeshQuads;
 BlockType blockRegistry[100];
 // int ChunkWidthX = 1;
@@ -37,55 +35,55 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->triggerVertexRecreation = 0;
 
     chunk->firstVertex = -1;
-    chunk->lastVertex  = -1;
+    chunk->lastVertex = -1;
     chunk->firstWaterVertex = -1;
-    chunk->lastWaterVertex  = -1;
+    chunk->lastWaterVertex = -1;
 
     for (int x = 0; x < ChunkWidthX; x++)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
             for (int y = 0; y < ChunkHeightY; y++)
-            { 
+            {
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
 
                 curBlock->blockType = -1;
                 curBlock->x = BlockWidthX * x + xAdd;
                 curBlock->z = BlockLengthZ * z + zAdd;
-                
+
                 curBlock->y = BlockHeightY * (y);
                 float scale = 100;
 
                 int generatedBlockNoiseHeight;
-            
+
                 float worldX = curBlock->x;
                 float worldZ = curBlock->z;
 
                 float noise = fbm2D(worldX / scale, worldZ / scale, 5, 2, 2.0, 5.0);
-                
+
                 generatedBlockNoiseHeight = (int)(noise * BlockHeightY * 20 + 30);
-                float ridge = ridgedFbm2D(worldX/150.0f, worldZ/150.0f, 9, 4, 2.0, 0.5) * 20;
+                float ridge = ridgedFbm2D(worldX / 150.0f, worldZ / 150.0f, 9, 4, 2.0, 0.5) * 20;
                 generatedBlockNoiseHeight += (int)ridge;
 
                 curBlock->isAir = (y > generatedBlockNoiseHeight);
 
-                if (!curBlock->isAir) {
-                    if (y > 18 && y < 50) {
-                        int yboost = 15;  // small vertical shift
+                if (!curBlock->isAir)
+                {
+                    if (y > 18 && y < 50)
+                    {
+                        int yboost = 15; // small vertical shift
 
                         float base = perlinNoise3D(
                             worldX / 25.0f,
                             (y + yboost) / 25.0f,
                             worldZ / 25.0f,
-                            3
-                        );
+                            3);
 
                         float ridged = 1.0f - fabs(base);
 
                         curBlock->isAir = (ridged > 0.9f);
                     }
                 }
-                
 
                 if (curBlock->isAir)
                 {
@@ -96,10 +94,18 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     if (y == generatedBlockNoiseHeight)
                     {
                         // surface block
-                        if (generatedBlockNoiseHeight <= SEA_LEVEL + 1)
+                        if (generatedBlockNoiseHeight <= SEA_LEVEL + 1 && perlinNoise3D(
+                                                                              worldX / 25.0f,
+                                                                              (y + 5) / 25.0f,
+                                                                              worldZ / 25.0f,
+                                                                              3) < 0.05)
                         {
                             // shoreline
-                            curBlock->blockType = BLOCK_TYPE_SAND;
+                            curBlock->blockType = BLOCK_TYPE_RED_CLAY;
+                        }
+                        else if (generatedBlockNoiseHeight <= SEA_LEVEL)
+                        {
+                            curBlock->blockType = BLOCK_TYPE_DIRT;
                         }
                         else
                         {
@@ -112,7 +118,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                         if (y < SEA_LEVEL)
                         {
                             // underwater seabed
-                            curBlock->blockType = BLOCK_TYPE_SAND;
+                            curBlock->blockType = BLOCK_TYPE_RED_CLAY;
                         }
                         else
                         {
@@ -126,33 +132,37 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     }
                 }
 
-                if (curBlock->isAir && y < SEA_LEVEL) {
+                if (curBlock->isAir && y < SEA_LEVEL)
+                {
                     curBlock->isAir = 0;
                     curBlock->blockType = BLOCK_TYPE_WATER;
-                }                
+                }
             }
         }
     }
 
-    for (int x = 0; x < ChunkWidthX; x++) {
-        for (int z = 0; z < ChunkLengthZ; z++) {
+    for (int x = 0; x < ChunkWidthX; x++)
+    {
+        for (int z = 0; z < ChunkLengthZ; z++)
+        {
 
             int surfaceY = -1;
 
-        
-            for (int y = ChunkHeightY - 2; y >= 0; y--) {
+            for (int y = ChunkHeightY - 2; y >= 0; y--)
+            {
                 Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
                 Block *above = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * (y + 1)]);
 
-                if (!b->isAir && above->isAir && b->blockType == BLOCK_TYPE_GRASS) {
+                if (!b->isAir && above->isAir && b->blockType == BLOCK_TYPE_GRASS)
+                {
                     surfaceY = y + 1;
                     break;
                 }
             }
 
-            if (surfaceY == -1) continue;
+            if (surfaceY == -1)
+                continue;
 
-        
             if (x < 4 || x >= ChunkWidthX - 4 || z < 4 || z >= ChunkLengthZ - 4)
                 continue;
 
@@ -165,61 +175,58 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             int flowerValid = fbm2D(worldX / 10.f, worldZ / 10.f, 5, 2, 2.0, 5.0) > 0.37f;
             int shortGrassValid = fbm2D(worldX / 1.2f, worldZ / 10.f, 5, 2, 2.0, 5.0) > 0.30f;
 
-            if (flowerValid && !treeValid && !shortGrassValid) {
+            if (flowerValid && !treeValid && !shortGrassValid)
+            {
                 // flowers addition
-                Block *b = &(chunk->blocks[
-                    x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY
-                ]);
+                Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY]);
 
                 b->blockType = BLOCK_TYPE_ORCHID;
                 b->isAir = 0;
                 continue;
-            } 
+            }
 
-            if (shortGrassValid && !treeValid) {
+            if (shortGrassValid && !treeValid)
+            {
                 // short grass addition
-                Block *b = &(chunk->blocks[
-                    x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY
-                ]);
+                Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY]);
 
                 b->blockType = BLOCK_TYPE_SHORT_GRASS;
                 b->isAir = 0;
                 continue;
-            } 
+            }
 
-            if (!treeValid) { 
+            if (!treeValid)
+            {
                 continue;
             }
-            
-            
 
-      
             int trunkHeight = 5 + (int)(fbm2D(worldX, worldZ, 1, 1, 1, 1) * 2);
 
-            for (int yAdd = 0; yAdd < trunkHeight; yAdd++) {
+            for (int yAdd = 0; yAdd < trunkHeight; yAdd++)
+            {
                 int newY = surfaceY + yAdd;
-                if (newY >= ChunkHeightY) break;
+                if (newY >= ChunkHeightY)
+                    break;
 
-                Block *b = &(chunk->blocks[
-                    x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * newY
-                ]);
+                Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * newY]);
 
                 b->blockType = BLOCK_TYPE_OAK;
                 b->isAir = 0;
             }
 
-            int topY = surfaceY + trunkHeight-2;
+            int topY = surfaceY + trunkHeight - 2;
 
-            
-
-            for (int yOff = 0; yOff <= 1; yOff++) {
+            for (int yOff = 0; yOff <= 1; yOff++)
+            {
                 int layerY = topY + yOff;
 
                 if (layerY < 0 || layerY >= ChunkHeightY)
                     continue;
-        
-                for (int xOff = -2; xOff <= 2; xOff++) {
-                    for (int zOff = -2; zOff <= 2; zOff++) {
+
+                for (int xOff = -2; xOff <= 2; xOff++)
+                {
+                    for (int zOff = -2; zOff <= 2; zOff++)
+                    {
 
                         int newX = x + xOff;
                         int newZ = z + zOff;
@@ -228,15 +235,12 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                             newZ < 0 || newZ >= ChunkLengthZ)
                             continue;
 
-                        
+                        Block *b = &(chunk->blocks[newX +
+                                                   ChunkWidthX * newZ +
+                                                   (ChunkWidthX * ChunkLengthZ) * layerY]);
 
-                        Block *b = &(chunk->blocks[
-                            newX +
-                            ChunkWidthX * newZ +
-                            (ChunkWidthX * ChunkLengthZ) * layerY
-                        ]);
-
-                        if (b->blockType == BLOCK_TYPE_OAK) continue;
+                        if (b->blockType == BLOCK_TYPE_OAK)
+                            continue;
 
                         b->blockType = BLOCK_TYPE_LEAVES;
                         b->isAir = 0;
@@ -248,9 +252,11 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
             if (layerY < 0 || layerY >= ChunkHeightY)
                 continue;
-        
-            for (int xOff = -1; xOff <= 1; xOff++) {
-                for (int zOff = -1; zOff <= 1; zOff++) {
+
+            for (int xOff = -1; xOff <= 1; xOff++)
+            {
+                for (int zOff = -1; zOff <= 1; zOff++)
+                {
 
                     int newX = x + xOff;
                     int newZ = z + zOff;
@@ -259,24 +265,25 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                         newZ < 0 || newZ >= ChunkLengthZ)
                         continue;
 
-                
-                    Block *b = &(chunk->blocks[
-                        newX +
-                        ChunkWidthX * newZ +
-                        (ChunkWidthX * ChunkLengthZ) * layerY
-                    ]);
+                    Block *b = &(chunk->blocks[newX +
+                                               ChunkWidthX * newZ +
+                                               (ChunkWidthX * ChunkLengthZ) * layerY]);
 
-                    if (b->blockType == BLOCK_TYPE_OAK) continue;
+                    if (b->blockType == BLOCK_TYPE_OAK)
+                        continue;
 
                     b->blockType = BLOCK_TYPE_LEAVES;
                     b->isAir = 0;
                 }
             }
 
-            int topLayerY = topY+3;
-            if (topLayerY < ChunkHeightY) {
-                for (int xOff = 0; xOff <= 0; xOff++) {
-                    for (int zOff = 0; zOff <= 0; zOff++) {
+            int topLayerY = topY + 3;
+            if (topLayerY < ChunkHeightY)
+            {
+                for (int xOff = 0; xOff <= 0; xOff++)
+                {
+                    for (int zOff = 0; zOff <= 0; zOff++)
+                    {
 
                         int newX = x + xOff;
                         int newZ = z + zOff;
@@ -285,14 +292,12 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                             newZ < 0 || newZ >= ChunkLengthZ)
                             continue;
 
+                        Block *b = &(chunk->blocks[newX +
+                                                   ChunkWidthX * newZ +
+                                                   (ChunkWidthX * ChunkLengthZ) * topLayerY]);
 
-                        Block *b = &(chunk->blocks[
-                            newX +
-                            ChunkWidthX * newZ +
-                            (ChunkWidthX * ChunkLengthZ) * topLayerY
-                        ]);
-
-                        if (b->blockType == BLOCK_TYPE_OAK) continue;
+                        if (b->blockType == BLOCK_TYPE_OAK)
+                            continue;
 
                         b->blockType = BLOCK_TYPE_LEAVES;
                         b->isAir = 0;
@@ -321,15 +326,14 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
     if (mainBlock->isAir)
         return 0;
 
-    
-    if (!mainBlock->isAir && !neighborBlock->isAir && !blockRegistry[mainBlock->blockType].isRenderSolid && !blockRegistry[neighborBlock->blockType].isRenderSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER) {
+    if (!mainBlock->isAir && !neighborBlock->isAir && !blockRegistry[mainBlock->blockType].isRenderSolid && !blockRegistry[neighborBlock->blockType].isRenderSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER)
+    {
         return 1;
     }
-    if (!mainBlock->isAir && !neighborBlock->isAir && blockRegistry[mainBlock->blockType].isRenderSolid && !blockRegistry[neighborBlock->blockType].isRenderSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER) {
+    if (!mainBlock->isAir && !neighborBlock->isAir && blockRegistry[mainBlock->blockType].isRenderSolid && !blockRegistry[neighborBlock->blockType].isRenderSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER)
+    {
         return 1;
     }
-     
-    
 
     // normal solid block
     if (mainBlock->blockType != BLOCK_TYPE_WATER)
@@ -360,31 +364,29 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
 void generateChunkMesh(Chunk *chunk)
 {
     // printf("starting mesh amts %d\n", chunkMeshQuads.amtQuads);
-    int tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY]    = {0}; // * X-Z plane, y fixed
+    int tops[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0};    // * X-Z plane, y fixed
     int bottoms[ChunkWidthX][ChunkLengthZ][ChunkHeightY] = {0}; // * X-Z plane, y fixed
-    int lefts[ChunkHeightY][ChunkLengthZ][ChunkWidthX]   = {0}; // ? Y-Z plane, x fixed
-    int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX]  = {0}; // ? Y-Z plane, x fixed
-    int fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ]  = {0}; // * X-Y plane, z fixed
-    int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ]   = {0}; // * X-Y plane, z fixed
-    
-    int crosses[ChunkWidthX*ChunkLengthZ*ChunkHeightY] = {0}; // * cross blocks (like flowers)
+    int lefts[ChunkHeightY][ChunkLengthZ][ChunkWidthX] = {0};   // ? Y-Z plane, x fixed
+    int rights[ChunkHeightY][ChunkLengthZ][ChunkWidthX] = {0};  // ? Y-Z plane, x fixed
+    int fronts[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0};  // * X-Y plane, z fixed
+    int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0};   // * X-Y plane, z fixed
 
+    int crosses[ChunkWidthX * ChunkLengthZ * ChunkHeightY] = {0}; // * cross blocks (like flowers)
 
     int64_t chunkX;
     int64_t chunkZ;
     unpackChunkKey(chunk->key, &chunkX, &chunkZ);
-    
+
     uint64_t upChunkNeighborKey, downChunkNeighborKey, rightChunkNeighborKey, leftChunkNeighborKey;
-    leftChunkNeighborKey  = packChunkKey((chunkX - 1), chunkZ);
+    leftChunkNeighborKey = packChunkKey((chunkX - 1), chunkZ);
     rightChunkNeighborKey = packChunkKey((chunkX + 1), chunkZ);
-    upChunkNeighborKey    = packChunkKey(chunkX, (chunkZ - 1));
-    downChunkNeighborKey  = packChunkKey(chunkX, (chunkZ + 1));
+    upChunkNeighborKey = packChunkKey(chunkX, (chunkZ - 1));
+    downChunkNeighborKey = packChunkKey(chunkX, (chunkZ + 1));
 
-    BucketEntry *leftNeighbor  = getHashmapEntry(leftChunkNeighborKey);
+    BucketEntry *leftNeighbor = getHashmapEntry(leftChunkNeighborKey);
     BucketEntry *rightNeighbor = getHashmapEntry(rightChunkNeighborKey);
-    BucketEntry *upNeighbor    = getHashmapEntry(upChunkNeighborKey);
-    BucketEntry *downNeighbor  = getHashmapEntry(downChunkNeighborKey);
-
+    BucketEntry *upNeighbor = getHashmapEntry(upChunkNeighborKey);
+    BucketEntry *downNeighbor = getHashmapEntry(downChunkNeighborKey);
 
     // if (leftNeighbor == NULL) {
     //     printf("left neighbor null\n");
@@ -425,7 +427,8 @@ void generateChunkMesh(Chunk *chunk)
                 int frontBlockIndex = blockIndex - ChunkWidthX;
                 int backBlockIndex = blockIndex + ChunkWidthX;
 
-                if (!chunk->blocks[blockIndex].isAir && blockRegistry[chunk->blocks[blockIndex].blockType].isRenderCross) {
+                if (!chunk->blocks[blockIndex].isAir && blockRegistry[chunk->blocks[blockIndex].blockType].isRenderCross)
+                {
                     crosses[blockIndex] = 1;
                     continue;
                 }
@@ -453,7 +456,6 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     bottoms[x][z][y] = 0;
                 }
-
 
                 if ((x > 0 && checkIfFaceValidToBeInMesh(&(chunk->blocks[blockIndex]), &(chunk->blocks[leftBlockIndex]))) ||
                     (!chunk->blocks[blockIndex].isAir && x == 0))
@@ -519,7 +521,8 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
 
@@ -595,7 +598,8 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
 
@@ -670,10 +674,10 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
-                
 
                 curBlockType = lefts[y][z][x];
 
@@ -684,8 +688,7 @@ void generateChunkMesh(Chunk *chunk)
                     Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
                     Block *neighborBlock = &leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
                     if (
-                        !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock)
-                    )
+                        !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                     {
                         continue;
                     }
@@ -696,11 +699,10 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (leftNeighbor != NULL && (x == 0))
                     {
-                        Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + (y+width) * (ChunkWidthX * ChunkLengthZ)];
+                        Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)];
                         Block *neighborBlock = &leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)];
                         if (
-                            !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock)
-                        )
+                            !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
                             break;
                         }
@@ -725,8 +727,7 @@ void generateChunkMesh(Chunk *chunk)
                             Block *mainBlock = &chunk->blocks[x + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
                             Block *neighborBlock = &leftNeighbor->chunkEntry->blocks[ChunkWidthX - 1 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
                             if (
-                                !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock)
-                            )
+                                !checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
                                 done = 1;
                                 break;
@@ -785,10 +786,11 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
-                
+
                 curBlockType = rights[y][z][x];
 
                 if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
@@ -808,7 +810,7 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                     {
-                        Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + (y+width) * (ChunkWidthX * ChunkLengthZ)];
+                        Block *mainBlock = &chunk->blocks[x + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)];
                         Block *neighborBlock = &rightNeighbor->chunkEntry->blocks[0 + z * ChunkWidthX + (y + width) * (ChunkWidthX * ChunkLengthZ)];
                         if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
@@ -832,7 +834,7 @@ void generateChunkMesh(Chunk *chunk)
 
                         if (rightNeighbor != NULL && (x == (ChunkWidthX - 1)))
                         {
-                            Block *mainBlock = &chunk->blocks[x + (z+height) * ChunkWidthX + (y+dy) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *mainBlock = &chunk->blocks[x + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
                             Block *neighborBlock = &rightNeighbor->chunkEntry->blocks[0 + (z + height) * ChunkWidthX + (y + dy) * (ChunkWidthX * ChunkLengthZ)];
                             if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
@@ -891,7 +893,8 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
 
@@ -914,7 +917,7 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (upNeighbor != NULL && (z == 0))
                     {
-                        Block *mainBlock = &chunk->blocks[(x+width) + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                        Block *mainBlock = &chunk->blocks[(x + width) + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
                         Block *neighborBlock = &upNeighbor->chunkEntry->blocks[(x + width) + ((ChunkLengthZ - 1)) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
                         if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
@@ -935,11 +938,11 @@ void generateChunkMesh(Chunk *chunk)
                             done = 1;
                             break;
                         }
- 
+
                         if (upNeighbor != NULL && (z == 0))
                         {
-                            Block *mainBlock = &chunk->blocks[(x+dx) + z * ChunkWidthX + (y+height) * (ChunkWidthX * ChunkLengthZ)];
-                            Block *neighborBlock = &upNeighbor->chunkEntry->blocks[(x + dx) + ((ChunkLengthZ - 1)) * ChunkWidthX + (y+height) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *mainBlock = &chunk->blocks[(x + dx) + z * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *neighborBlock = &upNeighbor->chunkEntry->blocks[(x + dx) + ((ChunkLengthZ - 1)) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)];
                             if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
                                 done = 1;
@@ -998,7 +1001,8 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
 
@@ -1021,7 +1025,7 @@ void generateChunkMesh(Chunk *chunk)
                 {
                     if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                     {
-                        Block *mainBlock = &chunk->blocks[(x+width) + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
+                        Block *mainBlock = &chunk->blocks[(x + width) + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
                         Block *neighborBlock = &downNeighbor->chunkEntry->blocks[(x + width) + (0) * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ)];
                         if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                         {
@@ -1045,7 +1049,7 @@ void generateChunkMesh(Chunk *chunk)
 
                         if (downNeighbor != NULL && (z == (ChunkLengthZ - 1)))
                         {
-                            Block *mainBlock = &chunk->blocks[(x+dx) + z * ChunkWidthX + (y+height) * (ChunkWidthX * ChunkLengthZ)];
+                            Block *mainBlock = &chunk->blocks[(x + dx) + z * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)];
                             Block *neighborBlock = &downNeighbor->chunkEntry->blocks[(x + dx) + (0) * ChunkWidthX + (y + height) * (ChunkWidthX * ChunkLengthZ)];
                             if (!checkIfFaceValidToBeInMesh(mainBlock, neighborBlock))
                             {
@@ -1099,13 +1103,14 @@ void generateChunkMesh(Chunk *chunk)
         {
             for (int z = 0; z < ChunkLengthZ; z++)
             {
-                if (!crosses[x+z*ChunkWidthX+y*ChunkWidthX*ChunkLengthZ]) {
+                if (!crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                {
                     continue;
                 }
 
                 int blockIndex = x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ);
                 Block *block = &chunk->blocks[blockIndex];
-                
+
                 if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity)
                 {
                     chunkMeshQuads.capacity *= 2;
@@ -1129,16 +1134,16 @@ void generateChunkMesh(Chunk *chunk)
             }
         }
     }
-    
 
     // printf("   -> ending mesh amts %d\n", chunkMeshQuads.amtQuads);
 
     chunk->firstQuadIndex = currentQuadIndex;
-    chunk->lastQuadIndex = chunkMeshQuads.amtQuads-1;
+    chunk->lastQuadIndex = chunkMeshQuads.amtQuads - 1;
     chunk->flag = CHUNK_FLAG_RENDERED_AND_LOADED;
 }
 
-void deleteChunkMesh(Chunk *chunk) {
+void deleteChunkMesh(Chunk *chunk)
+{
     // need to delete the quads created from the chunks start to end quad
     // this can be done by shifting over entries and then resetting the quad count
 
@@ -1147,27 +1152,32 @@ void deleteChunkMesh(Chunk *chunk) {
     chunk->hasMesh = 0;
     chunk->flag = CHUNK_FLAG_LOADED;
     // printf("Deleting quads from %d to %d and has mesh is %d\n", firstQuadIndex, lastQuadIndex, chunk->hasMesh);
-    if (firstQuadIndex == -1 && lastQuadIndex == -1) {
-        return; 
+    if (firstQuadIndex == -1 && lastQuadIndex == -1)
+    {
+        return;
     }
 
     int deleteAmount = (lastQuadIndex - firstQuadIndex) + 1;
 
-    for (int quadIndex = lastQuadIndex+1; quadIndex < chunkMeshQuads.amtQuads; quadIndex++) {
+    for (int quadIndex = lastQuadIndex + 1; quadIndex < chunkMeshQuads.amtQuads; quadIndex++)
+    {
         chunkMeshQuads.quads[quadIndex - deleteAmount] = chunkMeshQuads.quads[quadIndex];
     }
 
     chunkMeshQuads.amtQuads -= deleteAmount;
     // fix other chunks' indices
-    for (int c = 0; c < chunkLoaderManager.loadedChunks.amtLoadedChunks; c++) {
-        Chunk* other = chunkLoaderManager.loadedChunks.loadedChunks[c];
+    for (int c = 0; c < chunkLoaderManager.loadedChunks.amtLoadedChunks; c++)
+    {
+        Chunk *other = chunkLoaderManager.loadedChunks.loadedChunks[c];
 
-        if (other->firstQuadIndex > lastQuadIndex) {
+        if (other->firstQuadIndex > lastQuadIndex)
+        {
             other->firstQuadIndex -= deleteAmount;
-            other->lastQuadIndex  -= deleteAmount;
+            other->lastQuadIndex -= deleteAmount;
         }
 
-        if (other->key == chunk->key) {
+        if (other->key == chunk->key)
+        {
             // printf("key reset!\n");
             other->firstQuadIndex = -1;
             other->lastQuadIndex = -1;
@@ -1175,4 +1185,3 @@ void deleteChunkMesh(Chunk *chunk) {
     }
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
 }
- 

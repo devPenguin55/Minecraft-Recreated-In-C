@@ -263,7 +263,7 @@ void initGraphics()
         "assets\\dirt.png",        // 2
         "assets\\stone.png",       // 3
         "assets\\water.png",       // 4
-        "assets\\sand.png",        // 5
+        "assets\\red_clay.png",    // 5
         "assets\\oak_log.png",     // 6
         "assets\\oak_log_top.png", // 7
         "assets\\leaves.png",      // 8
@@ -276,7 +276,7 @@ void initGraphics()
     int DIRT_TEXTURE_ARRAY_INDEX = 2;
     int STONE_TEXTURE_ARRAY_INDEX = 3;
     int WATER_TEXTURE_ARRAY_INDEX = 4;
-    int SAND_TEXTURE_ARRAY_INDEX = 5;
+    int RED_CLAY_TEXTURE_ARRAY_INDEX = 5;
     int OAK_SIDE_TEXTURE_ARRAY_INDEX = 6;
     int OAK_TOP_TEXTURE_ARRAY_INDEX = 7;
     int LEAVES_TEXTURE_ARRAY_INDEX = 8;
@@ -323,11 +323,11 @@ void initGraphics()
         .isRenderCross = 0,
         .isPhysicsSolid = 0};
 
-    blockRegistry[BLOCK_TYPE_SAND] = (BlockType){
-        .id = BLOCK_TYPE_SAND,
-        .sideTexture = SAND_TEXTURE_ARRAY_INDEX,
-        .topTexture = SAND_TEXTURE_ARRAY_INDEX,
-        .bottomTexture = SAND_TEXTURE_ARRAY_INDEX,
+    blockRegistry[BLOCK_TYPE_RED_CLAY] = (BlockType){
+        .id = BLOCK_TYPE_RED_CLAY,
+        .sideTexture = RED_CLAY_TEXTURE_ARRAY_INDEX,
+        .topTexture = RED_CLAY_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = RED_CLAY_TEXTURE_ARRAY_INDEX,
         .isRenderSolid = 1,
         .blockBreakingTime = 0.75f,
         .isRenderCross = 0,
@@ -591,7 +591,10 @@ void face(
 
         // float crackAlpha = (stage / 9.0f);
         // crackAlpha = (crackAlpha > 1.0f) ? 1.0f : crackAlpha;
-        float crackAlpha = ((!blockRegistry[selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType].isRenderSolid || selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType == BLOCK_TYPE_SAND) ? 0.3 : 0.6);
+        float crackAlpha = ((!blockRegistry[selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType].isRenderSolid || selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType == BLOCK_TYPE_RED_CLAY) ? 0.3 : 0.6);
+        if (selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType == BLOCK_TYPE_LEAVES) {
+            crackAlpha = 0.9;
+        }
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
 
         // Compute face normal from vertices
@@ -1525,7 +1528,11 @@ void drawGraphics()
         glVertex2f(windowWidth, 0);
         glEnd();
         glDisable(GL_BLEND);
-        player.isOnGround = 1;
+        player.isInWater = 1;
+    }
+    else
+    {
+        player.isInWater = 0;
     }
 
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -1559,11 +1566,8 @@ void drawGraphics()
     float barBottom = windowHeight - 50.0f;
     float barTop = barBottom + barHeight;
 
-    // --- setup ---
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // --- background ---
     glColor4f(0.0f, 0.0f, 0.0f, 0.55f);
     glBegin(GL_QUADS);
     glVertex2f(barLeft, barBottom);
@@ -1571,8 +1575,6 @@ void drawGraphics()
     glVertex2f(barLeft + barWidth, barTop);
     glVertex2f(barLeft + barWidth, barBottom);
     glEnd();
-
-    // --- outer border ---
     glColor3f(0.6f, 0.6f, 0.6f);
     glLineWidth(2.0f);
     glBegin(GL_LINE_LOOP);
@@ -1672,10 +1674,6 @@ void drawGraphics()
 
     // switch the content of color and depth buffers
     glutSwapBuffers();
-
-
-
-
 
     if (userBlockBreakingTimeElapsed != -1.f)
     {

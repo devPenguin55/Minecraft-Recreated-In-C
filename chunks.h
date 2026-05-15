@@ -23,8 +23,8 @@ typedef struct Chunk
     int flag;
     int hasMesh;
     uint64_t key;
-    int hasVertices; 
-    int hasWaterVertices; 
+    int hasVertices;
+    int hasWaterVertices;
     int firstVertex;
     int lastVertex;
     int firstWaterVertex;
@@ -70,7 +70,7 @@ typedef struct BlockType
 #define FACE_RIGHT 4
 #define FACE_FRONT 5
 #define FACE_BACK 6
-#define FACE_CROSS 7 // use for things like flowers 
+#define FACE_CROSS 7 // use for things like flowers
 
 #define PLANE_X 1
 #define PLANE_Y 2
@@ -81,7 +81,7 @@ typedef struct BlockType
 #define BLOCK_TYPE_DIRT 2
 #define BLOCK_TYPE_STONE 3
 #define BLOCK_TYPE_WATER 4
-#define BLOCK_TYPE_SAND 5
+#define BLOCK_TYPE_RED_CLAY 5
 #define BLOCK_TYPE_OAK 6
 #define BLOCK_TYPE_LEAVES 7
 #define BLOCK_TYPE_ORCHID 8
@@ -101,7 +101,7 @@ extern float BlockLengthZ;
 extern float BlockHeightY;
 extern ChunkMeshQuads chunkMeshQuads;
 
-extern BlockType blockRegistry[100]; 
+extern BlockType blockRegistry[100];
 
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key);
 void initChunkMeshingSystem();

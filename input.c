@@ -19,6 +19,7 @@ Player player = (Player){
     .velocity.y = 0,
     .velocity.z = 0,
     .isOnGround = 0,
+    .isInWater = 0,
     .width = 0.75f,
     .height = 1.8f};
 GLfloat EYE_HEIGHT_OFFSET = 1.62f;
@@ -363,7 +364,7 @@ void handleUserMovement()
         player.velocity.y = -5.0f;
     }
     // } else {
-    if (pressedKeys[' '] && player.isOnGround)
+    if (pressedKeys[' '] && (player.isOnGround || player.isInWater))
     {
         player.velocity.y = 7.5f;
         player.isOnGround = 0;
@@ -377,8 +378,8 @@ void handleUserMovement()
         moveX /= length;
         moveZ /= length;
     }
-    player.velocity.x = moveX * 6;
-    player.velocity.z = moveZ * 6;
+    player.velocity.x = moveX * 5;
+    player.velocity.z = moveZ * 5;
 
     // hotbar selection (keys 1–9)
     if (pressedKeys['1'])

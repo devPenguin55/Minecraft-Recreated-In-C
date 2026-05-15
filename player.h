@@ -10,6 +10,7 @@ typedef struct Player {
     Vec3 position;
     Vec3 velocity;
     int isOnGround;
+    int isInWater;
     float width;
     float height;
 } Player;
