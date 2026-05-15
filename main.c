@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     initGraphics();
 
     glutReshapeFunc(reshape);
-    glutDisplayFunc(drawGraphics);
+    glutDisplayFunc(drawGraphics); 
     glutKeyboardFunc(handleKeyDown);
     glutKeyboardUpFunc(handleKeyUp);
     glutIdleFunc(spinObject);

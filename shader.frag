@@ -1,6 +1,7 @@
 #version 330 core
 in vec2 fragUV;
-flat in int fragLayer;
+flat in float fragLayer;
+in float fragBrightness;
 
 out vec4 fragColor;
 
@@ -8,9 +9,10 @@ uniform sampler2DArray blockTextures;
 
 void main()
 {
-    vec4 texColor = texture(blockTextures, vec3(fragUV, fragLayer));
+    int layer = int(fragLayer);
+    vec4 texColor = texture(blockTextures, vec3(fragUV, layer));
 
-    if (fragLayer == 4)
+    if (layer == 4)
     {
         texColor.a = 0.6;
     }
@@ -20,5 +22,6 @@ void main()
         discard;
     }
 
+    texColor.rgb *= fragBrightness;
     fragColor = texColor;
 }

@@ -592,7 +592,8 @@ void face(
         // float crackAlpha = (stage / 9.0f);
         // crackAlpha = (crackAlpha > 1.0f) ? 1.0f : crackAlpha;
         float crackAlpha = ((!blockRegistry[selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType].isRenderSolid || selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType == BLOCK_TYPE_RED_CLAY) ? 0.3 : 0.6);
-        if (selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType == BLOCK_TYPE_LEAVES) {
+        if (selectedBlockToRender.chunk->blocks[(int)selectedBlockToRender.localX + (int)(selectedBlockToRender.localZ * ChunkWidthX) + (int)(selectedBlockToRender.localY * ChunkLengthZ * ChunkWidthX)].blockType == BLOCK_TYPE_LEAVES)
+        {
             crackAlpha = 0.9;
         }
         glColor4f(1.0f, 1.0f, 1.0f, crackAlpha);
@@ -947,6 +948,7 @@ void buildWorldMesh()
                         verts[i]->y += y;
                         verts[i]->z += z;
                         verts[i]->layer = blockRegistry[q->blockType].sideTexture;
+                        verts[i]->brightness = 1.0f;
                     }
 
                     if ((worldVertexCount + 24) > worldVertexCapacity)
@@ -1023,7 +1025,8 @@ void buildWorldMesh()
                         v->u = v->x + 0.5f;
                         v->v = v->z + 0.5f;
 
-                        v->layer = (q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex;
+                        v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
                     }
                 }
                 else if (amtDx == 0.0f)
@@ -1040,7 +1043,8 @@ void buildWorldMesh()
                         v->u = v->z + 0.5f;
                         v->v = 1.0 - (v->y + 0.5f);
 
-                        v->layer = sideTextureIndex;
+                        v->layer = (float)(sideTextureIndex);
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
                     }
                 }
                 else
@@ -1057,7 +1061,8 @@ void buildWorldMesh()
                         v->u = v->x + 0.5f;
                         v->v = 1.0 - (v->y + 0.5f);
 
-                        v->layer = sideTextureIndex;
+                        v->layer = (float)(sideTextureIndex);
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
                     }
                 }
 
@@ -1217,7 +1222,8 @@ void buildWorldMesh()
                         v->u = v->x + 0.5f;
                         v->v = v->z + 0.5f;
 
-                        v->layer = (q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex;
+                        v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
                     }
                 }
                 else if (amtDx == 0.0f)
@@ -1234,7 +1240,8 @@ void buildWorldMesh()
                         v->u = v->z + 0.5f;
                         v->v = 1.0 - (v->y + 0.5f);
 
-                        v->layer = sideTextureIndex;
+                        v->layer = (float)(sideTextureIndex);
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
                     }
                 }
                 else
@@ -1251,7 +1258,8 @@ void buildWorldMesh()
                         v->u = v->x + 0.5f;
                         v->v = 1.0 - (v->y + 0.5f);
 
-                        v->layer = sideTextureIndex;
+                        v->layer = (float)(sideTextureIndex);
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
                     }
                 }
 
@@ -1312,12 +1320,22 @@ void uploadWorldMesh()
     glEnableVertexAttribArray(0);
 
     // texcoord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, u)));
     glEnableVertexAttribArray(1);
 
     // layer attribute location
-    glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void *)(offsetof(Vertex, layer)));
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, layer)));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(
+        3,
+        1,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex),
+        (void *)(offsetof(Vertex, brightness)));
+
+    glEnableVertexAttribArray(3);
 
     glBindVertexArray(0); // unbind
 
@@ -1343,12 +1361,21 @@ void uploadWorldMesh()
     glEnableVertexAttribArray(0);
 
     // texcoord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, u)));
     glEnableVertexAttribArray(1);
 
     // layer attribute location
-    glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void *)(offsetof(Vertex, layer)));
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, layer)));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(
+        3,
+        1,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex),
+        (void *)(offsetof(Vertex, brightness)));
+    glEnableVertexAttribArray(3);
 
     glBindVertexArray(0); // unbind
 }
@@ -1601,7 +1628,7 @@ void drawGraphics()
         if (hotbarBlocks[i] == -1)
             continue;
 
-        int layer = blockRegistry[hotbarBlocks[i]].sideTexture;
+        float layer = blockRegistry[hotbarBlocks[i]].sideTexture;
 
         float pad = 6.0f;
         float ix0 = x0 + pad;
@@ -1616,27 +1643,33 @@ void drawGraphics()
         glBegin(GL_TRIANGLES);
 
         glVertexAttrib2f(1, 0.0f, 0.0f);
-        glVertexAttribI1i(2, layer);
+        glVertexAttrib1f(2, layer);
+        glVertexAttrib1f(3, 1.0);
         glVertex2f(ix0, iy0);
 
         glVertexAttrib2f(1, 1.0f, 0.0f);
-        glVertexAttribI1i(2, layer);
+        glVertexAttrib1f(2, layer);
+        glVertexAttrib1f(3, 1.0);
         glVertex2f(ix1, iy0);
 
         glVertexAttrib2f(1, 1.0f, 1.0f);
-        glVertexAttribI1i(2, layer);
+        glVertexAttrib1f(2, layer);
+        glVertexAttrib1f(3, 1.0);
         glVertex2f(ix1, iy1);
 
         glVertexAttrib2f(1, 0.0f, 0.0f);
-        glVertexAttribI1i(2, layer);
+        glVertexAttrib1f(2, layer);
+        glVertexAttrib1f(3, 1.0);
         glVertex2f(ix0, iy0);
 
         glVertexAttrib2f(1, 1.0f, 1.0f);
-        glVertexAttribI1i(2, layer);
+        glVertexAttrib1f(2, layer);
+        glVertexAttrib1f(3, 1.0);
         glVertex2f(ix1, iy1);
 
         glVertexAttrib2f(1, 0.0f, 1.0f);
-        glVertexAttribI1i(2, layer);
+        glVertexAttrib1f(2, layer);
+        glVertexAttrib1f(3, 1.0);
         glVertex2f(ix0, iy1);
 
         glEnd();

@@ -60,7 +60,7 @@ void raycastFromCamera() {
             hitBlock = &curChunk->blocks[index];
 
             // determine which face the ray entered from
-            float prevRayX = rayX - step*normDirX;
+            float prevRayX = rayX - step*normDirX; 
             float prevRayY = rayY - step*normDirY;
             float prevRayZ = rayZ - step*normDirZ;
 

@@ -28,7 +28,8 @@ typedef struct SelectedBlockToRender {
 typedef struct Vertex {
     float x, y, z;   // position
     float u, v;      // texcoords
-    int layer;
+    float layer; 
+    float brightness;
 } Vertex;
 
 
