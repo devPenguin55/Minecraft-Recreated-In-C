@@ -569,7 +569,7 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = v->z + 0.5f;
 
                             v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else if (amtDx == 0.0f)
@@ -587,7 +587,7 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else
@@ -605,7 +605,7 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
 
@@ -761,7 +761,7 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = v->z + 0.5f;
 
                             v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else if (amtDx == 0.0f)
@@ -779,7 +779,7 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else
@@ -797,7 +797,7 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
 
@@ -841,7 +841,8 @@ void triggerRenderChunkRebuild(Chunk *chunk)
 
     for (int i = 0; i < chunksToSaveToDisk->amtChunksToSaveToDisk; i++)
     {
-        if (chunksToSaveToDisk->chunksToSaveToDisk[i]->key == chunk->key) {
+        if (chunksToSaveToDisk->chunksToSaveToDisk[i]->key == chunk->key)
+        {
             chunksToSaveToDisk->chunksToSaveToDisk[i] = chunksToSaveToDisk->chunksToSaveToDisk[chunksToSaveToDisk->amtChunksToSaveToDisk - 1];
             chunksToSaveToDisk->amtChunksToSaveToDisk--;
             break;
@@ -850,22 +851,26 @@ void triggerRenderChunkRebuild(Chunk *chunk)
 
     chunksToSaveToDisk->chunksToSaveToDisk[chunksToSaveToDisk->amtChunksToSaveToDisk++] = chunk;
 
-    if (chunksToSaveToDisk->amtChunksToSaveToDisk >= chunksToSaveToDisk->capacity) {
+    if (chunksToSaveToDisk->amtChunksToSaveToDisk >= chunksToSaveToDisk->capacity)
+    {
         chunksToSaveToDisk->capacity *= 2;
         chunksToSaveToDisk->chunksToSaveToDisk = realloc(chunksToSaveToDisk->chunksToSaveToDisk, chunksToSaveToDisk->capacity * sizeof(Chunk *));
     }
 }
 
-
-void chunkSaveOnInterval() {
+void chunkSaveOnInterval()
+{
     ChunksToSaveToDisk *chunksToSaveToDisk = &(chunkLoaderManager.chunksToSaveToDisk);
 
     chunksToSaveToDisk->elapsedTime += DELTA_TIME;
-    
-    if (chunksToSaveToDisk->elapsedTime < 10.0f) { return; }
 
+    if (chunksToSaveToDisk->elapsedTime < 10.0f)
+    {
+        return;
+    }
 
-    for (int i = 0; i < chunksToSaveToDisk->amtChunksToSaveToDisk; i++) {
+    for (int i = 0; i < chunksToSaveToDisk->amtChunksToSaveToDisk; i++)
+    {
         saveChunkToDisk(chunksToSaveToDisk->chunksToSaveToDisk[i]);
     }
     chunksToSaveToDisk->amtChunksToSaveToDisk = 0;

@@ -1026,7 +1026,7 @@ void buildWorldMesh()
                         v->v = v->z + 0.5f;
 
                         v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else if (amtDx == 0.0f)
@@ -1044,7 +1044,7 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else
@@ -1062,7 +1062,7 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
 
@@ -1223,7 +1223,7 @@ void buildWorldMesh()
                         v->v = v->z + 0.5f;
 
                         v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else if (amtDx == 0.0f)
@@ -1241,7 +1241,7 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else
@@ -1259,7 +1259,7 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 0.95f;
+                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
 
@@ -1450,56 +1450,55 @@ void drawGraphics()
     glGetFloatv(GL_MODELVIEW_MATRIX, clip);
     glPopMatrix();
 
-    if (pressedKeys['c']) {
+    if (pressedKeys['c'])
+    {
         // optionally draw the chunk borders for debug purposes
         int chunkX = (player.position.x >= 0)
-            ? player.position.x / ChunkWidthX
-            : (player.position.x - (ChunkWidthX - 1)) / ChunkWidthX;
+                         ? player.position.x / ChunkWidthX
+                         : (player.position.x - (ChunkWidthX - 1)) / ChunkWidthX;
 
         int chunkZ = (player.position.z >= 0)
-            ? player.position.z / ChunkLengthZ
-            : (player.position.z - (ChunkLengthZ - 1)) / ChunkLengthZ;
+                         ? player.position.z / ChunkLengthZ
+                         : (player.position.z - (ChunkLengthZ - 1)) / ChunkLengthZ;
 
         int localX = player.position.x - chunkX * ChunkWidthX;
         int localY = player.position.y;
         int localZ = player.position.z - chunkZ * ChunkLengthZ;
 
         uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
-        BucketEntry* result = getHashmapEntry(chunkKey);
+        BucketEntry *result = getHashmapEntry(chunkKey);
 
-        if (result) {
-            Chunk* chunk = result->chunkEntry;
+        if (result)
+        {
+            Chunk *chunk = result->chunkEntry;
             for (int dy = 0; dy <= 50; dy++)
             {
                 glBegin(GL_LINE_LOOP);
-                glVertex3f(chunk->chunkStartX, ChunkHeightY*dy/50.0f,chunk->chunkStartZ);
-                glVertex3f(chunk->chunkStartX, ChunkHeightY*dy/50.0f,chunk->chunkStartZ+ChunkLengthZ);
-                glVertex3f(chunk->chunkStartX+ChunkWidthX, ChunkHeightY*dy/50.0f,chunk->chunkStartZ+ChunkLengthZ);
-                glVertex3f(chunk->chunkStartX+ChunkWidthX, ChunkHeightY*dy/50.0f,chunk->chunkStartZ);
+                glVertex3f(chunk->chunkStartX, ChunkHeightY * dy / 50.0f, chunk->chunkStartZ);
+                glVertex3f(chunk->chunkStartX, ChunkHeightY * dy / 50.0f, chunk->chunkStartZ + ChunkLengthZ);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX, ChunkHeightY * dy / 50.0f, chunk->chunkStartZ + ChunkLengthZ);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX, ChunkHeightY * dy / 50.0f, chunk->chunkStartZ);
                 glEnd();
             }
             glBegin(GL_LINES);
             for (int dx = 0; dx <= 5; dx++)
             {
-                glVertex3f(chunk->chunkStartX+ChunkWidthX*dx/5.0f, 0, chunk->chunkStartZ);
-                glVertex3f(chunk->chunkStartX+ChunkWidthX*dx/5.0f, ChunkHeightY, chunk->chunkStartZ);
-                glVertex3f(chunk->chunkStartX+ChunkWidthX*dx/5.0f, 0, chunk->chunkStartZ+ChunkLengthZ);
-                glVertex3f(chunk->chunkStartX+ChunkWidthX*dx/5.0f, ChunkHeightY, chunk->chunkStartZ+ChunkLengthZ);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX * dx / 5.0f, 0, chunk->chunkStartZ);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX * dx / 5.0f, ChunkHeightY, chunk->chunkStartZ);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX * dx / 5.0f, 0, chunk->chunkStartZ + ChunkLengthZ);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX * dx / 5.0f, ChunkHeightY, chunk->chunkStartZ + ChunkLengthZ);
             }
 
-            for (int dz = 0; dz <= 5; dz++) 
+            for (int dz = 0; dz <= 5; dz++)
             {
-                glVertex3f(chunk->chunkStartX+ChunkWidthX, 0, chunk->chunkStartZ+ChunkLengthZ*dz/5.0f);
-                glVertex3f(chunk->chunkStartX+ChunkWidthX, ChunkHeightY, chunk->chunkStartZ+ChunkLengthZ*dz/5.0f);
-                glVertex3f(chunk->chunkStartX, 0, chunk->chunkStartZ+ChunkLengthZ*dz/5.0f);
-                glVertex3f(chunk->chunkStartX, ChunkHeightY, chunk->chunkStartZ+ChunkLengthZ*dz/5.0f);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX, 0, chunk->chunkStartZ + ChunkLengthZ * dz / 5.0f);
+                glVertex3f(chunk->chunkStartX + ChunkWidthX, ChunkHeightY, chunk->chunkStartZ + ChunkLengthZ * dz / 5.0f);
+                glVertex3f(chunk->chunkStartX, 0, chunk->chunkStartZ + ChunkLengthZ * dz / 5.0f);
+                glVertex3f(chunk->chunkStartX, ChunkHeightY, chunk->chunkStartZ + ChunkLengthZ * dz / 5.0f);
             }
             glEnd();
         }
     }
-
-
-
 
     buildWorldMesh(); // fills worldVertices and worldVertexCount
 

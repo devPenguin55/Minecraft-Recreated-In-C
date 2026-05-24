@@ -9,13 +9,12 @@
 #include "render.h"
 #include "chunks.h"
 #include "chunkLoaderManager.h" 
+#include "worldDiskStorage.h"
 
 int main(int argc, char *argv[]) {
+    initWorldDiskStorage();
     initChunkLoaderManager();
-
     initChunkMeshingSystem();
-
-    
 
     glutInit(&argc, argv);
     

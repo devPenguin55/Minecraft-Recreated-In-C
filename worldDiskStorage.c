@@ -3,6 +3,12 @@
 #include <inttypes.h>
 #include "worldDiskStorage.h"
 #include "chunkLoaderManager.h"
+#include "direct.h"
+
+void initWorldDiskStorage() {
+    char path[] = "worldChunkData";
+    _mkdir(path);
+}
 
 void saveChunkToDisk(Chunk *chunk) {
     if (!chunk->isDirty) { return; }
