@@ -7,6 +7,7 @@
 #include "chunks.h"
 #include "chunkLoaderManager.h"
 #include "noise.h"
+#include "player.h"
 #include "worldDiskStorage.h"
 
 ChunkMeshQuads chunkMeshQuads;
@@ -42,6 +43,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
     chunk->isDirty = 0;
 
+    chunk->isBakedLightComplete = 0;
+
     for (int x = 0; x < ChunkWidthX; x++)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
@@ -55,6 +58,9 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 curBlock->z = BlockLengthZ * z + zAdd;
 
                 curBlock->y = BlockHeightY * (y);
+
+                curBlock->light = 0;
+
                 float scale = 100;
 
                 int generatedBlockNoiseHeight;
@@ -1187,4 +1193,22 @@ void deleteChunkMesh(Chunk *chunk)
         }
     }
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
+}
+
+void computeSkylightForChunk(Chunk *chunk) {
+    // should only be called after chunk + neighbor chunks loaded
+    // this is the light baking step
+    chunk->isBakedLightComplete = 1;
+    for (int x = 0; x < ChunkWidthX; x++) {
+        for (int z = 0; z < ChunkLengthZ; z++) {
+            uint8_t currentLight = 15;
+
+            for (int y = ChunkHeightY - 1; y >= 0; y--) {
+                Block *curBlock = &chunk->blocks[x + z * (ChunkWidthX) + y * (ChunkWidthX * ChunkLengthZ)];
+                if (!curBlock->isAir) { currentLight = 0; }
+                
+                SET_SKYLIGHT(curBlock->light, currentLight);
+            }
+        }
+    }
 }

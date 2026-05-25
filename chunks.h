@@ -11,6 +11,7 @@ typedef struct Block
     GLfloat z;
     int isAir;
     int blockType; // the block type for selecting the texture later
+    uint8_t light; // Upper 4 bits -> skylight, Lower 4 bits -> blockLight
 } Block;
 
 typedef struct Chunk
@@ -32,6 +33,7 @@ typedef struct Chunk
     int triggerVertexDeletion;
     int triggerVertexRecreation;
     int isDirty;
+    int isBakedLightComplete;
 } Chunk;
 
 typedef struct MeshQuad
@@ -87,6 +89,7 @@ typedef struct BlockType
 #define BLOCK_TYPE_LEAVES 7
 #define BLOCK_TYPE_ORCHID 8
 #define BLOCK_TYPE_SHORT_GRASS 9
+#define BLOCK_TYPE_LIGHT_SOURCE 10
 
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
@@ -96,6 +99,12 @@ typedef struct BlockType
 #define CHUNK_FLAG_RENDERED_AND_LOADED 2
 
 #define SEA_LEVEL 35
+
+// upper is more left and bigger, lower is more right and smaller
+#define GET_SKYLIGHT(b) (((b) >> 4) & 0xF) // upper 4 bits 
+#define GET_BLOCK_LIGHT(b) ((b) & 0xF) // lower 4 bits 
+#define SET_SKYLIGHT(b, s) ((b) = ((b) & 0x0F) | (((s) & 0xF) << 4)) // clear upper 4 bits and insert shifted skylight
+#define SET_BLOCK_LIGHT(b, s) ((b) = ((b) & 0xF0) | ((s) & 0xF)) // clear lower 4 bits and insert block light 
 
 extern float BlockWidthX;
 extern float BlockLengthZ;
@@ -109,5 +118,6 @@ void initChunkMeshingSystem();
 void handleProgramClose();
 void generateChunkMesh(Chunk *chunk);
 void deleteChunkMesh(Chunk *chunk);
+void computeSkylightForChunk(Chunk *chunk);
 
 #endif

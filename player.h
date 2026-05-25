@@ -15,6 +15,7 @@ typedef struct Player {
     float height;
 } Player;
 
+Block *blockAtPosition(int voxelX, int voxelY, int voxelZ);
 int isSolidVoxel(int voxelX, int voxelY, int voxelZ);
 float playerHalfWidth(Player* player);
 int playerCollides(Player* player);

@@ -166,6 +166,7 @@ void loadChunks(GLfloat playerCoords[2])
     chunksToUnload->capacity = 16;
 
     int alreadyPreloadedOnce = 0;
+    int isFinishedOnlyLoadingChunks = 0;
     for (int dx = -CHUNK_PRELOAD_RADIUS; dx < CHUNK_PRELOAD_RADIUS + 1; dx++)
     {
         if (alreadyPreloadedOnce)
@@ -183,6 +184,7 @@ void loadChunks(GLfloat playerCoords[2])
             if (result == NULL && !alreadyPreloadedOnce)
             {
                 alreadyPreloadedOnce = 1;
+                isFinishedOnlyLoadingChunks = 1;
                 // if (chunkX == -1 && chunkZ == 0) {printf("Loading chunks for %d %d %d %d!\n", chunkX, chunkZ, dx, dz);}
                 // * the chunk has not been loaded yet, must load it in and add to the hashmap
                 // ? chunks that are loaded are just skipped since their data is already there
@@ -260,6 +262,12 @@ void loadChunks(GLfloat playerCoords[2])
     {
         Chunk *curChunk = loadedChunks->loadedChunks[loadedChunkIdx];
         unpackChunkKey(curChunk->key, &loadedChunkX, &loadedChunkZ);
+
+        if (isFinishedOnlyLoadingChunks && !curChunk->isBakedLightComplete)
+        {
+            printf("baking...\n");
+            computeSkylightForChunk(curChunk);
+        }
 
         if (
             (loadedChunkX > (playerChunkX + CHUNK_RENDER_RADIUS) || (loadedChunkX < (playerChunkX - CHUNK_RENDER_RADIUS))) ||
@@ -569,7 +577,6 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = v->z + 0.5f;
 
                             v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else if (amtDx == 0.0f)
@@ -587,7 +594,6 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else
@@ -605,7 +611,6 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
 
@@ -618,6 +623,16 @@ void loadChunks(GLfloat playerCoords[2])
                         v->x += x;
                         v->y += y;
                         v->z += z;
+
+                        Block *vBlock = blockAtPosition((int)round(v->x), (int)round(v->y), (int)round(v->z));
+                        if (vBlock == NULL)
+                        {
+                            v->brightness = 0.0f;
+                        }
+                        else
+                        {
+                            v->brightness = ((float)GET_SKYLIGHT(vBlock->light)) / 15.0f;
+                        }
                     }
 
                     worldVertices[worldVertexCount++] = v0;
@@ -761,7 +776,6 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = v->z + 0.5f;
 
                             v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else if (amtDx == 0.0f)
@@ -779,7 +793,6 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
                     else
@@ -797,7 +810,6 @@ void loadChunks(GLfloat playerCoords[2])
                             v->v = 1.0 - (v->y + 0.5f);
 
                             v->layer = (float)(sideTextureIndex);
-                            v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                         }
                     }
 
@@ -814,6 +826,16 @@ void loadChunks(GLfloat playerCoords[2])
                         if (v->y > 0.0f) // top vertices of cube
                         {
                             v->y -= 0.1;
+                        }
+
+                        Block *vBlock = blockAtPosition((int)round(v->x), (int)round(v->y), (int)round(v->z));
+                        if (vBlock == NULL)
+                        {
+                            v->brightness = 0.0f;
+                        }
+                        else
+                        {
+                            v->brightness = ((float)GET_SKYLIGHT(vBlock->light)) / 15.0f;
                         }
                     }
 
@@ -863,7 +885,7 @@ void chunkSaveOnInterval()
     ChunksToSaveToDisk *chunksToSaveToDisk = &(chunkLoaderManager.chunksToSaveToDisk);
 
     chunksToSaveToDisk->elapsedTime += DELTA_TIME;
-
+    // save dirty chunks to disk every 10 seconds
     if (chunksToSaveToDisk->elapsedTime < 10.0f)
     {
         return;

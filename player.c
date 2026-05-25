@@ -4,8 +4,7 @@
 #include "chunkLoaderManager.h"
 #include "input.h"
 
-int isSolidVoxel(int voxelX, int voxelY, int voxelZ)
-{
+Block *blockAtPosition(int voxelX, int voxelY, int voxelZ) {
     int chunkX = (voxelX >= 0)
         ? voxelX / ChunkWidthX
         : (voxelX - (ChunkWidthX - 1)) / ChunkWidthX;
@@ -22,7 +21,7 @@ int isSolidVoxel(int voxelX, int voxelY, int voxelZ)
     BucketEntry* result = getHashmapEntry(chunkKey);
 
     if (!result) {
-        return 0;
+        return NULL;
     }
 
     Chunk* chunk = result->chunkEntry;
@@ -35,11 +34,18 @@ int isSolidVoxel(int voxelX, int voxelY, int voxelZ)
     if (index < 0 ||
         index >= ChunkWidthX * ChunkLengthZ * ChunkHeightY)
     {
-        return 0;
+        return NULL;
     }
 
-    Block* block = &chunk->blocks[index];
+    return &chunk->blocks[index];
+}
 
+int isSolidVoxel(int voxelX, int voxelY, int voxelZ)
+{
+    Block* block = blockAtPosition(voxelX, voxelY, voxelZ);
+
+    if (block == NULL) { return 0; }
+    
     return (
         blockRegistry[block->blockType].isPhysicsSolid &&
         !block->isAir

@@ -1026,7 +1026,6 @@ void buildWorldMesh()
                         v->v = v->z + 0.5f;
 
                         v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else if (amtDx == 0.0f)
@@ -1044,7 +1043,6 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else
@@ -1062,7 +1060,6 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
 
@@ -1075,6 +1072,16 @@ void buildWorldMesh()
                     v->x += x;
                     v->y += y;
                     v->z += z;
+
+                    Block *vBlock = blockAtPosition((int)round(v->x), (int)round(v->y), (int)round(v->z));
+                    if (vBlock == NULL)
+                    {
+                        v->brightness = 0.0f;
+                    }
+                    else
+                    {
+                        v->brightness = ((float)GET_SKYLIGHT(vBlock->light)) / 15.0f;
+                    }
                 }
 
                 worldVertices[worldVertexCount++] = v0;
@@ -1223,7 +1230,6 @@ void buildWorldMesh()
                         v->v = v->z + 0.5f;
 
                         v->layer = (float)((q->faceType == FACE_TOP) ? topTextureIndex : bottomTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else if (amtDx == 0.0f)
@@ -1241,7 +1247,6 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
                 else
@@ -1259,7 +1264,6 @@ void buildWorldMesh()
                         v->v = 1.0 - (v->y + 0.5f);
 
                         v->layer = (float)(sideTextureIndex);
-                        v->brightness = (q->faceType == FACE_FRONT || q->faceType == FACE_LEFT) ? 0.85f : 1.0f;
                     }
                 }
 
@@ -1272,6 +1276,16 @@ void buildWorldMesh()
                     v->x += x;
                     v->y += y;
                     v->z += z;
+
+                    Block *vBlock = blockAtPosition((int)round(v->x), (int)round(v->y), (int)round(v->z));
+                    if (vBlock == NULL)
+                    {
+                        v->brightness = 0.0f;
+                    }
+                    else
+                    {
+                        v->brightness = ((float)GET_SKYLIGHT(vBlock->light)) / 15.0f;
+                    };
 
                     if (v->y > 0.0f) // top vertices of cube
                     {
