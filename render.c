@@ -261,19 +261,19 @@ void initGraphics()
     glLinkProgram(worldShader);
 
     allChunkLighting = malloc(sizeof(uint8_t) * (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1) * ChunkWidthX * ChunkHeightY * ChunkLengthZ);
-    // glGenBuffers(1, &lightBuffer);
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightBuffer);
+    glGenBuffers(1, &lightBuffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightBuffer);
 
-    // int chunkVoxelCount =
-    //     ChunkWidthX * ChunkHeightY * ChunkLengthZ;
+    int chunkVoxelCount =
+        ChunkWidthX * ChunkHeightY * ChunkLengthZ;
 
-    // int maxChunks =
-    //     (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1);
+    int maxChunks =
+        (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1);
 
-    // size_t totalSize =
-    //     (size_t)maxChunks * chunkVoxelCount * sizeof(uint8_t);
+    size_t totalSize =
+        (size_t)maxChunks * chunkVoxelCount * sizeof(uint8_t);
 
-    // glBufferData(GL_SHADER_STORAGE_BUFFER, totalSize, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, totalSize, NULL, GL_DYNAMIC_DRAW);
 
     const char *blockTextures[] = {
         "assets\\grassSide.png",   // 0
