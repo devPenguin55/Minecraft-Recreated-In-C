@@ -49,6 +49,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->gpuLightIndex = -1;
 
     chunk->lightData = malloc(sizeof(uint8_t)*ChunkWidthX*ChunkLengthZ*ChunkHeightY);
+    chunk->isInitialLightCreated = 0;
 
     for (int x = 0; x < ChunkWidthX; x++)
     {
@@ -1221,7 +1222,7 @@ void computeSkylightForChunk(Chunk *chunk) {
 
                 SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(min(15, x+z)));
 
-                if (chunk->lightData[index] != originalLight) {
+                if ((chunk->lightData[index] != originalLight) && chunk->isInitialLightCreated) {
                     chunk->lightDirty = 1;
                 }
 
@@ -1231,4 +1232,5 @@ void computeSkylightForChunk(Chunk *chunk) {
             }
         }
     } 
+    chunk->isInitialLightCreated = 1;
 } 

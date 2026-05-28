@@ -35,6 +35,7 @@ typedef struct Chunk
     int isDirty;
     int lightDirty;
     int gpuLightIndex;
+    int isInitialLightCreated;
 } Chunk;
 
 typedef struct MeshQuad

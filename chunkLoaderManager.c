@@ -99,7 +99,6 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists)
         bucket->head->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
         createChunk(bucket->head->chunkEntry, chunkX * (ChunkWidthX * BlockWidthX), chunkZ * (ChunkLengthZ * BlockLengthZ), 1, CHUNK_FLAG_LOADED, key);
         
-        printf("%d\n", chunkLoaderManager.amtFreeSlots);
         if (chunkLoaderManager.amtFreeSlots <= 0)
         {
             printf("No free GPU light slots!\n");
@@ -859,6 +858,7 @@ void triggerRenderChunkRebuild(Chunk *chunk)
 {
     chunk->triggerVertexRecreation = 1;
     chunk->isDirty = 1;
+    chunk->lightDirty = 1;
 
     ChunksToSaveToDisk *chunksToSaveToDisk = &(chunkLoaderManager.chunksToSaveToDisk);
 

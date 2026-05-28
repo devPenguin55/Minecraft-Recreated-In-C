@@ -396,7 +396,6 @@ void initGraphics()
 
 void createWorldLightingDataFromAllChunks()
 {
-    return;
     RenderChunks *renderChunks = &(chunkLoaderManager.renderChunks);
 
     int chunkVoxelCount =
@@ -409,6 +408,7 @@ void createWorldLightingDataFromAllChunks()
         Chunk *chunk = renderChunks->renderChunks[i];
     
         if (!chunk->lightDirty) { continue; }
+        printf("was dirty\n");
         chunk->lightDirty = 0;
 
         int chunkBase = chunk->gpuLightIndex * chunkVoxelCount;
