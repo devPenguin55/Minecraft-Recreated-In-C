@@ -38,6 +38,9 @@ int waterVertexCount = 0;
 int waterVertexCapacity = 0;
 
 GLuint blockTextureArray;
+GLuint lightBuffer;
+uint8_t *allChunkLighting;
+
 
 int hotbarBlocks[9];
 int hotbarActiveSlot = -1;
@@ -257,6 +260,21 @@ void initGraphics()
     glBindAttribLocation(worldShader, 2, "layer");
     glLinkProgram(worldShader);
 
+    allChunkLighting = malloc(sizeof(uint8_t) * (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1) * ChunkWidthX * ChunkHeightY * ChunkLengthZ);
+    // glGenBuffers(1, &lightBuffer);
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightBuffer);
+
+    // int chunkVoxelCount =
+    //     ChunkWidthX * ChunkHeightY * ChunkLengthZ;
+
+    // int maxChunks =
+    //     (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1);
+
+    // size_t totalSize =
+    //     (size_t)maxChunks * chunkVoxelCount * sizeof(uint8_t);
+
+    // glBufferData(GL_SHADER_STORAGE_BUFFER, totalSize, NULL, GL_DYNAMIC_DRAW);
+
     const char *blockTextures[] = {
         "assets\\grassSide.png",   // 0
         "assets\\grassTop.png",    // 1
@@ -376,6 +394,48 @@ void initGraphics()
     blockTextureArray = loadTextureArray(blockTextures, sizeof(blockTextures) / sizeof(blockTextures[0]));
 }
 
+void createWorldLightingDataFromAllChunks()
+{
+    return;
+    RenderChunks *renderChunks = &(chunkLoaderManager.renderChunks);
+
+    int chunkVoxelCount =
+        ChunkWidthX *
+        ChunkHeightY *
+        ChunkLengthZ;
+    
+    for (int i = 0; i < renderChunks->amtRenderChunks; i++)
+    {
+        Chunk *chunk = renderChunks->renderChunks[i];
+    
+        if (!chunk->lightDirty) { continue; }
+        chunk->lightDirty = 0;
+
+        int chunkBase = chunk->gpuLightIndex * chunkVoxelCount;
+
+        memcpy(
+            &allChunkLighting[chunkBase],
+            chunk->lightData,
+            chunkVoxelCount * sizeof(uint8_t)
+        );  
+    }
+}
+
+void uploadLightingSSBO() {
+    return;
+    int chunkVoxelCount =
+        ChunkWidthX * ChunkHeightY * ChunkLengthZ;
+
+    int maxRenderChunks =
+        (2 * CHUNK_RENDER_RADIUS + 1) * (2 * CHUNK_RENDER_RADIUS + 1);
+
+    size_t totalSize =
+        (size_t)maxRenderChunks * chunkVoxelCount * sizeof(uint8_t);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightBuffer);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, totalSize, allChunkLighting);
+}
+
 void reshape(int width, int height)
 {
     if (height == 0)
@@ -411,8 +471,7 @@ void adjustVerticesForQuadData(
     Vertex *v3,
     float x,
     float y,
-    float z
-)
+    float z)
 {
     Vertex *verts[4] = {v0, v1, v2, v3};
 
@@ -424,7 +483,6 @@ void adjustVerticesForQuadData(
         v->y += y;
         v->z += z;
     }
-
 }
 
 void face(
@@ -1271,7 +1329,7 @@ void buildWorldMesh()
                 }
 
                 adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z);
-                
+
                 waterVertices[waterVertexCount++] = v0;
                 waterVertices[waterVertexCount++] = v1;
                 waterVertices[waterVertexCount++] = v2;
@@ -1383,6 +1441,7 @@ void drawGraphics()
 
     GLfloat playerCoords[2] = {player.position.x, player.position.z};
     loadChunks(playerCoords);
+    createWorldLightingDataFromAllChunks();
 
     GLfloat Vertices[8][3] = {
         // front face

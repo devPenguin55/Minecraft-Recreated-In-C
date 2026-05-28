@@ -4,7 +4,7 @@
 #include <GL/glut.h>
 #include "chunks.h"
 
-typedef struct UV 
+typedef struct UV
 {
     float u;
     float v;
@@ -12,25 +12,26 @@ typedef struct UV
     float v1;
 } UV;
 
-typedef struct SelectedBlockToRender {
-    int   active;
+typedef struct SelectedBlockToRender
+{
+    int active;
     float worldX;
     float worldY;
     float worldZ;
     float localX;
     float localY;
     float localZ;
-    int  hitFace;
+    int hitFace;
     Chunk *chunk;
     int amtSteps;
 } SelectedBlockToRender;
 
-typedef struct Vertex {
-    float x, y, z;   // position
-    float u, v;      // texcoords
-    float layer; 
+typedef struct Vertex
+{
+    float x, y, z; // position
+    float u, v;    // texcoords
+    float layer;
 } Vertex;
-
 
 extern GLfloat T;
 extern GLfloat PlayerDirX;
@@ -47,8 +48,10 @@ extern int waterVertexCount;
 extern int waterVertexCapacity;
 extern int hotbarBlocks[9];
 extern int hotbarActiveSlot;
+extern uint8_t *allChunkLighting;
 
 void initGraphics();
+void createWorldLightingDataFromAllChunks();
 void reshape(int width, int height);
 void spinObject();
 void adjustVerticesForQuadData(Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3, float x, float y, float z);
@@ -59,8 +62,7 @@ void face(
     GLfloat D[3],
     GLfloat transformation[3],
     GLuint texture,
-    GLfloat size[2]
-);
+    GLfloat size[2]);
 void cubeFace(GLfloat Vertices[8][3], GLfloat transformation[3], GLfloat size[2], int faceType, int blockType);
 void drawText(const char *text, float x, float y);
 void drawGraphics();

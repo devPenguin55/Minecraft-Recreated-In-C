@@ -13,6 +13,7 @@
 
 ChunkLoaderManager chunkLoaderManager;
 
+
 void initChunkLoaderManager()
 {
     LoadedChunks *loadedChunks = &(chunkLoaderManager.loadedChunks);
@@ -40,7 +41,14 @@ void initChunkLoaderManager()
     {
         chunkLoaderManager.hashmap.buckets[i].head = NULL;
     }
-}
+
+
+    chunkLoaderManager.amtFreeSlots = (2*CHUNK_PRELOAD_RADIUS+1)*(2*CHUNK_PRELOAD_RADIUS+1);
+    for (int i = 0; i < chunkLoaderManager.amtFreeSlots; i++)
+    {
+        chunkLoaderManager.freeSlots[i] = i;
+    }    
+} 
 
 // bucket->head = malloc(sizeof(BucketEntry));
 // bucket->head->exists     = 0;
@@ -90,10 +98,28 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists)
         bucket->head->key = key;
         bucket->head->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
         createChunk(bucket->head->chunkEntry, chunkX * (ChunkWidthX * BlockWidthX), chunkZ * (ChunkLengthZ * BlockLengthZ), 1, CHUNK_FLAG_LOADED, key);
+        
+        printf("%d\n", chunkLoaderManager.amtFreeSlots);
+        if (chunkLoaderManager.amtFreeSlots <= 0)
+        {
+            printf("No free GPU light slots!\n");
+            exit(1);
+        }
+        int slot = chunkLoaderManager.freeSlots[--chunkLoaderManager.amtFreeSlots];
+        bucket->head->chunkEntry->gpuLightIndex = slot;
+        int chunkVoxelCount = ChunkWidthX * ChunkLengthZ * ChunkHeightY;
+        int chunkBase = slot * chunkVoxelCount;
+        memcpy(
+            &allChunkLighting[chunkBase],
+            bucket->head->chunkEntry->lightData,
+            chunkVoxelCount * sizeof(uint8_t)
+        );  
+
         bucket->head->exists = exists;
         bucket->head->next = NULL;
         return;
     }
+
 
     BucketEntry *currentNode = bucket->head;
     while (currentNode != NULL)
@@ -113,6 +139,21 @@ void writeHashmapEntry(uint64_t key, int chunkX, int chunkZ, int exists)
     currentNode->key = key;
     currentNode->chunkEntry = malloc(sizeof(Chunk)); // allocate the chunk
     createChunk(currentNode->chunkEntry, chunkX * ChunkWidthX * BlockWidthX, chunkZ * ChunkLengthZ * BlockLengthZ, 1, CHUNK_FLAG_LOADED, key);
+    
+    if (chunkLoaderManager.amtFreeSlots <= 0)
+    {
+        printf("No free GPU light slots!\n");
+        exit(1);
+    }
+    int slot = chunkLoaderManager.freeSlots[--chunkLoaderManager.amtFreeSlots];
+    currentNode->chunkEntry->gpuLightIndex = slot;
+    int chunkVoxelCount = ChunkWidthX * ChunkLengthZ * ChunkHeightY;
+    int chunkBase = slot * chunkVoxelCount;
+    memcpy(
+        &allChunkLighting[chunkBase],
+        currentNode->chunkEntry->lightData,
+        chunkVoxelCount * sizeof(uint8_t)
+    );
     currentNode->exists = exists;
     currentNode->next = NULL;
 }
@@ -145,6 +186,17 @@ void deleteHashmapEntry(uint64_t key)
     {
         prevNode->next = currentNode->next;
     }
+
+    int chunkVoxelCount = ChunkWidthX * ChunkLengthZ * ChunkHeightY;
+    memset(allChunkLighting + currentNode->chunkEntry->gpuLightIndex * chunkVoxelCount, 0, chunkVoxelCount);
+    if (chunkLoaderManager.amtFreeSlots >= (2*CHUNK_PRELOAD_RADIUS+1)*(2*CHUNK_PRELOAD_RADIUS+1))
+    {
+        printf("Free slot overflow!\n");
+        exit(1);
+    }
+    chunkLoaderManager.freeSlots[chunkLoaderManager.amtFreeSlots++] = currentNode->chunkEntry->gpuLightIndex;
+    currentNode->chunkEntry->gpuLightIndex = -1; 
+    free(currentNode->chunkEntry->lightData);
     free(currentNode->chunkEntry);
     free(currentNode);
 }
@@ -162,8 +214,56 @@ void loadChunks(GLfloat playerCoords[2])
 
     renderChunks->amtRenderChunks = 0;
     chunksToUnload->amtChunksToUnload = 0;
-    renderChunks->capacity = 16;
-    chunksToUnload->capacity = 16;
+
+    int64_t loadedChunkX, loadedChunkZ;
+    for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++)
+    {
+        Chunk *curChunk = loadedChunks->loadedChunks[loadedChunkIdx];
+        unpackChunkKey(curChunk->key, &loadedChunkX, &loadedChunkZ);
+
+        if (
+            (loadedChunkX > (playerChunkX + CHUNK_RENDER_RADIUS) || (loadedChunkX < (playerChunkX - CHUNK_RENDER_RADIUS))) ||
+            (loadedChunkZ > (playerChunkZ + CHUNK_RENDER_RADIUS) || (loadedChunkZ < (playerChunkZ - CHUNK_RENDER_RADIUS))))
+        {
+            if (curChunk->hasMesh)
+            {
+                // printf("deleting a chunk mesh!\n");
+                // printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
+                deleteChunkMesh(curChunk);
+                curChunk->triggerVertexDeletion = 1;
+            }
+        }
+
+        if ((loadedChunkX > (playerChunkX + CHUNK_PRELOAD_RADIUS)) || (loadedChunkX < (playerChunkX - CHUNK_PRELOAD_RADIUS)) ||
+            (loadedChunkZ > (playerChunkZ + CHUNK_PRELOAD_RADIUS)) || (loadedChunkZ < (playerChunkZ - CHUNK_PRELOAD_RADIUS)))
+        {
+
+            if (chunksToUnload->amtChunksToUnload >= chunksToUnload->capacity)
+            {
+                chunksToUnload->capacity *= 2;
+                chunksToUnload->chunksToUnload = realloc(chunksToUnload->chunksToUnload, chunksToUnload->capacity * sizeof(Chunk *));
+            }
+
+            chunksToUnload->chunksToUnload[chunksToUnload->amtChunksToUnload++] = curChunk;
+        }
+    }
+
+    for (int chunkIdx = 0; chunkIdx < chunksToUnload->amtChunksToUnload; chunkIdx++)
+    {
+        Chunk *curChunk = chunksToUnload->chunksToUnload[chunkIdx];
+        for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++)
+        {
+            if (curChunk == loadedChunks->loadedChunks[loadedChunkIdx])
+            {
+                // this is a match of pointers to a chunk
+                saveChunkToDisk(curChunk);
+                deleteHashmapEntry(curChunk->key);
+                loadedChunks->loadedChunks[loadedChunkIdx] = loadedChunks->loadedChunks[loadedChunks->amtLoadedChunks - 1];
+                loadedChunks->amtLoadedChunks--;
+                break;
+            }
+        }
+    }
 
     int alreadyPreloadedOnce = 0;
     int isFinishedOnlyLoadingChunks = 0;
@@ -240,7 +340,6 @@ void loadChunks(GLfloat playerCoords[2])
                     renderChunks->capacity *= 2;
                     renderChunks->renderChunks = realloc(renderChunks->renderChunks, renderChunks->capacity * sizeof(Chunk *));
                 }
-
                 renderChunks->renderChunks[(renderChunks->amtRenderChunks)++] = result->chunkEntry;
             }
         }
@@ -257,55 +356,7 @@ void loadChunks(GLfloat playerCoords[2])
         generateChunkMesh(curChunkToRender);
     }
 
-    int64_t loadedChunkX, loadedChunkZ;
-    for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++)
-    {
-        Chunk *curChunk = loadedChunks->loadedChunks[loadedChunkIdx];
-        unpackChunkKey(curChunk->key, &loadedChunkX, &loadedChunkZ);
-
-        if (
-            (loadedChunkX > (playerChunkX + CHUNK_RENDER_RADIUS) || (loadedChunkX < (playerChunkX - CHUNK_RENDER_RADIUS))) ||
-            (loadedChunkZ > (playerChunkZ + CHUNK_RENDER_RADIUS) || (loadedChunkZ < (playerChunkZ - CHUNK_RENDER_RADIUS))))
-        {
-            if (curChunk->hasMesh)
-            {
-                // printf("deleting a chunk mesh!\n");
-                // printf("chunk coordinates are at %d %d\n", loadedChunkX, loadedChunkZ);
-                deleteChunkMesh(curChunk);
-                curChunk->triggerVertexDeletion = 1;
-            }
-        }
-
-        if ((loadedChunkX > (playerChunkX + CHUNK_PRELOAD_RADIUS)) || (loadedChunkX < (playerChunkX - CHUNK_PRELOAD_RADIUS)) ||
-            (loadedChunkZ > (playerChunkZ + CHUNK_PRELOAD_RADIUS)) || (loadedChunkZ < (playerChunkZ - CHUNK_PRELOAD_RADIUS)))
-        {
-
-            if (chunksToUnload->amtChunksToUnload >= chunksToUnload->capacity)
-            {
-                chunksToUnload->capacity *= 2;
-                chunksToUnload->chunksToUnload = realloc(chunksToUnload->chunksToUnload, chunksToUnload->capacity * sizeof(Chunk *));
-            }
-
-            chunksToUnload->chunksToUnload[chunksToUnload->amtChunksToUnload++] = curChunk;
-        }
-    }
-
-    for (int chunkIdx = 0; chunkIdx < chunksToUnload->amtChunksToUnload; chunkIdx++)
-    {
-        Chunk *curChunk = chunksToUnload->chunksToUnload[chunkIdx];
-        for (int loadedChunkIdx = 0; loadedChunkIdx < loadedChunks->amtLoadedChunks; loadedChunkIdx++)
-        {
-            if (curChunk == loadedChunks->loadedChunks[loadedChunkIdx])
-            {
-                // this is a match of pointers to a chunk
-                saveChunkToDisk(curChunk);
-                deleteHashmapEntry(curChunk->key);
-                loadedChunks->loadedChunks[loadedChunkIdx] = loadedChunks->loadedChunks[loadedChunks->amtLoadedChunks - 1];
-                loadedChunks->amtLoadedChunks--;
-                break;
-            }
-        }
-    }
+    
 
     for (int chunkIdx = 0; chunkIdx < loadedChunks->amtLoadedChunks; chunkIdx++)
     {

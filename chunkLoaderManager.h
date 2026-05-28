@@ -49,11 +49,13 @@ typedef struct Hashmap {
 } Hashmap;
 
 typedef struct ChunkLoaderManager {
-    LoadedChunks                 loadedChunks;
-    RenderChunks                 renderChunks;
-    ChunksToUnload             chunksToUnload;
-    ChunksToSaveToDisk     chunksToSaveToDisk;
-    Hashmap                           hashmap;
+    LoadedChunks                                          loadedChunks;
+    RenderChunks                                          renderChunks;
+    ChunksToUnload                                      chunksToUnload;
+    ChunksToSaveToDisk                              chunksToSaveToDisk;
+    Hashmap                                                    hashmap;
+    int freeSlots[(2*CHUNK_PRELOAD_RADIUS+1)*(2*CHUNK_PRELOAD_RADIUS+1)];
+    int                                                   amtFreeSlots;
 } ChunkLoaderManager;
 
 extern ChunkLoaderManager chunkLoaderManager;

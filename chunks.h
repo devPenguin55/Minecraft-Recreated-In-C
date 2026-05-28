@@ -11,12 +11,12 @@ typedef struct Block
     GLfloat z;
     int isAir;
     int blockType; // the block type for selecting the texture later
-    uint8_t light; // Upper 4 bits -> skylight, Lower 4 bits -> blockLight
 } Block;
 
 typedef struct Chunk
 {
     Block blocks[16 * 16 * 128];
+    uint8_t *lightData; // for each, Upper 4 bits -> skylight, Lower 4 bits -> blockLight
     GLfloat chunkStartX;
     GLfloat chunkStartZ;
     int firstQuadIndex;
@@ -33,6 +33,8 @@ typedef struct Chunk
     int triggerVertexDeletion;
     int triggerVertexRecreation;
     int isDirty;
+    int lightDirty;
+    int gpuLightIndex;
 } Chunk;
 
 typedef struct MeshQuad

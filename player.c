@@ -27,16 +27,16 @@ Block *blockAtPosition(int voxelX, int voxelY, int voxelZ) {
     Chunk* chunk = result->chunkEntry;
 
     int index =
-        localX +
-        ChunkWidthX * localZ +
-        (ChunkWidthX * ChunkLengthZ) * localY;
-
+    localX +
+    ChunkWidthX * localZ +
+    (ChunkWidthX * ChunkLengthZ) * localY;
+    
     if (index < 0 ||
         index >= ChunkWidthX * ChunkLengthZ * ChunkHeightY)
-    {
-        return NULL;
-    }
-
+        {
+            return NULL;
+        }
+        
     return &chunk->blocks[index];
 }
 
@@ -64,7 +64,7 @@ int playerCollides(Player* player)
 
     float minY = player->position.y;
     float maxY = player->position.y + player->height;
-
+ 
     float minZ = player->position.z - playerHalfWidth(player);
     float maxZ = player->position.z + playerHalfWidth(player);
 

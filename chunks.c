@@ -22,6 +22,8 @@ float BlockLengthZ = 1;
 
 int DEBUG = 0;
 
+
+
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key)
 {
     chunk->chunkStartX = xAdd;
@@ -42,6 +44,11 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
     chunk->lastWaterVertex = -1;
 
     chunk->isDirty = 0;
+    chunk->lightDirty = 0;
+
+    chunk->gpuLightIndex = -1;
+
+    chunk->lightData = malloc(sizeof(uint8_t)*ChunkWidthX*ChunkLengthZ*ChunkHeightY);
 
     for (int x = 0; x < ChunkWidthX; x++)
     {
@@ -56,8 +63,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 curBlock->z = BlockLengthZ * z + zAdd;
 
                 curBlock->y = BlockHeightY * (y);
-
-                curBlock->light = 0;
 
                 float scale = 100;
 
@@ -1165,6 +1170,7 @@ void deleteChunkMesh(Chunk *chunk)
     int lastQuadIndex = chunk->lastQuadIndex;
     chunk->hasMesh = 0;
     chunk->flag = CHUNK_FLAG_LOADED;
+
     // printf("Deleting quads from %d to %d and has mesh is %d\n", firstQuadIndex, lastQuadIndex, chunk->hasMesh);
     if (firstQuadIndex == -1 && lastQuadIndex == -1)
     {
@@ -1208,9 +1214,16 @@ void computeSkylightForChunk(Chunk *chunk) {
             uint8_t currentLight = 15;
 
             for (int y = ChunkHeightY - 1; y >= 0; y--) {
-                Block *curBlock = &chunk->blocks[x + z * (ChunkWidthX) + y * (ChunkWidthX * ChunkLengthZ)];
+                int index = x + z * (ChunkWidthX) + y * (ChunkWidthX * ChunkLengthZ);
+                Block *curBlock = &chunk->blocks[index];
 
-                SET_SKYLIGHT(curBlock->light, (uint8_t)(min(15, x+z)));
+                uint8_t originalLight = chunk->lightData[index];
+
+                SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(min(15, x+z)));
+
+                if (chunk->lightData[index] != originalLight) {
+                    chunk->lightDirty = 1;
+                }
 
                 if (!curBlock->isAir) {
                     currentLight = (uint8_t)0;
