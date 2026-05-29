@@ -324,6 +324,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             }
         }
     }
+
+    computeSkylightForChunk(chunk);
 }
 
 void initChunkMeshingSystem()
@@ -1220,7 +1222,7 @@ void computeSkylightForChunk(Chunk *chunk) {
 
                 uint8_t originalLight = chunk->lightData[index];
 
-                SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(min(15, x+z)));
+                SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(x+z));
 
                 if ((chunk->lightData[index] != originalLight) && chunk->isInitialLightCreated) {
                     chunk->lightDirty = 1;

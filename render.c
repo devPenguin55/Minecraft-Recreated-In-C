@@ -39,6 +39,7 @@ int waterVertexCapacity = 0;
 
 GLuint blockTextureArray;
 GLuint lightBuffer;
+GLuint lightTex;
 uint8_t *allChunkLighting;
 
 
@@ -262,7 +263,9 @@ void initGraphics()
 
     allChunkLighting = malloc(sizeof(uint8_t) * (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1) * ChunkWidthX * ChunkHeightY * ChunkLengthZ);
     glGenBuffers(1, &lightBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightBuffer);
+    glBindBuffer(GL_TEXTURE_BUFFER, lightBuffer);
+
+    
 
     int chunkVoxelCount =
         ChunkWidthX * ChunkHeightY * ChunkLengthZ;
@@ -273,7 +276,21 @@ void initGraphics()
     size_t totalSize =
         (size_t)maxChunks * chunkVoxelCount * sizeof(uint8_t);
 
-    glBufferData(GL_SHADER_STORAGE_BUFFER, totalSize, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(
+        GL_TEXTURE_BUFFER,
+        totalSize,
+        NULL,
+        GL_DYNAMIC_DRAW
+    );
+    glGenTextures(1, &lightTex);
+    glBindTexture(GL_TEXTURE_BUFFER, lightTex);
+
+    glTexBuffer(
+        GL_TEXTURE_BUFFER,
+        GL_R8UI,
+        lightBuffer
+    );
+
 
     const char *blockTextures[] = {
         "assets\\grassSide.png",   // 0
@@ -392,6 +409,7 @@ void initGraphics()
         .isPhysicsSolid = 0};
 
     blockTextureArray = loadTextureArray(blockTextures, sizeof(blockTextures) / sizeof(blockTextures[0]));
+
 }
 
 void createWorldLightingDataFromAllChunks()
@@ -408,7 +426,7 @@ void createWorldLightingDataFromAllChunks()
         Chunk *chunk = renderChunks->renderChunks[i];
     
         if (!chunk->lightDirty) { continue; }
-        printf("was dirty\n");
+        // printf("was dirty\n");
         chunk->lightDirty = 0;
 
         int chunkBase = chunk->gpuLightIndex * chunkVoxelCount;
@@ -421,19 +439,34 @@ void createWorldLightingDataFromAllChunks()
     }
 }
 
-void uploadLightingSSBO() {
-    return;
+void uploadLighting() {
     int chunkVoxelCount =
         ChunkWidthX * ChunkHeightY * ChunkLengthZ;
 
-    int maxRenderChunks =
-        (2 * CHUNK_RENDER_RADIUS + 1) * (2 * CHUNK_RENDER_RADIUS + 1);
+    int maxChunks =
+        (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1);
 
     size_t totalSize =
-        (size_t)maxRenderChunks * chunkVoxelCount * sizeof(uint8_t);
+        (size_t)maxChunks * chunkVoxelCount * sizeof(uint8_t);
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, lightBuffer);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, totalSize, allChunkLighting);
+    glBindBuffer(GL_TEXTURE_BUFFER, lightBuffer);
+
+    glBufferSubData(
+        GL_TEXTURE_BUFFER,
+        0,
+        totalSize,
+        allChunkLighting
+    );
+
+
+    // if (chunkLoaderManager.loadedChunks.amtLoadedChunks == 168) {
+
+    //     int chunkBase = 5 * chunkVoxelCount;
+    //     for (int i = 0; i < chunkVoxelCount; i++) {
+    //         printf("%d ", GET_SKYLIGHT(allChunkLighting[chunkBase + i]));
+    //     }
+    //     printf("\n");
+    // }
 }
 
 void reshape(int width, int height)
@@ -1442,6 +1475,7 @@ void drawGraphics()
     GLfloat playerCoords[2] = {player.position.x, player.position.z};
     loadChunks(playerCoords);
     createWorldLightingDataFromAllChunks();
+    uploadLighting();
 
     GLfloat Vertices[8][3] = {
         // front face
@@ -1539,6 +1573,7 @@ void drawGraphics()
 
     buildWorldMesh(); // fills worldVertices and worldVertexCount
 
+    
     glUseProgram(worldShader);
 
     glActiveTexture(GL_TEXTURE0);
@@ -1549,6 +1584,12 @@ void drawGraphics()
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_BUFFER, lightTex);
+    glUniform1i(glGetUniformLocation(worldShader, "lightBuffer"), 1);
+
 
     glBindVertexArray(worldVAO);
     glDrawArrays(GL_TRIANGLES, 0, worldVertexCount);
@@ -1572,6 +1613,7 @@ void drawGraphics()
 
     glUseProgram(0);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    glBindTexture(GL_TEXTURE_BUFFER, 0);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_2D_ARRAY);
     glDisable(GL_TEXTURE_3D);
