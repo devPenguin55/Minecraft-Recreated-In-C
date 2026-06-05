@@ -549,6 +549,7 @@ void loadChunks(GLfloat playerCoords[2])
                             verts[i]->z += z;
                             verts[i]->layer = blockRegistry[q->blockType].sideTexture;
                             verts[i]->gpuLightIndex = chunkAtPosition(x,y,z)->gpuLightIndex;
+                            verts[i]->face = FACE_CROSS;
                         }
 
                         if ((worldVertexCount + 24) > worldVertexCapacity)
@@ -658,7 +659,7 @@ void loadChunks(GLfloat playerCoords[2])
                         }
                     }
 
-                    adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z);
+                    adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z, q->faceType);
 
                     worldVertices[worldVertexCount++] = v0;
                     worldVertices[worldVertexCount++] = v1;
@@ -838,7 +839,7 @@ void loadChunks(GLfloat playerCoords[2])
                         }
                     }
 
-                    adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z);
+                    adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z, q->faceType);
 
                     waterVertices[waterVertexCount++] = v0;
                     waterVertices[waterVertexCount++] = v1;

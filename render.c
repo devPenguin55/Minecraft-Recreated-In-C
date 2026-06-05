@@ -243,7 +243,7 @@ void initGraphics()
         hotbarBlocks[i] = -1;
     }
     hotbarBlocks[0] = BLOCK_TYPE_DIRT;
-    hotbarBlocks[1] = BLOCK_TYPE_GRASS;
+    hotbarBlocks[1] = BLOCK_TYPE_TORCH;
     hotbarBlocks[2] = BLOCK_TYPE_LEAVES;
 
     hotbarActiveSlot = 1;
@@ -260,6 +260,7 @@ void initGraphics()
     glBindAttribLocation(worldShader, 1, "texCoord");
     glBindAttribLocation(worldShader, 2, "layer");
     glBindAttribLocation(worldShader, 3, "gpuLightIndex");
+    glBindAttribLocation(worldShader, 4, "face");
     glLinkProgram(worldShader);
 
     allChunkLighting = malloc(sizeof(uint8_t) * (2 * CHUNK_PRELOAD_RADIUS + 1) * (2 * CHUNK_PRELOAD_RADIUS + 1) * ChunkWidthX * ChunkHeightY * ChunkLengthZ);
@@ -304,7 +305,8 @@ void initGraphics()
         "assets\\oak_log_top.png", // 7
         "assets\\leaves.png",      // 8
         "assets\\blue_orchid.png", // 9
-        "assets\\short_grass.png"  // 10
+        "assets\\short_grass.png", // 10
+        "assets\\torch.png"        // 11
     };
 
     int GRASS_SIDE_TEXTURE_ARRAY_INDEX = 0;
@@ -318,6 +320,7 @@ void initGraphics()
     int LEAVES_TEXTURE_ARRAY_INDEX = 8;
     int ORCHID_TEXTURE_ARRAY_INDEX = 9;
     int SHORT_GRASS_TEXTURE_ARRAY_INDEX = 10;
+    int TORCH_TEXTURE_ARRAY_INDEX = 11;
 
     blockRegistry[BLOCK_TYPE_GRASS] = (BlockType){
         .id = BLOCK_TYPE_GRASS,
@@ -409,6 +412,16 @@ void initGraphics()
         .isRenderCross = 1,
         .isPhysicsSolid = 0};
 
+    blockRegistry[BLOCK_TYPE_TORCH] = (BlockType){
+        .id = BLOCK_TYPE_TORCH,
+        .sideTexture = TORCH_TEXTURE_ARRAY_INDEX,
+        .topTexture = TORCH_TEXTURE_ARRAY_INDEX,
+        .bottomTexture = TORCH_TEXTURE_ARRAY_INDEX,
+        .isRenderSolid = 0,
+        .blockBreakingTime = 0.1f,
+        .isRenderCross = 1,
+        .isPhysicsSolid = 0};
+
     blockTextureArray = loadTextureArray(blockTextures, sizeof(blockTextures) / sizeof(blockTextures[0]));
 
 }
@@ -427,7 +440,7 @@ void createWorldLightingDataFromAllChunks()
         Chunk *chunk = renderChunks->renderChunks[i];
     
         if (!chunk->lightDirty) { continue; }
-        // printf("was dirty\n");
+        printf("was dirty\n");
         chunk->lightDirty = 0;
 
         int chunkBase = chunk->gpuLightIndex * chunkVoxelCount;
@@ -505,7 +518,9 @@ void adjustVerticesForQuadData(
     Vertex *v3,
     float x,
     float y,
-    float z)
+    float z,
+    int face
+)
 {
     Vertex *verts[4] = {v0, v1, v2, v3};
 
@@ -516,7 +531,41 @@ void adjustVerticesForQuadData(
         v->x += x;
         v->y += y;
         v->z += z;
+
+
+        int sampleX = (int)x;
+        int sampleY = (int)y;
+        int sampleZ = (int)z;
+        switch (face)
+        {
+            case FACE_TOP:
+                sampleY -= 1;
+                break;
+
+            case FACE_BOTTOM:
+                sampleY += 1;
+                break;
+
+            case FACE_LEFT:
+                sampleX += 1;
+                break;
+
+            case FACE_RIGHT:
+                sampleX -= 1;
+                break;
+
+            case FACE_FRONT:
+                sampleZ += 1;
+                break;
+
+            case FACE_BACK:
+                sampleZ -= 1;
+                break;
+        }
+
+
         v->gpuLightIndex = chunkAtPosition(x,y,z)->gpuLightIndex;
+        v->face = face;
     }
 }
 
@@ -1063,6 +1112,7 @@ void buildWorldMesh()
                         verts[i]->z += z;
                         verts[i]->layer = blockRegistry[q->blockType].sideTexture;
                         verts[i]->gpuLightIndex = chunkAtPosition(x,y,z)->gpuLightIndex;
+                        verts[i]->face = FACE_CROSS;
                     }
 
                     if ((worldVertexCount + 24) > worldVertexCapacity)
@@ -1177,7 +1227,7 @@ void buildWorldMesh()
                     }
                 }
 
-                adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z);
+                adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z, q->faceType);
 
                 worldVertices[worldVertexCount++] = v0;
                 worldVertices[worldVertexCount++] = v1;
@@ -1362,7 +1412,7 @@ void buildWorldMesh()
                     }
                 }
 
-                adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z);
+                adjustVerticesForQuadData(&v0, &v1, &v2, &v3, x, y, z, q->faceType);
 
                 waterVertices[waterVertexCount++] = v0;
                 waterVertices[waterVertexCount++] = v1;
@@ -1412,8 +1462,13 @@ void uploadWorldMesh()
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, layer)));
     glEnableVertexAttribArray(2);
     
+    // gpu light index attribute 
     glVertexAttribIPointer(3, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, gpuLightIndex));
     glEnableVertexAttribArray(3);
+
+    // face attribute 
+    glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, face));
+    glEnableVertexAttribArray(4);
 
     glBindVertexArray(0); // unbind
 
@@ -1446,8 +1501,13 @@ void uploadWorldMesh()
     glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, layer)));
     glEnableVertexAttribArray(2);
 
+    // gpu light index attribute 
     glVertexAttribIPointer(3, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, gpuLightIndex));
     glEnableVertexAttribArray(3);
+
+    // face attribute 
+    glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, face));
+    glEnableVertexAttribArray(4);
 
     glBindVertexArray(0); // unbind
 }
@@ -1676,6 +1736,7 @@ void drawGraphics()
 
     // draw 2d things
     int inWater = isCameraInWater();
+    inWater = 0;
     if (inWater)
     {
         glEnable(GL_BLEND);

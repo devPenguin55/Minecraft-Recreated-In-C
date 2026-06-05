@@ -346,6 +346,9 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
     if (mainBlock->isAir)
         return 0;
 
+  
+    
+
     if (!mainBlock->isAir && !neighborBlock->isAir && !blockRegistry[mainBlock->blockType].isRenderSolid && !blockRegistry[neighborBlock->blockType].isRenderSolid && mainBlock->blockType != BLOCK_TYPE_WATER && neighborBlock->blockType != BLOCK_TYPE_WATER)
     {
         return 1;
@@ -377,6 +380,8 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
 
         return 0;
     }
+
+    
 
     return 0;
 }
@@ -1209,28 +1214,41 @@ void deleteChunkMesh(Chunk *chunk)
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
 }
 
+void propagateBlockLight(Chunk *chunk, int x, int y, int z) {
+    // Queue queue;
+}
+
 void computeSkylightForChunk(Chunk *chunk) {
     // should only be called after chunk + neighbor chunks loaded
     // this is the light baking step
     for (int x = 0; x < ChunkWidthX; x++) {
         for (int z = 0; z < ChunkLengthZ; z++) {
-            uint8_t currentLight = 15;
-
+            uint8_t currentLight = 9;
             for (int y = ChunkHeightY - 1; y >= 0; y--) {
                 int index = x + z * (ChunkWidthX) + y * (ChunkWidthX * ChunkLengthZ);
                 Block *curBlock = &chunk->blocks[index];
 
                 uint8_t originalLight = chunk->lightData[index];
 
-                SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(currentLight));
+                // if (curBlock->blockType == BLOCK_TYPE_TORCH) { propagateBlockLight(chunk, x, y, z); }
+
+                if (curBlock->blockType == BLOCK_TYPE_TORCH) {
+                    SET_BLOCK_LIGHT(chunk->lightData[index], (uint8_t)(15));
+                    currentLight = 15;
+                } else {
+                    SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(currentLight));
+                }
+                  
 
                 if ((chunk->lightData[index] != originalLight) && chunk->isInitialLightCreated) {
                     chunk->lightDirty = 1;
                 }
 
-                if (!curBlock->isAir) {
+                if (!curBlock->isAir && curBlock->blockType != BLOCK_TYPE_TORCH) {
                     currentLight = (uint8_t)(max(0, currentLight - 3));
-                }
+                } 
+                
+                 
             }
         }
     } 

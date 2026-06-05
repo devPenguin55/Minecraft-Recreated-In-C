@@ -372,7 +372,7 @@ void handleUserMovement()
     }
     if (pressedKeys['f'])
     {
-        player.velocity.y = -5.0f;
+        player.velocity.y = 0.0f;
     }
     // } else {
     if (pressedKeys[' '] && (player.isOnGround || player.isInWater))

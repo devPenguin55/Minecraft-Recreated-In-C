@@ -92,7 +92,7 @@ typedef struct BlockType
 #define BLOCK_TYPE_LEAVES 7
 #define BLOCK_TYPE_ORCHID 8
 #define BLOCK_TYPE_SHORT_GRASS 9
-#define BLOCK_TYPE_LIGHT_SOURCE 10
+#define BLOCK_TYPE_TORCH 10
 
 #define ChunkWidthX 16
 #define ChunkLengthZ 16
