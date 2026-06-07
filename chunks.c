@@ -154,8 +154,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 }
 
                 // ! REMOVE 
-                curBlock->blockType = BLOCK_TYPE_DIRT;
-                curBlock->isAir = y > 50;
+                // curBlock->blockType = BLOCK_TYPE_DIRT;
+                // curBlock->isAir = y > 50;
                 // curBlock->isAir = (int)(y/2) > (int)(0.5*(40+x/2+z/2));
             }
         }
@@ -1272,11 +1272,7 @@ void computeSkylightForChunk(Chunk *chunk) {
                     SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(currentLight));
                 }
 
-                // SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(8));
 
-                if ((chunk->lightData[index] != originalLight) && chunk->isInitialLightCreated) {
-                    chunk->lightDirty = 1;
-                }
 
                 if (!curBlock->isAir && curBlock->blockType != BLOCK_TYPE_TORCH) {
                     currentLight = (uint8_t)(max(0, currentLight - 3));
