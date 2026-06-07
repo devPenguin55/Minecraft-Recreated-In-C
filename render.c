@@ -538,7 +538,7 @@ void adjustVerticesForQuadData(
         int sampleY = (int)y;
         int sampleZ = (int)z;
 
-
+        // printf("%d\n",((sampleZ % 16) + 16) % 16);
         switch (face)
         {
             case FACE_TOP:
@@ -556,11 +556,15 @@ void adjustVerticesForQuadData(
                 break;
 
             case FACE_FRONT:
-                sampleZ -= 1;
+                if ((((sampleZ % 16) + 16) % 16) == 15) {
+                    sampleZ -= 1;
+                }
                 break;
 
             case FACE_BACK:
-                sampleZ += 1;
+                if ((((sampleZ % 16) + 16) % 16) == 0) {
+                    sampleZ += 1;
+                }
                 break;
         }
 
