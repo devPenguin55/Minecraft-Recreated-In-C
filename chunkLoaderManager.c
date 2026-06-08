@@ -439,6 +439,7 @@ void loadChunks(GLfloat playerCoords[2])
                 chunk->hasWaterVertices = 0;
                 chunk->triggerVertexDeletion = 0;
 
+                
                 // build vertices
 
                 generateChunkMesh(chunk);

@@ -33,7 +33,7 @@ void raycastFromCamera() {
         amtSteps = dist;
         voxelX = (int)round(rayX / BlockWidthX);
         voxelY = (int)round(rayY / BlockHeightY);
-        voxelZ = (int)round(rayZ / BlockLengthZ);
+        voxelZ = (int)round(rayZ / BlockLengthZ); 
 
 
         int chunkX = (voxelX >= 0) ? voxelX / ChunkWidthX : (voxelX - (ChunkWidthX-1)) / ChunkWidthX;

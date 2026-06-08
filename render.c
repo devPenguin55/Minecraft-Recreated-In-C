@@ -198,13 +198,14 @@ int isCameraInWater()
     uint64_t chunkKey = packChunkKey(chunkX, chunkZ);
     BucketEntry *result = getHashmapEntry(chunkKey);
     if (!result)
-    {
+    { 
         return 0;
     };
 
     Chunk *curChunk = result->chunkEntry;
     int index = voxelX + ChunkWidthX * voxelZ + (ChunkWidthX * ChunkLengthZ) * voxelY;
 
+    if (index > ChunkWidthX * ChunkLengthZ * ChunkHeightY || index < 0) { return 0; }
     Block *block = &curChunk->blocks[index];
     return (block != NULL && block->blockType == BLOCK_TYPE_WATER);
 }
@@ -922,9 +923,12 @@ void checkForWorldChunkVerticesDeletion()
         {
             loadedChunk->triggerVertexDeletion = 0;
 
-            int amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
-            if (loadedChunk->lastVertex != -1)
+            int amtVerticesInChunk = 0;
+            int amtWaterVerticesInChunk = 0;
+            if (loadedChunk->lastVertex != -1 && loadedChunk->firstVertex != -1)
             {
+                amtVerticesInChunk = loadedChunk->lastVertex - loadedChunk->firstVertex + 1;
+
                 int start = loadedChunk->firstVertex;
                 int end = loadedChunk->lastVertex + 1;
 
@@ -941,9 +945,9 @@ void checkForWorldChunkVerticesDeletion()
                 changedVBO = 1;
             }
 
-            int amtWaterVerticesInChunk = loadedChunk->lastWaterVertex - loadedChunk->firstWaterVertex + 1;
-            if (loadedChunk->lastWaterVertex != -1)
+            if (loadedChunk->lastWaterVertex != -1 && loadedChunk->firstWaterVertex != -1)
             {
+                amtWaterVerticesInChunk = loadedChunk->lastWaterVertex - loadedChunk->firstWaterVertex + 1;
                 int start = loadedChunk->firstWaterVertex;
                 int end = loadedChunk->lastWaterVertex + 1;
 
