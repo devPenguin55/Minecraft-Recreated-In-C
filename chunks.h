@@ -76,7 +76,7 @@ typedef struct QueueEntry {
 
 typedef struct Queue 
 {
-    QueueEntry  items[250];
+    QueueEntry  items[2500];
     int              front;
     int               rear;
     int           capacity;

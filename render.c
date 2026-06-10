@@ -1750,7 +1750,6 @@ void drawGraphics()
 
     // draw 2d things
     int inWater = isCameraInWater();
-    inWater = 0;
     if (inWater)
     {
         glEnable(GL_BLEND);
@@ -2008,14 +2007,6 @@ void drawGraphics()
             BucketEntry *result = getHashmapEntry(chunkKey);
             triggerRenderChunkRebuild(result->chunkEntry);
         }
-
-        // for (int i = 0; i < 32768; i++)
-        // {
-        //     SET_BLOCK_LIGHT(selectedBlockToRender.chunk->lightData[i], 0);
-        //     if (selectedBlockToRender.chunk->blocks[i].blockType == BLOCK_TYPE_TORCH && !selectedBlockToRender.chunk->blocks[i].isAir) {
-        //         enqueue(&lightingQueue, selectedBlockToRender.chunk->blocks[i].x - selectedBlockToRender.chunk->chunkStartX, selectedBlockToRender.chunk->blocks[i].y, selectedBlockToRender.chunk->blocks[i].z - selectedBlockToRender.chunk->chunkStartZ);
-        //     }
-        // }
 
         blockPlacingOrBreakingLightingRecalculation();
     }

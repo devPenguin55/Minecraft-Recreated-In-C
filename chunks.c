@@ -154,8 +154,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 }
 
                 // ! REMOVE 
-                curBlock->blockType = BLOCK_TYPE_DIRT;
-                curBlock->isAir = y > 50;
+                // curBlock->blockType = BLOCK_TYPE_DIRT;
+                // curBlock->isAir = y > 50;
                 // curBlock->isAir = (int)(y/2) > (int)(0.5*(40+x/2+z/2));
             }
         }
@@ -1217,7 +1217,7 @@ void deleteChunkMesh(Chunk *chunk)
 void initLightingQueue(Queue *queue) {
     queue->front = 0;
     queue->rear = 0;
-    queue->capacity = 250;
+    queue->capacity = 2500;
     queue->size = 0;
 }
 
@@ -1259,6 +1259,7 @@ void propagateLightBFS() { // seed the lighting queue beforehand (note to self t
 
     
     while (lightingQueue.size > 0) { 
+        
         QueueEntry *queueEntry = dequeue(&lightingQueue); 
         if (queueEntry == NULL) { continue; } 
         
@@ -1286,11 +1287,13 @@ void propagateLightBFS() { // seed the lighting queue beforehand (note to self t
             neighborIndex = (nx - neighborLightingChunk->chunkStartX) + (nz - neighborLightingChunk->chunkStartZ) * ChunkWidthX + ny * ChunkWidthX * ChunkLengthZ; 
         
             
-            if ((GET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex]) >= (GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1)) || !neighborLightingChunk->blocks[neighborIndex].isAir) { continue; }
+            if ((GET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex]) >= (GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1)) || (!neighborLightingChunk->blocks[neighborIndex].isAir && neighborLightingChunk->blocks[neighborIndex].blockType != BLOCK_TYPE_WATER)) { continue; }
             neighborLightingChunk->lightDirty = 1;
 
-            neighborLightingChunk->lightData[neighborIndex] = SET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex], GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1); 
+            SET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex], GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1); 
+            if (lightingQueue.size >= lightingQueue.capacity) { exit(1); }
             enqueue(&lightingQueue, neighborLightingChunk->blocks[neighborIndex].x, neighborLightingChunk->blocks[neighborIndex].y, neighborLightingChunk->blocks[neighborIndex].z); 
+            if (lightingQueue.size >= lightingQueue.capacity) { exit(1); }
         }
     }
 }

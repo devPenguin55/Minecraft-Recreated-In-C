@@ -87,7 +87,7 @@ void handleKeyUp(unsigned char key, int x, int y)
 void blockPlacingOrBreakingLightingRecalculation() {
     int chunkXUnit = ChunkWidthX * BlockWidthX;
     int chunkZUnit = ChunkLengthZ * BlockLengthZ;
-    
+
     initLightingQueue(&lightingQueue);
     for (int dx = -1; dx <= 1; dx++)
     {
@@ -102,7 +102,6 @@ void blockPlacingOrBreakingLightingRecalculation() {
 
             if (result != NULL)
             {
-                printf("did it for %d %d\n", (int)((selectedBlockToRender.chunk->chunkStartX + dx*chunkXUnit)/(chunkXUnit)), (int)((selectedBlockToRender.chunk->chunkStartZ + dz*chunkZUnit)/(chunkZUnit)));
                 result->chunkEntry->lightDirty = 1;
                 for (int i = 0; i < 32768; i++) {
                     if (result->chunkEntry->blocks[i].blockType == BLOCK_TYPE_TORCH && !result->chunkEntry->blocks[i].isAir) {
