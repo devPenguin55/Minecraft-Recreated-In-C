@@ -1974,6 +1974,7 @@ void drawGraphics()
             return;
         }
 
+        
         if (x == 0)
         {
             uint64_t chunkKey = packChunkKey(
@@ -2007,5 +2008,15 @@ void drawGraphics()
             BucketEntry *result = getHashmapEntry(chunkKey);
             triggerRenderChunkRebuild(result->chunkEntry);
         }
+
+        // for (int i = 0; i < 32768; i++)
+        // {
+        //     SET_BLOCK_LIGHT(selectedBlockToRender.chunk->lightData[i], 0);
+        //     if (selectedBlockToRender.chunk->blocks[i].blockType == BLOCK_TYPE_TORCH && !selectedBlockToRender.chunk->blocks[i].isAir) {
+        //         enqueue(&lightingQueue, selectedBlockToRender.chunk->blocks[i].x - selectedBlockToRender.chunk->chunkStartX, selectedBlockToRender.chunk->blocks[i].y, selectedBlockToRender.chunk->blocks[i].z - selectedBlockToRender.chunk->chunkStartZ);
+        //     }
+        // }
+
+        blockPlacingOrBreakingLightingRecalculation();
     }
 }

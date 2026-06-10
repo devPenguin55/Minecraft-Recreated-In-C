@@ -84,6 +84,41 @@ void handleKeyUp(unsigned char key, int x, int y)
     pressedKeys[key] = 0;
 }
 
+void blockPlacingOrBreakingLightingRecalculation() {
+    int chunkXUnit = ChunkWidthX * BlockWidthX;
+    int chunkZUnit = ChunkLengthZ * BlockLengthZ;
+    
+    initLightingQueue(&lightingQueue);
+    for (int dx = -1; dx <= 1; dx++)
+    {
+        for (int dz = -1; dz <= 1; dz++)
+        {
+            uint64_t chunkKey = packChunkKey(
+                (int)((selectedBlockToRender.chunk->chunkStartX + dx*chunkXUnit)/(chunkXUnit)),
+                (int)((selectedBlockToRender.chunk->chunkStartZ + dz*chunkZUnit)/(chunkZUnit))
+            );
+
+            BucketEntry *result = getHashmapEntry(chunkKey);
+
+            if (result != NULL)
+            {
+                printf("did it for %d %d\n", (int)((selectedBlockToRender.chunk->chunkStartX + dx*chunkXUnit)/(chunkXUnit)), (int)((selectedBlockToRender.chunk->chunkStartZ + dz*chunkZUnit)/(chunkZUnit)));
+                result->chunkEntry->lightDirty = 1;
+                for (int i = 0; i < 32768; i++) {
+                    if (result->chunkEntry->blocks[i].blockType == BLOCK_TYPE_TORCH && !result->chunkEntry->blocks[i].isAir) {
+                        enqueue(&lightingQueue, result->chunkEntry->blocks[i].x, result->chunkEntry->blocks[i].y, result->chunkEntry->blocks[i].z);
+                        SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], 15);
+                    } else {
+                        SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], 0);
+                    }
+                }
+            }
+        }
+    }
+
+    propagateLightBFS();
+}
+
 void handleMouse(int button, int state, int x_, int y_)
 {
     // button: GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, etc.
@@ -303,11 +338,7 @@ void handleMouse(int button, int state, int x_, int y_)
 
             triggerRenderChunkRebuild(selectedBlockToRender.chunk);
 
-            initLightingQueue(&lightingQueue);
-            selectedBlockToRender.chunk->lightData[blockIndex] = (uint8_t)15;
-            enqueue(&lightingQueue, x+chunkXUnit, y, z+chunkZUnit);
-
-            propagateLightBFS();
+            blockPlacingOrBreakingLightingRecalculation();
         }
     }
     else

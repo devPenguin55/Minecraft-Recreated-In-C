@@ -24,6 +24,7 @@ extern GLfloat eyeZ;
 void toggleFullscreen();
 void handleKeyDown(unsigned char key, int x, int y);
 void handleKeyUp(unsigned char key, int x, int y);
+void blockPlacingOrBreakingLightingRecalculation();
 void handleMouse(int button, int state, int x, int y);
 void handleMovingMouse(int x, int y);
 void handleUserMovement();

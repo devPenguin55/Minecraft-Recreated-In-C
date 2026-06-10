@@ -1,0 +1,53 @@
+Date : 2026-06-10 00:55:42
+Directory : c:\AaravC-Projects\MinecraftRecreated
+Total : 21 files,  898 codes, 20 comments, 129 blanks, all 1047 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| C        |          7 |        551 |         16 |         72 |        639 |
+| Markdown |          4 |        122 |          0 |         26 |        148 |
+| GLSL     |          2 |         95 |          3 |         26 |        124 |
+| C++      |          5 |         67 |          1 |          5 |         73 |
+| CSV      |          2 |         62 |          0 |          0 |         62 |
+| JSON     |          1 |          1 |          0 |          0 |          1 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                     | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                        |         21 |        898 |         20 |        129 |      1,047 |
+| . (Files)                                                                                |         14 |        713 |         20 |        103 |        836 |
+| .VSCodeCounter                                                                           |          7 |        185 |          0 |         26 |        211 |
+| .VSCodeCounter\2026-05-15_00-41-39                                                       |          7 |        185 |          0 |         26 |        211 |
++------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                 | language | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\details.md      | Markdown |         45 |          0 |          6 |         51 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\diff-details.md | Markdown |         31 |          0 |          6 |         37 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\diff.csv        | CSV      |         24 |          0 |          0 |         24 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\diff.md         | Markdown |         22 |          0 |          7 |         29 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\results.csv     | CSV      |         38 |          0 |          0 |         38 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\results.json    | JSON     |          1 |          0 |          0 |          1 |
+| c:\AaravC-Projects\MinecraftRecreated\.VSCodeCounter\2026-05-15_00-41-39\results.md      | Markdown |         24 |          0 |          7 |         31 |
+| c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.c                               | C        |        147 |          1 |        -20 |        128 |
+| c:\AaravC-Projects\MinecraftRecreated\chunkLoaderManager.h                               | C++      |         10 |          0 |          1 |         11 |
+| c:\AaravC-Projects\MinecraftRecreated\chunks.c                                           | C        |        139 |          3 |         23 |        165 |
+| c:\AaravC-Projects\MinecraftRecreated\chunks.h                                           | C++      |         32 |          1 |          3 |         36 |
+| c:\AaravC-Projects\MinecraftRecreated\input.c                                            | C        |         15 |          0 |          3 |         18 |
+| c:\AaravC-Projects\MinecraftRecreated\main.c                                             | C        |          2 |          0 |         -3 |         -1 |
+| c:\AaravC-Projects\MinecraftRecreated\player.c                                           | C        |         19 |          0 |          9 |         28 |
+| c:\AaravC-Projects\MinecraftRecreated\player.h                                           | C++      |          3 |          0 |          0 |          3 |
+| c:\AaravC-Projects\MinecraftRecreated\render.c                                           | C        |        184 |         10 |         51 |        245 |
+| c:\AaravC-Projects\MinecraftRecreated\render.h                                           | C++      |         15 |          0 |         -1 |         14 |
+| c:\AaravC-Projects\MinecraftRecreated\shader.frag                                        | GLSL     |         87 |          3 |         27 |        117 |
+| c:\AaravC-Projects\MinecraftRecreated\shader.vert                                        | GLSL     |          8 |          0 |         -1 |          7 |
+| c:\AaravC-Projects\MinecraftRecreated\worldDiskStorage.c                                 | C        |         45 |          2 |          9 |         56 |
+| c:\AaravC-Projects\MinecraftRecreated\worldDiskStorage.h                                 | C++      |          7 |          0 |          2 |          9 |
+| Total                                                                                    |          |        898 |         20 |        129 |      1,047 |
++------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

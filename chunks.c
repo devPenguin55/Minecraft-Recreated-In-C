@@ -1286,7 +1286,7 @@ void propagateLightBFS() { // seed the lighting queue beforehand (note to self t
             neighborIndex = (nx - neighborLightingChunk->chunkStartX) + (nz - neighborLightingChunk->chunkStartZ) * ChunkWidthX + ny * ChunkWidthX * ChunkLengthZ; 
         
             
-            if ((GET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex]) >= (GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1))) { continue; }
+            if ((GET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex]) >= (GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1)) || !neighborLightingChunk->blocks[neighborIndex].isAir) { continue; }
             neighborLightingChunk->lightDirty = 1;
 
             neighborLightingChunk->lightData[neighborIndex] = SET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex], GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1); 
