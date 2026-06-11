@@ -336,7 +336,7 @@ void initChunkMeshingSystem()
     chunkMeshQuads.amtQuads = 0;
     chunkMeshQuads.quads = malloc(sizeof(MeshQuad) * chunkMeshQuads.capacity);
 
-    initLightingQueue(&lightingQueue);
+    resetLightingQueue(&lightingQueue);
 }
 
 void handleProgramClose()
@@ -1214,15 +1214,17 @@ void deleteChunkMesh(Chunk *chunk)
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
 }
 
-void initLightingQueue(Queue *queue) {
+void resetLightingQueue(Queue *queue) {
     queue->front = 0;
     queue->rear = 0;
-    queue->capacity = 2500;
+    queue->capacity = 100000;
     queue->size = 0;
 }
 
 void enqueue(Queue *queue, int worldX, int worldY, int worldZ) {
-    if (queue->size == queue->capacity) {
+    if (queue->size >= queue->capacity) {
+        printf("LIGHT QUEUE FULL!\n");
+        exit(1);
         return; 
     }
 
@@ -1257,9 +1259,9 @@ void propagateLightBFS() { // seed the lighting queue beforehand (note to self t
         {0, 0, -1}
     };
 
-    
+    int nodesProcessed = 0;
     while (lightingQueue.size > 0) { 
-        
+        nodesProcessed++;
         QueueEntry *queueEntry = dequeue(&lightingQueue); 
         if (queueEntry == NULL) { continue; } 
         
@@ -1287,13 +1289,14 @@ void propagateLightBFS() { // seed the lighting queue beforehand (note to self t
             neighborIndex = (nx - neighborLightingChunk->chunkStartX) + (nz - neighborLightingChunk->chunkStartZ) * ChunkWidthX + ny * ChunkWidthX * ChunkLengthZ; 
         
             
-            if ((GET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex]) >= (GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1)) || (!neighborLightingChunk->blocks[neighborIndex].isAir && neighborLightingChunk->blocks[neighborIndex].blockType != BLOCK_TYPE_WATER)) { continue; }
+            if (
+                (GET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex]) >= (GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1)) || 
+                (!neighborLightingChunk->blocks[neighborIndex].isAir && blockRegistry[neighborLightingChunk->blocks[neighborIndex].blockType].isRenderSolid) 
+            ) { continue; }
             neighborLightingChunk->lightDirty = 1;
 
             SET_BLOCK_LIGHT(neighborLightingChunk->lightData[neighborIndex], GET_BLOCK_LIGHT(curLightingChunk->lightData[blockIndex])-1); 
-            if (lightingQueue.size >= lightingQueue.capacity) { exit(1); }
             enqueue(&lightingQueue, neighborLightingChunk->blocks[neighborIndex].x, neighborLightingChunk->blocks[neighborIndex].y, neighborLightingChunk->blocks[neighborIndex].z); 
-            if (lightingQueue.size >= lightingQueue.capacity) { exit(1); }
         }
     }
 }
@@ -1302,7 +1305,7 @@ void computeSkylightForChunk(Chunk *chunk) {
     // should only be called after chunk + neighbor chunks loaded
     // this is the light baking step
 
-    initLightingQueue(&lightingQueue);
+    resetLightingQueue(&lightingQueue);
     
     for (int x = 0; x < ChunkWidthX; x++) {
         for (int z = 0; z < ChunkLengthZ; z++) {
@@ -1312,9 +1315,9 @@ void computeSkylightForChunk(Chunk *chunk) {
                 Block *curBlock = &chunk->blocks[index];
 
                 uint8_t originalLight = chunk->lightData[index];
-
-                if (curBlock->blockType == BLOCK_TYPE_TORCH && !curBlock->isAir) {
-                    if (!chunk->isInitialLightCreated) { SET_BLOCK_LIGHT(chunk->lightData[index], (uint8_t)(15)); }
+                
+                if (blockRegistry[curBlock->blockType].lightEmissivePower && !curBlock->isAir) {
+                    if (!chunk->isInitialLightCreated) { SET_BLOCK_LIGHT(chunk->lightData[index], (uint8_t)(blockRegistry[curBlock->blockType].lightEmissivePower)); }
                     SET_SKYLIGHT(chunk->lightData[index], (uint8_t)(0));
                     
                     enqueue(&lightingQueue, 
@@ -1329,7 +1332,7 @@ void computeSkylightForChunk(Chunk *chunk) {
 
 
 
-                if (!curBlock->isAir && curBlock->blockType != BLOCK_TYPE_TORCH) {
+                if (!curBlock->isAir && blockRegistry[curBlock->blockType].lightEmissivePower == 0) {
                     currentLight = (uint8_t)(max(0, currentLight - 3));
                 } 
                 

@@ -84,30 +84,35 @@ void handleKeyUp(unsigned char key, int x, int y)
     pressedKeys[key] = 0;
 }
 
-void blockPlacingOrBreakingLightingRecalculation() {
+void blockPlacingOrBreakingLightingRecalculation()
+{
     int chunkXUnit = ChunkWidthX * BlockWidthX;
     int chunkZUnit = ChunkLengthZ * BlockLengthZ;
 
-    initLightingQueue(&lightingQueue);
+    resetLightingQueue(&lightingQueue);
     for (int dx = -1; dx <= 1; dx++)
     {
         for (int dz = -1; dz <= 1; dz++)
         {
             uint64_t chunkKey = packChunkKey(
-                (int)((selectedBlockToRender.chunk->chunkStartX + dx*chunkXUnit)/(chunkXUnit)),
-                (int)((selectedBlockToRender.chunk->chunkStartZ + dz*chunkZUnit)/(chunkZUnit))
-            );
+                (int)((selectedBlockToRender.chunk->chunkStartX + dx * chunkXUnit) / (chunkXUnit)),
+                (int)((selectedBlockToRender.chunk->chunkStartZ + dz * chunkZUnit) / (chunkZUnit)));
 
             BucketEntry *result = getHashmapEntry(chunkKey);
 
             if (result != NULL)
             {
                 result->chunkEntry->lightDirty = 1;
-                for (int i = 0; i < 32768; i++) {
-                    if (result->chunkEntry->blocks[i].blockType == BLOCK_TYPE_TORCH && !result->chunkEntry->blocks[i].isAir) {
+                for (int i = 0; i < 32768; i++)
+                {
+                    
+                    if (blockRegistry[result->chunkEntry->blocks[i].blockType].lightEmissivePower && !result->chunkEntry->blocks[i].isAir)
+                    {
                         enqueue(&lightingQueue, result->chunkEntry->blocks[i].x, result->chunkEntry->blocks[i].y, result->chunkEntry->blocks[i].z);
-                        SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], 15);
-                    } else {
+                        SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], blockRegistry[result->chunkEntry->blocks[i].blockType].lightEmissivePower);
+                    }
+                    else
+                    {
                         SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], 0);
                     }
                 }
@@ -367,8 +372,6 @@ void handleMovingMouse(int x, int y)
 
     glutPostRedisplay();
     glutWarpPointer(windowCenterX, windowCenterY);
-
-    
 }
 
 void handleUserMovement()

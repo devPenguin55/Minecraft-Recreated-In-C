@@ -6,81 +6,83 @@
 
 typedef struct Block
 {
-    GLfloat     x;
-    GLfloat     y;
-    GLfloat     z;
-    int     isAir;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    int isAir;
     int blockType; // the block type for selecting the texture later
 } Block;
 
 typedef struct Chunk
 {
     Block blocks[16 * 16 * 128];
-    uint8_t          *lightData; // for each, Upper 4 bits -> skylight, Lower 4 bits -> blockLight
-    GLfloat         chunkStartX;
-    GLfloat         chunkStartZ;
-    int          firstQuadIndex;
-    int           lastQuadIndex;
-    int                    flag;
-    int                 hasMesh;
-    uint64_t                key;
-    int             hasVertices;
-    int        hasWaterVertices;
-    int             firstVertex;
-    int              lastVertex;
-    int        firstWaterVertex;
-    int         lastWaterVertex;
-    int   triggerVertexDeletion;
+    uint8_t *lightData; // for each, Upper 4 bits -> skylight, Lower 4 bits -> blockLight
+    GLfloat chunkStartX;
+    GLfloat chunkStartZ;
+    int firstQuadIndex;
+    int lastQuadIndex;
+    int flag;
+    int hasMesh;
+    uint64_t key;
+    int hasVertices;
+    int hasWaterVertices;
+    int firstVertex;
+    int lastVertex;
+    int firstWaterVertex;
+    int lastWaterVertex;
+    int triggerVertexDeletion;
     int triggerVertexRecreation;
-    int                 isDirty;
-    int              lightDirty;
-    int           gpuLightIndex;
-    int   isInitialLightCreated;
+    int isDirty;
+    int lightDirty;
+    int gpuLightIndex;
+    int isInitialLightCreated;
 } Chunk;
 
 typedef struct MeshQuad
 {
-    GLfloat      x;
-    GLfloat      y;
-    GLfloat      z;
-    GLfloat  width;
+    GLfloat x;
+    GLfloat y;
+    GLfloat z;
+    GLfloat width;
     GLfloat height;
-    int   faceType;  // these are listed below!
-    int  blockType; // these are listed below!
+    int faceType;  // these are listed below!
+    int blockType; // these are listed below!
 } MeshQuad;
 
 typedef struct ChunkMeshQuads
 {
     MeshQuad *quads;
-    int    capacity;
-    int    amtQuads;
+    int capacity;
+    int amtQuads;
 } ChunkMeshQuads;
 
 typedef struct BlockType
 {
-    int                  id; // essentially BLOCK_TYPE_GRASS or smt
-    int          topTexture;
-    int       bottomTexture;
-    int         sideTexture;
-    int       isRenderSolid;
+    int id; // essentially BLOCK_TYPE_GRASS or smt
+    int topTexture;
+    int bottomTexture;
+    int sideTexture;
+    int isRenderSolid;
     float blockBreakingTime;
-    int       isRenderCross;
-    int      isPhysicsSolid;
+    int isRenderCross;
+    int isPhysicsSolid;
+    int lightEmissivePower; // 0 to 15
 } BlockType;
 
-typedef struct QueueEntry {
+typedef struct QueueEntry
+{
     int x;
     int y;
     int z;
 } QueueEntry;
 
-typedef struct Queue 
+typedef struct Queue
 {
-    QueueEntry  items[2500];
-    int              front;
-    int               rear;
-    int           capacity;
-    int               size;
+    QueueEntry items[100000];
+    int front;
+    int rear;
+    int capacity;
+    int size;
 } Queue;
 
 // these are the face types
@@ -119,10 +121,10 @@ typedef struct Queue
 #define SEA_LEVEL 35
 
 // upper is more left and bigger, lower is more right and smaller
-#define GET_SKYLIGHT(b) (((b) >> 4) & 0xF) // upper 4 bits 
-#define GET_BLOCK_LIGHT(b) ((b) & 0xF) // lower 4 bits 
+#define GET_SKYLIGHT(b) (((b) >> 4) & 0xF)                           // upper 4 bits
+#define GET_BLOCK_LIGHT(b) ((b) & 0xF)                               // lower 4 bits
 #define SET_SKYLIGHT(b, s) ((b) = ((b) & 0x0F) | (((s) & 0xF) << 4)) // clear upper 4 bits and insert shifted skylight
-#define SET_BLOCK_LIGHT(b, s) ((b) = ((b) & 0xF0) | ((s) & 0xF)) // clear lower 4 bits and insert block light 
+#define SET_BLOCK_LIGHT(b, s) ((b) = ((b) & 0xF0) | ((s) & 0xF))     // clear lower 4 bits and insert block light
 
 #define IS_CELL_SOLID(cell) ((cell).blockType != BLOCK_TYPE_AIR)
 
@@ -138,8 +140,7 @@ void initChunkMeshingSystem();
 void handleProgramClose();
 void generateChunkMesh(Chunk *chunk);
 void deleteChunkMesh(Chunk *chunk);
-void initLightingQueue(Queue *queue);
-void initLightingQueue(Queue *queue);
+void resetLightingQueue(Queue *queue);
 void enqueue(Queue *queue, int worldX, int worldY, int worldZ);
 QueueEntry *dequeue(Queue *queue);
 void propagateLightBFS();

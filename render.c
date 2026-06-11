@@ -331,7 +331,9 @@ void initGraphics()
         .isRenderSolid = 1,
         .blockBreakingTime = 1.0f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 1};
+        .isPhysicsSolid = 1,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_DIRT] = (BlockType){
         .id = BLOCK_TYPE_DIRT,
@@ -341,7 +343,9 @@ void initGraphics()
         .isRenderSolid = 1,
         .blockBreakingTime = 1.0f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 1};
+        .isPhysicsSolid = 1,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_STONE] = (BlockType){
         .id = BLOCK_TYPE_STONE,
@@ -351,7 +355,9 @@ void initGraphics()
         .isRenderSolid = 1,
         .blockBreakingTime = 2.0f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 1};
+        .isPhysicsSolid = 1,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_WATER] = (BlockType){
         .id = BLOCK_TYPE_WATER,
@@ -361,7 +367,9 @@ void initGraphics()
         .isRenderSolid = 0,
         .blockBreakingTime = 99999.0f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 0};
+        .isPhysicsSolid = 0,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_RED_CLAY] = (BlockType){
         .id = BLOCK_TYPE_RED_CLAY,
@@ -371,7 +379,9 @@ void initGraphics()
         .isRenderSolid = 1,
         .blockBreakingTime = 0.75f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 1};
+        .isPhysicsSolid = 1,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_OAK] = (BlockType){
         .id = BLOCK_TYPE_OAK,
@@ -381,7 +391,9 @@ void initGraphics()
         .isRenderSolid = 1,
         .blockBreakingTime = 1.5f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 1};
+        .isPhysicsSolid = 1,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_LEAVES] = (BlockType){
         .id = BLOCK_TYPE_LEAVES,
@@ -391,7 +403,9 @@ void initGraphics()
         .isRenderSolid = 0,
         .blockBreakingTime = 0.5f,
         .isRenderCross = 0,
-        .isPhysicsSolid = 1};
+        .isPhysicsSolid = 1,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_ORCHID] = (BlockType){
         .id = BLOCK_TYPE_ORCHID,
@@ -401,7 +415,9 @@ void initGraphics()
         .isRenderSolid = 0,
         .blockBreakingTime = 0.1f,
         .isRenderCross = 1,
-        .isPhysicsSolid = 0};
+        .isPhysicsSolid = 0,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_SHORT_GRASS] = (BlockType){
         .id = BLOCK_TYPE_SHORT_GRASS,
@@ -411,7 +427,9 @@ void initGraphics()
         .isRenderSolid = 0,
         .blockBreakingTime = 0.1f,
         .isRenderCross = 1,
-        .isPhysicsSolid = 0};
+        .isPhysicsSolid = 0,
+        .lightEmissivePower = 0
+    };
 
     blockRegistry[BLOCK_TYPE_TORCH] = (BlockType){
         .id = BLOCK_TYPE_TORCH,
@@ -421,7 +439,10 @@ void initGraphics()
         .isRenderSolid = 0,
         .blockBreakingTime = 0.1f,
         .isRenderCross = 1,
-        .isPhysicsSolid = 0};
+        .isPhysicsSolid = 0,
+        .lightEmissivePower = 15
+    };
+
 
     blockTextureArray = loadTextureArray(blockTextures, sizeof(blockTextures) / sizeof(blockTextures[0]));
 

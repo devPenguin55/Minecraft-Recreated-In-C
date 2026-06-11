@@ -132,8 +132,12 @@ void main()
                 z += 1;
                 break;
         }
-
-        texColor.rgb *= getLight(int(floor(x)), int(floor(y)), int(floor(z)));
+        if (fragFace != FACE_CROSS) {
+            
+            texColor.rgb *= getLight(int(floor(x)), int(floor(y)), int(floor(z)));
+        } else {
+            texColor.rgb *= getLight(int(round(worldPos.x)), int(round(worldPos.y)), int(round(worldPos.z)));
+        }
     }
 
     fragColor = texColor;
