@@ -7,7 +7,8 @@
 
 void initWorldDiskStorage() {
     char path[] = "worldChunkData";
-    _mkdir(path);
+    _rmdir(path);
+    // _mkdir(path);
 }
 
 void saveChunkToDisk(Chunk *chunk) {

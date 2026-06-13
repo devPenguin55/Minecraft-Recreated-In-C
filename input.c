@@ -163,13 +163,24 @@ void blockPlacingOrBreakingLightingRecalculation(Chunk *chunk)
                                     (int)neighbor->blocks[skylightSeed].y,
                                     (int)neighbor->blocks[skylightSeed].z);
                             }
+                        } else if (!curBlock->isAir && curBlock->blockType == BLOCK_TYPE_WATER && currentLight) {
+                            int skylightSeed = index + ChunkWidthX * ChunkLengthZ;
+                            if (skylightSeed < ChunkWidthX * ChunkLengthZ * ChunkHeightY && neighbor->blocks[skylightSeed].isAir)
+                            {
+                                SET_SKYLIGHT(neighbor->lightData[index], currentLight);
+                                enqueue(&lightingQueue,
+                                    (int)neighbor->blocks[skylightSeed].x,
+                                    (int)neighbor->blocks[skylightSeed].y,
+                                    (int)neighbor->blocks[skylightSeed].z);
+                            }
+                            currentLight = (currentLight > 2) ? (currentLight - 2) : 0;
                         }
                     }
                 }
             }
             neighbor->lightDirty = 1;
 
-            // if (isCenter) continue; // center seeded via surface seeds above, skip border seeding
+            if (isCenter) continue; // center seeded via surface seeds above, skip border seeding
 
             // border face seeding for non-center non-diagonal neighbors
             for (int y = 0; y < ChunkHeightY; y++)

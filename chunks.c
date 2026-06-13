@@ -1402,7 +1402,7 @@ void computeInitialLightingForChunk(Chunk *chunk)
                     SET_SKYLIGHT(chunk->lightData[index], currentLight);
                 }
 
-                if (!curBlock->isAir && blockRegistry[curBlock->blockType].isRenderSolid && currentLight)
+                if (!curBlock->isAir && blockRegistry[curBlock->blockType].isRenderSolid && currentLight && curBlock->blockType != BLOCK_TYPE_WATER)
                 {
                     currentLight = 0;
                     int skylightSeed = index + ChunkWidthX * ChunkLengthZ;
@@ -1411,7 +1411,16 @@ void computeInitialLightingForChunk(Chunk *chunk)
                     {
                         skylightEmissiveBlocks[amtSkylightEmissiveBlocks++] = skylightSeed;
                     }
-                }
+                } else if (!curBlock->isAir && curBlock->blockType == BLOCK_TYPE_WATER && currentLight) {
+                     int skylightSeed = index + ChunkWidthX * ChunkLengthZ;
+                     if (skylightSeed < ChunkWidthX * ChunkLengthZ * ChunkHeightY && chunk->blocks[skylightSeed].isAir)
+                     {
+                        SET_SKYLIGHT(chunk->lightData[index], currentLight);
+                        skylightEmissiveBlocks[amtSkylightEmissiveBlocks++] = skylightSeed;
+
+                     }
+                     currentLight = (currentLight > 2) ? (currentLight - 2) : 0;
+                 }
             }
         }
     }
