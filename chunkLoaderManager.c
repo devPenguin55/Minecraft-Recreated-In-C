@@ -366,7 +366,6 @@ void loadChunks(GLfloat playerCoords[2])
         curChunkToRender->hasMesh = 1; 
         generateChunkMesh(curChunkToRender);
         curChunkToRender->isInitialLightCreated = 0;
-        renderChunkLoadInForNeighbors(curChunkToRender);
     }
 
     

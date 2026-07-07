@@ -145,5 +145,4 @@ void enqueue(Queue *queue, int worldX, int worldY, int worldZ);
 QueueEntry *dequeue(Queue *queue);
 void propagateLightBFS(int isBlockLight);
 void computeInitialLightingForChunk(Chunk *chunk);
-void renderChunkLoadInForNeighbors(Chunk *chunk);
 #endif

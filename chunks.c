@@ -1213,7 +1213,6 @@ void deleteChunkMesh(Chunk *chunk)
     }
 
     // printf("New starting quad index is at %d\n", chunkMeshQuads.amtQuads);
-    renderChunkLoadInForNeighbors(chunk);
 }
 
 void resetLightingQueue(Queue *queue)
@@ -1372,56 +1371,6 @@ void propagateLightBFS(int isBlockLight)
             enqueue(&lightingQueue, (int)neighborLightingChunk->blocks[neighborIndex].x, (int)neighborLightingChunk->blocks[neighborIndex].y, (int)neighborLightingChunk->blocks[neighborIndex].z);
         }
     }
-}
-
-void renderChunkLoadInForNeighbors(Chunk *chunk)
-{
-    return;
-    int chunkXUnit = ChunkWidthX * BlockWidthX;
-    int chunkZUnit = ChunkLengthZ * BlockLengthZ;
-
-    resetLightingQueue(&lightingQueue);
-    for (int dx = -1; dx <= 1; dx++)
-    {
-        for (int dz = -1; dz <= 1; dz++)
-        {
-            if (dx == 0 && dz == 0) {
-                continue;
-            }
-            
-            uint64_t chunkKey = packChunkKey(
-                (int)((chunk->chunkStartX + dx * chunkXUnit) / (chunkXUnit)),
-                (int)((chunk->chunkStartZ + dz * chunkZUnit) / (chunkZUnit)));
-
-            BucketEntry *result = getHashmapEntry(chunkKey);
-
-            if (result != NULL)
-            {
-                
-                result->chunkEntry->lightDirty = 1;
-                for (int i = 0; i < 32768; i++)
-                {
-                    if (blockRegistry[result->chunkEntry->blocks[i].blockType].lightEmissivePower && !result->chunkEntry->blocks[i].isAir)
-                    {
-                        enqueue(&lightingQueue, result->chunkEntry->blocks[i].x, result->chunkEntry->blocks[i].y, result->chunkEntry->blocks[i].z);
-                        if (!result->chunkEntry->isInitialLightCreated) {
-                            SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], blockRegistry[result->chunkEntry->blocks[i].blockType].lightEmissivePower);
-                        }
-                    }
-                    else
-                    {
-                        if (!result->chunkEntry->isInitialLightCreated) {
-                            SET_BLOCK_LIGHT(result->chunkEntry->lightData[i], 0);
-                        }
-                    }
-                } 
-            }
-        }
-    }
-
-    chunk->isInitialLightCreated = 1;
-
-    propagateLightBFS(1);
 }
 
 void seedNeighborBorderLighting(Chunk *chunk)
