@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "player.h"
 #include "chunks.h"
 #include "chunkLoaderManager.h"
@@ -85,7 +86,8 @@ int isSolidVoxel(int voxelX, int voxelY, int voxelZ)
 
 float playerHalfWidth(Player* player)
 {
-    return player->width * 0.5f;
+    return 0;
+    // return player->width * 0.5f;
 }
 
 int playerCollides(Player* player)
@@ -99,14 +101,15 @@ int playerCollides(Player* player)
     float minZ = player->position.z - playerHalfWidth(player);
     float maxZ = player->position.z + playerHalfWidth(player);
 
-    int voxelMinX = (int)round(minX);
-    int voxelMaxX = (int)round(maxX);
+    int voxelMinX = (int)floor(minX);
+    int voxelMaxX = (int)floor(maxX);
 
-    int voxelMinY = (int)round(minY);
-    int voxelMaxY = (int)round(maxY);
+    int voxelMinY = (int)floor(minY);
+    int voxelMaxY = (int)floor(maxY);
 
-    int voxelMinZ = (int)round(minZ);
-    int voxelMaxZ = (int)round(maxZ);
+    int voxelMinZ = (int)floor(minZ);
+    int voxelMaxZ = (int)floor(maxZ);
+
 
     for (int x = voxelMinX; x <= voxelMaxX; x++)
     {
@@ -116,8 +119,38 @@ int playerCollides(Player* player)
             {
                 if (isSolidVoxel(x, y, z))
                 {
-                    return 1;
+                    Block *block = blockAtPosition(x, y, z);
+                    if (block->isSlope == 0) { return 1; }
+
+                    float localWithinBlockX = player->position.x-(float)x;
+                    float localWithinBlockY = player->position.y-(float)y;
+                    float localWithinBlockZ = player->position.z-(float)z;
+                    
+                    float height;
+                    switch (block->isSlope) {
+                        case 1:
+                            height = 1-localWithinBlockZ;
+                            break;
+                        case 4:
+                            height = localWithinBlockX;
+                            break;
+                        case 3:
+                            height = localWithinBlockZ;
+                            break;
+                        case 2:
+                            height = 1-localWithinBlockX;
+                            break;
+                    }
+        
+                    height += y;
+                    if (player->position.y < height) {
+                        player->position.y = height + DELTA_TIME;
+                        return 0;
+                    }
+ 
+                    return 0;
                 }
+
             }
         }
     }

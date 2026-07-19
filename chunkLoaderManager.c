@@ -601,6 +601,89 @@ void loadChunks(GLfloat playerCoords[2])
                         worldVertices[worldVertexCount++] = d0;
 
                         continue; // skip normal cube logic
+                    case FACE_SLOPE:
+                        {
+                            // Base geometry, dir 0: low edge at +Z (front), high edge at -Z (back)
+                            Vertex b0 = {-0.5f, -0.5f,  0.5f, 0, 1};
+                            Vertex b1 = { 0.5f, -0.5f,  0.5f, 1, 1};
+                            Vertex b2 = { 0.5f, -0.5f, -0.5f, 1, 0};
+                            Vertex b3 = {-0.5f, -0.5f, -0.5f, 0, 0};
+
+                            Vertex w0 = {-0.5f, -0.5f, -0.5f, 0, 1};
+                            Vertex w1 = { 0.5f, -0.5f, -0.5f, 1, 1};
+                            Vertex w2 = { 0.5f,  0.5f, -0.5f, 1, 0};
+                            Vertex w3 = {-0.5f,  0.5f, -0.5f, 0, 0};
+
+                            Vertex r0 = {-0.5f, -0.5f,  0.5f, 0, 1};
+                            Vertex r1 = { 0.5f, -0.5f,  0.5f, 1, 1};
+                            Vertex r2 = { 0.5f,  0.5f, -0.5f, 1, 0};
+                            Vertex r3 = {-0.5f,  0.5f, -0.5f, 0, 0};
+
+                            Vertex tl0 = {-0.5f, -0.5f,  0.5f, 0, 1};
+                            Vertex tl1 = {-0.5f, -0.5f, -0.5f, 1, 1};
+                            Vertex tl2 = {-0.5f,  0.5f, -0.5f, 1, 0};
+
+                            Vertex tr0 = { 0.5f, -0.5f,  0.5f, 0, 1};
+                            Vertex tr1 = { 0.5f,  0.5f, -0.5f, 1, 0};
+                            Vertex tr2 = { 0.5f, -0.5f, -0.5f, 1, 1};
+
+                            Vertex *allVerts[] = { &b0,&b1,&b2,&b3, &w0,&w1,&w2,&w3, &r0,&r1,&r2,&r3, &tl0,&tl1,&tl2, &tr0,&tr1,&tr2 };
+                            int vertCount = sizeof(allVerts) / sizeof(allVerts[0]);
+
+                            int dir = (q->slopeDirection - 1) & 3; // slopeDirection is 1-4, rotate index is 0-3
+                            for (int i = 0; i < dir; i++)
+                            {
+                                for (int j = 0; j < vertCount; j++)
+                                {
+                                    float oldX = allVerts[j]->x;
+                                    float oldZ = allVerts[j]->z;
+                                    allVerts[j]->x = oldZ;
+                                    allVerts[j]->z = -oldX;
+                                }
+                            }
+
+                            int bottomLayer = blockRegistry[q->blockType].bottomTexture;
+                            int sideLayer   = blockRegistry[q->blockType].sideTexture;
+                            int topLayer    = blockRegistry[q->blockType].topTexture;
+
+                            for (int i = 0; i < vertCount; i++)
+                            {
+                                allVerts[i]->x += x;
+                                allVerts[i]->y += y;
+                                allVerts[i]->z += z;
+                                allVerts[i]->gpuLightIndex = chunkAtPosition(x, y, z)->gpuLightIndex;
+                                allVerts[i]->face = FACE_SLOPE;
+                            }
+
+                            if ((worldVertexCount + 24) > worldVertexCapacity)
+                            {
+                                worldVertexCapacity = worldVertexCapacity * 2 + 1024;
+                                worldVertices = realloc(worldVertices, sizeof(Vertex) * worldVertexCapacity);
+                            }
+
+                            Vertex tris[24] = {
+                                b0,b2,b1, b0,b3,b2,      // bottom (was b0,b1,b2 / b0,b2,b3 — reversed)
+                                w0,w2,w1, w0,w3,w2,      // back wall (was w0,w1,w2 / w0,w2,w3 — reversed)
+                                r0,r1,r2, r0,r2,r3,      // ramp — unchanged, this one was already correct
+                                tl0,tl2,tl1,             // left triangle (was tl0,tl1,tl2 — reversed)
+                                tr0,tr2,tr1              // right triangle (was tr0,tr1,tr2 — reversed)
+                            };
+                            int layersForTris[24] = {
+                                bottomLayer,bottomLayer,bottomLayer, bottomLayer,bottomLayer,bottomLayer,
+                                sideLayer,sideLayer,sideLayer, sideLayer,sideLayer,sideLayer,
+                                topLayer,topLayer,topLayer, topLayer,topLayer,topLayer,
+                                sideLayer,sideLayer,sideLayer,
+                                sideLayer,sideLayer,sideLayer
+                            };
+
+                            for (int i = 0; i < 24; i++)
+                            {
+                                tris[i].layer = (float)layersForTris[i];
+                                worldVertices[worldVertexCount++] = tris[i];
+                            }
+
+                            continue;
+                        }
                     }
 
                     float minX = MIN4(v0.x, v1.x, v2.x, v3.x);

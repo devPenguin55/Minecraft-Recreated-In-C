@@ -17,6 +17,7 @@ uniform usamplerBuffer lightBuffer; // for all render chunks in one
 #define FACE_FRONT 5
 #define FACE_BACK 6
 #define FACE_CROSS 7 // use for things like flowers
+#define FACE_SLOPE 8 // use for slopes
 
 float getLight(int x, int y, int z)
 {
@@ -132,7 +133,7 @@ void main()
                 z += 1;
                 break;
         }
-        if (fragFace != FACE_CROSS) {
+        if (fragFace != FACE_CROSS && fragFace != FACE_SLOPE) {
             
             texColor.rgb *= getLight(int(floor(x)), int(floor(y)), int(floor(z)));
         } else {

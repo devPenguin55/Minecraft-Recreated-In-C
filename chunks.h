@@ -11,6 +11,7 @@ typedef struct Block
     GLfloat z;
     int isAir;
     int blockType; // the block type for selecting the texture later
+    int isSlope;
 } Block;
 
 typedef struct Chunk
@@ -47,6 +48,7 @@ typedef struct MeshQuad
     GLfloat height;
     int faceType;  // these are listed below!
     int blockType; // these are listed below!
+    int slopeDirection; // these are only for the slope blocks!
 } MeshQuad;
 
 typedef struct ChunkMeshQuads
@@ -93,6 +95,7 @@ typedef struct Queue
 #define FACE_FRONT 5
 #define FACE_BACK 6
 #define FACE_CROSS 7 // use for things like flowers
+#define FACE_SLOPE 8
 
 #define PLANE_X 1
 #define PLANE_Y 2

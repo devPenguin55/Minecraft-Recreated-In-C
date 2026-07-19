@@ -71,8 +71,8 @@ int remove_directory(const char *path) {
 void initWorldDiskStorage() {
     const char *path = "worldChunkData";
     _mkdir(path);
-    // remove_directory(path);
-    // _mkdir(path);
+    remove_directory(path);
+    _mkdir(path);
 }
 
 void saveChunkToDisk(Chunk *chunk) {

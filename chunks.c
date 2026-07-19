@@ -21,6 +21,14 @@ float BlockLengthZ = 1;
 
 int DEBUG_MODE = 0;
 
+static inline float clamp(float value, float minVal, float maxVal)
+{
+    if (value < minVal)
+        return minVal;
+    if (value > maxVal)
+        return maxVal;
+    return value;
+}
 void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, int flag, uint64_t key)
 {
     chunk->chunkStartX = xAdd;
@@ -47,14 +55,83 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
     chunk->gpuLightIndex = -1;
 
-    chunk->isInitialLightCreated = 0; // * while this is computed here, it gets handled in the worldDiskStorage
-    
+    chunk->isInitialLightCreated = 0;
+
     chunk->lightData = calloc(1, sizeof(uint8_t) * ChunkWidthX * ChunkLengthZ * ChunkHeightY);
-    
+
+    static int rawHeightMap[ChunkWidthX * ChunkLengthZ];
+    static int heightMap[ChunkWidthX * ChunkLengthZ];
+    static int blurTmp[ChunkWidthX * ChunkLengthZ];
+
+    // ---- PASS 1: height -- low-amplitude, long-wavelength so adjacent
+    // columns differ by ~0-1 blocks most of the time (slope-friendly),
+    // with an occasional bigger hill from the ridge layer and a plains
+    // mask that flattens some regions out entirely ----
     for (int x = 0; x < ChunkWidthX; x++)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
+            float worldX = BlockWidthX * x + xAdd;
+            float worldZ = BlockLengthZ * z + zAdd;
+
+            // rolling hills -- long wavelength (scale 90), modest amplitude
+            float rolling = fbm2D(worldX / 90.0f, worldZ / 90.0f, 4, 2, 2.0, 5.0);
+
+            // occasional bigger hills/mountains -- even longer wavelength so
+            // its per-block gradient stays gentle despite bigger total height
+            float bigHills = ridgedFbm2D(worldX / 60.0f, worldZ / 60.0f, 5, 3, 2.0, 0.5);
+
+            // plains mask: 0 = flatten this region into a plain, 1 = let hills through
+            float plainsMask = fbm2D(worldX / 320.0f, worldZ / 320.0f, 3, 2, 2.0, 3.0);
+            plainsMask = clamp((plainsMask + 1.0f) * 0.5f, 0.15f, 1.0f); // keep a floor so plains aren't perfectly flat
+
+            int h = 34;
+            h += (int)(rolling * 50.0f * plainsMask);
+            h += (int)(bigHills * 50.0f * plainsMask);
+
+            rawHeightMap[x + z * ChunkWidthX] = h;
+        }
+    }
+
+    // ---- PASS 2: two blur passes -- mops up whatever per-column jumps
+    // the noise still produced, so slope-eligible (diff == 1) edges dominate ----
+    for (int x = 0; x < ChunkWidthX; x++)
+        for (int z = 0; z < ChunkLengthZ; z++)
+            blurTmp[x + z * ChunkWidthX] = rawHeightMap[x + z * ChunkWidthX];
+
+    for (int pass = 0; pass < 2; pass++)
+    {
+        for (int x = 0; x < ChunkWidthX; x++)
+        {
+            for (int z = 0; z < ChunkLengthZ; z++)
+            {
+                if (x == 0 || x == ChunkWidthX - 1 || z == 0 || z == ChunkLengthZ - 1)
+                {
+                    heightMap[x + z * ChunkWidthX] = blurTmp[x + z * ChunkWidthX];
+                    continue;
+                }
+
+                int sum = 0, count = 0;
+                for (int dx = -1; dx <= 1; dx++)
+                    for (int dz = -1; dz <= 1; dz++)
+                    {
+                        sum += blurTmp[(x + dx) + (z + dz) * ChunkWidthX];
+                        count++;
+                    }
+                heightMap[x + z * ChunkWidthX] = sum / count;
+            }
+        }
+        for (int i = 0; i < ChunkWidthX * ChunkLengthZ; i++)
+            blurTmp[i] = heightMap[i];
+    }
+
+    // ---- PASS 3: fill blocks, with widened cave band tuned for overhangs ----
+    for (int x = 0; x < ChunkWidthX; x++)
+    {
+        for (int z = 0; z < ChunkLengthZ; z++)
+        {
+            int generatedBlockNoiseHeight = heightMap[x + z * ChunkWidthX];
+
             for (int y = 0; y < ChunkHeightY; y++)
             {
                 Block *curBlock = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * y]);
@@ -62,39 +139,31 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 curBlock->blockType = -1;
                 curBlock->x = BlockWidthX * x + xAdd;
                 curBlock->z = BlockLengthZ * z + zAdd;
-
                 curBlock->y = BlockHeightY * (y);
-
-                float scale = 100;
-
-                int generatedBlockNoiseHeight;
+                curBlock->isSlope = 0;
 
                 float worldX = curBlock->x;
                 float worldZ = curBlock->z;
-
-                float noise = fbm2D(worldX / scale, worldZ / scale, 5, 2, 2.0, 5.0);
-
-                generatedBlockNoiseHeight = (int)(noise * BlockHeightY * 20 + 30);
-                float ridge = ridgedFbm2D(worldX / 150.0f, worldZ / 150.0f, 9, 4, 2.0, 0.5) * 20;
-                generatedBlockNoiseHeight += (int)ridge;
 
                 curBlock->isAir = (y > generatedBlockNoiseHeight);
 
                 if (!curBlock->isAir)
                 {
-                    if (y > 18 && y < 50)
+                    if (y > 10 && y < 55)
                     {
-                        int yboost = 15; // small vertical shift
+                        int yboost = 15;
 
-                        float base = perlinNoise3D(
-                            worldX / 25.0f,
-                            (y + yboost) / 25.0f,
-                            worldZ / 25.0f,
-                            3);
-
+                        float base = perlinNoise3D(worldX / 22.0f, (y + yboost) / 22.0f, worldZ / 22.0f, 3);
                         float ridged = 1.0f - fabs(base);
 
-                        curBlock->isAir = (ridged > 0.9f);
+                        // region mask so caves cluster instead of appearing uniformly
+                        // everywhere -- some areas get big cave networks, others none
+                        float caveRegion = fbm2D(worldX / 60.0f, worldZ / 60.0f, 3, 2, 2.0, 3.0);
+
+                        if (caveRegion > 0.05f)
+                        {
+                            curBlock->isAir = (ridged > 0.85f);
+                        }
                     }
                 }
 
@@ -106,14 +175,8 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 {
                     if (y == generatedBlockNoiseHeight)
                     {
-                        // surface block
-                        if (generatedBlockNoiseHeight <= SEA_LEVEL + 1 && perlinNoise3D(
-                                                                              worldX / 25.0f,
-                                                                              (y + 5) / 25.0f,
-                                                                              worldZ / 25.0f,
-                                                                              3) < 0.05)
+                        if (generatedBlockNoiseHeight <= SEA_LEVEL + 1 && perlinNoise3D(worldX / 25.0f, (y + 5) / 25.0f, worldZ / 25.0f, 3) < 0.05)
                         {
-                            // shoreline
                             curBlock->blockType = BLOCK_TYPE_RED_CLAY;
                         }
                         else if (generatedBlockNoiseHeight <= SEA_LEVEL)
@@ -127,17 +190,7 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     }
                     else if (y < generatedBlockNoiseHeight && y >= generatedBlockNoiseHeight - 1)
                     {
-                        // just under surface
-                        if (y < SEA_LEVEL)
-                        {
-                            // underwater seabed
-                            curBlock->blockType = BLOCK_TYPE_RED_CLAY;
-                        }
-                        else
-                        {
-                            // inland soil
-                            curBlock->blockType = BLOCK_TYPE_DIRT;
-                        }
+                        curBlock->blockType = (y < SEA_LEVEL) ? BLOCK_TYPE_RED_CLAY : BLOCK_TYPE_DIRT;
                     }
                     else
                     {
@@ -150,20 +203,47 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     curBlock->isAir = 0;
                     curBlock->blockType = BLOCK_TYPE_WATER;
                 }
-
-                // ! REMOVE
-                // curBlock->blockType = BLOCK_TYPE_DIRT;
-                // curBlock->isAir = y > 50;
-                // curBlock->isAir = (int)(y/2) > (int)(0.5*(40+x/2+z/2));
             }
         }
     }
 
+    // ---- PASS 4: slope-direction pass -- corner cases now PICK a direction
+    // instead of falling back to a cube step, so slope coverage dominates ----
+    for (int x = 1; x < ChunkWidthX - 1; x++)
+    {
+        for (int z = 1; z < ChunkLengthZ - 1; z++)
+        {
+            int h = heightMap[x + z * ChunkWidthX];
+            if (h < 0 || h >= ChunkHeightY)
+                continue;
+
+            int hEast  = heightMap[(x + 1) + z * ChunkWidthX];
+            int hWest  = heightMap[(x - 1) + z * ChunkWidthX];
+            int hSouth = heightMap[x + (z + 1) * ChunkWidthX];
+            int hNorth = heightMap[x + (z - 1) * ChunkWidthX];
+
+            int dir = 0;
+            if (hSouth == h - 1) dir = 1;
+            else if (hEast  == h - 1) dir = 2;
+            else if (hNorth == h - 1) dir = 3;
+            else if (hWest  == h - 1) dir = 4;
+
+            if (dir == 0)
+                continue; // flat or a >1 cliff -- stays a plain cube, that's fine
+
+            Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * h]);
+            if (b->isAir || b->blockType == BLOCK_TYPE_WATER || b->blockType == -1)
+                continue;
+
+            b->isSlope = dir;
+        }
+    }
+
+    // ---- PASS 5: vegetation -- trees, flowers, short grass, shrubs (unchanged logic) ----
     for (int x = 0; x < ChunkWidthX; x++)
     {
         for (int z = 0; z < ChunkLengthZ; z++)
         {
-
             int surfaceY = -1;
 
             for (int y = ChunkHeightY - 2; y >= 0; y--)
@@ -180,24 +260,20 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
             if (surfaceY == -1)
                 continue;
-
             if (x < 4 || x >= ChunkWidthX - 4 || z < 4 || z >= ChunkLengthZ - 4)
                 continue;
 
             float worldX = x + chunk->chunkStartX;
             float worldZ = z + chunk->chunkStartZ;
 
-            // tree constraint
-
             int treeValid = !(fbm2D(worldX / 1.5f, worldZ / 1.5f, 5, 2, 2.0, 5.0) <= 0.45f);
             int flowerValid = fbm2D(worldX / 10.f, worldZ / 10.f, 5, 2, 2.0, 5.0) > 0.37f;
             int shortGrassValid = fbm2D(worldX / 1.2f, worldZ / 10.f, 5, 2, 2.0, 5.0) > 0.30f;
+            int shrubValid = fbm2D(worldX / 6.f, worldZ / 6.f, 4, 2, 2.0, 3.0) > 0.55f;
 
             if (flowerValid && !treeValid && !shortGrassValid)
             {
-                // flowers addition
                 Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY]);
-
                 b->blockType = BLOCK_TYPE_ORCHID;
                 b->isAir = 0;
                 continue;
@@ -205,25 +281,45 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
             if (shortGrassValid && !treeValid)
             {
-                // short grass addition
                 Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY]);
-
                 b->blockType = BLOCK_TYPE_SHORT_GRASS;
                 b->isAir = 0;
                 continue;
             }
 
-            if (!treeValid)
+            if (shrubValid && !treeValid)
             {
+                for (int yOff = 0; yOff < 2; yOff++)
+                {
+                    int layerY = surfaceY + yOff;
+                    if (layerY < 0 || layerY >= ChunkHeightY)
+                        continue;
+
+                    for (int xOff = -1; xOff <= 1; xOff++)
+                    {
+                        for (int zOff = -1; zOff <= 1; zOff++)
+                        {
+                            if (xOff != 0 && zOff != 0 && yOff == 1)
+                                continue;
+
+                            int newX = x + xOff, newZ = z + zOff;
+                            if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
+                                continue;
+
+                            Block *b = &(chunk->blocks[newX + ChunkWidthX * newZ + (ChunkWidthX * ChunkLengthZ) * layerY]);
+                            if (!b->isAir)
+                                continue;
+
+                            b->blockType = BLOCK_TYPE_LEAVES;
+                            b->isAir = 0;
+                        }
+                    }
+                }
                 continue;
             }
 
-            // // ! remove
-            // Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * surfaceY]);
-
-            // b->blockType = BLOCK_TYPE_TORCH;
-            // b->isAir = 0;
-            // continue;
+            if (!treeValid)
+                continue;
 
             int trunkHeight = 5 + (int)(fbm2D(worldX, worldZ, 1, 1, 1, 1) * 2);
 
@@ -234,7 +330,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                     break;
 
                 Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * newY]);
-
                 b->blockType = BLOCK_TYPE_OAK;
                 b->isAir = 0;
             }
@@ -244,7 +339,6 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
             for (int yOff = 0; yOff <= 1; yOff++)
             {
                 int layerY = topY + yOff;
-
                 if (layerY < 0 || layerY >= ChunkHeightY)
                     continue;
 
@@ -252,18 +346,11 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 {
                     for (int zOff = -2; zOff <= 2; zOff++)
                     {
-
-                        int newX = x + xOff;
-                        int newZ = z + zOff;
-
-                        if (newX < 0 || newX >= ChunkWidthX ||
-                            newZ < 0 || newZ >= ChunkLengthZ)
+                        int newX = x + xOff, newZ = z + zOff;
+                        if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
                             continue;
 
-                        Block *b = &(chunk->blocks[newX +
-                                                   ChunkWidthX * newZ +
-                                                   (ChunkWidthX * ChunkLengthZ) * layerY]);
-
+                        Block *b = &(chunk->blocks[newX + ChunkWidthX * newZ + (ChunkWidthX * ChunkLengthZ) * layerY]);
                         if (b->blockType == BLOCK_TYPE_OAK)
                             continue;
 
@@ -273,66 +360,40 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 }
             }
 
-            int layerY = topY + 2;
-
-            if (layerY < 0 || layerY >= ChunkHeightY)
-                continue;
-
-            for (int xOff = -1; xOff <= 1; xOff++)
+            int layerY2 = topY + 2;
+            if (layerY2 >= 0 && layerY2 < ChunkHeightY)
             {
-                for (int zOff = -1; zOff <= 1; zOff++)
+                for (int xOff = -1; xOff <= 1; xOff++)
                 {
+                    for (int zOff = -1; zOff <= 1; zOff++)
+                    {
+                        int newX = x + xOff, newZ = z + zOff;
+                        if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
+                            continue;
 
-                    int newX = x + xOff;
-                    int newZ = z + zOff;
+                        Block *b = &(chunk->blocks[newX + ChunkWidthX * newZ + (ChunkWidthX * ChunkLengthZ) * layerY2]);
+                        if (b->blockType == BLOCK_TYPE_OAK)
+                            continue;
 
-                    if (newX < 0 || newX >= ChunkWidthX ||
-                        newZ < 0 || newZ >= ChunkLengthZ)
-                        continue;
-
-                    Block *b = &(chunk->blocks[newX +
-                                               ChunkWidthX * newZ +
-                                               (ChunkWidthX * ChunkLengthZ) * layerY]);
-
-                    if (b->blockType == BLOCK_TYPE_OAK)
-                        continue;
-
-                    b->blockType = BLOCK_TYPE_LEAVES;
-                    b->isAir = 0;
+                        b->blockType = BLOCK_TYPE_LEAVES;
+                        b->isAir = 0;
+                    }
                 }
             }
 
             int topLayerY = topY + 3;
-            if (topLayerY < ChunkHeightY)
+            if (topLayerY >= 0 && topLayerY < ChunkHeightY)
             {
-                for (int xOff = 0; xOff <= 0; xOff++)
+                Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * topLayerY]);
+                if (b->blockType != BLOCK_TYPE_OAK)
                 {
-                    for (int zOff = 0; zOff <= 0; zOff++)
-                    {
-
-                        int newX = x + xOff;
-                        int newZ = z + zOff;
-
-                        if (newX < 0 || newX >= ChunkWidthX ||
-                            newZ < 0 || newZ >= ChunkLengthZ)
-                            continue;
-
-                        Block *b = &(chunk->blocks[newX +
-                                                   ChunkWidthX * newZ +
-                                                   (ChunkWidthX * ChunkLengthZ) * topLayerY]);
-
-                        if (b->blockType == BLOCK_TYPE_OAK)
-                            continue;
-
-                        b->blockType = BLOCK_TYPE_LEAVES;
-                        b->isAir = 0;
-                    }
+                    b->blockType = BLOCK_TYPE_LEAVES;
+                    b->isAir = 0;
                 }
             }
         }
     }
 }
-
 void initChunkMeshingSystem()
 {
     chunkMeshQuads.capacity = 16;
@@ -347,6 +408,7 @@ void handleProgramClose()
     printf("\n\n\n[MEMORY INFO] Program closing -> freeing chunk quad memory\n\n\n");
     free(chunkMeshQuads.quads);
 }
+
 
 static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBlock)
 {
@@ -372,6 +434,10 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
         if (neighborBlock->blockType == BLOCK_TYPE_WATER)
             return 1;
 
+        if (neighborBlock->isSlope) {
+            return 1;
+        }
+
         return 0;
     }
 
@@ -388,6 +454,8 @@ static inline int checkIfFaceValidToBeInMesh(Block *mainBlock, Block *neighborBl
     return 0;
 }
 
+
+
 void generateChunkMesh(Chunk *chunk)
 {
     // printf("starting mesh amts %d\n", chunkMeshQuads.amtQuads);
@@ -399,6 +467,7 @@ void generateChunkMesh(Chunk *chunk)
     int backs[ChunkWidthX][ChunkHeightY][ChunkLengthZ] = {0};   // * X-Y plane, z fixed
 
     int crosses[ChunkWidthX * ChunkLengthZ * ChunkHeightY] = {0}; // * cross blocks (like flowers)
+    int slopes[ChunkWidthX * ChunkLengthZ * ChunkHeightY] = {0}; // ? slope blocks for removing the harsh cube shape
 
     int64_t chunkX;
     int64_t chunkZ;
@@ -457,6 +526,12 @@ void generateChunkMesh(Chunk *chunk)
                 if (!chunk->blocks[blockIndex].isAir && blockRegistry[chunk->blocks[blockIndex].blockType].isRenderCross)
                 {
                     crosses[blockIndex] = 1;
+                    continue;
+                }
+
+                if (!chunk->blocks[blockIndex].isAir && chunk->blocks[blockIndex].isSlope) 
+                {
+                    slopes[blockIndex] = chunk->blocks[blockIndex].isSlope; // isSlope carries the direction info
                     continue;
                 }
 
@@ -548,7 +623,7 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ] || slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
                     continue;
                 }
@@ -625,7 +700,7 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ] || slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
                     continue;
                 }
@@ -701,7 +776,7 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ] || slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
                     continue;
                 }
@@ -813,7 +888,7 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ] || slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
                     continue;
                 }
@@ -920,7 +995,7 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ] || slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
                     continue;
                 }
@@ -1028,7 +1103,7 @@ void generateChunkMesh(Chunk *chunk)
                     continue;
                 }
 
-                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ] || slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
                     continue;
                 }
@@ -1130,33 +1205,56 @@ void generateChunkMesh(Chunk *chunk)
         {
             for (int z = 0; z < ChunkLengthZ; z++)
             {
-                if (!crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
+                if (crosses[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ])
                 {
-                    continue;
-                }
+                    int blockIndex = x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ);
+                    Block *block = &chunk->blocks[blockIndex];
 
-                int blockIndex = x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ);
-                Block *block = &chunk->blocks[blockIndex];
+                    if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity)
+                    {
+                        chunkMeshQuads.capacity *= 2;
+                        chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad) * chunkMeshQuads.capacity);
+                    }
 
-                if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity)
-                {
-                    chunkMeshQuads.capacity *= 2;
-                    chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad) * chunkMeshQuads.capacity);
-                }
+                    MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
+                    curQuad->x = x + chunk->chunkStartX;
+                    curQuad->y = y;
+                    curQuad->z = z + chunk->chunkStartZ;
+                    curQuad->width = 1;
+                    curQuad->height = 1;
+                    curQuad->faceType = FACE_CROSS;
+                    curQuad->blockType = block->blockType;
 
-                MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
-                curQuad->x = x + chunk->chunkStartX;
-                curQuad->y = y;
-                curQuad->z = z + chunk->chunkStartZ;
-                curQuad->width = 1;
-                curQuad->height = 1;
-                curQuad->faceType = FACE_CROSS;
-                curQuad->blockType = block->blockType;
+                    chunkMeshQuads.amtQuads++;
+                    if (DEBUG_MODE)
+                    {
+                        printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                    }
+                } else if (slopes[x + z * ChunkWidthX + y * ChunkWidthX * ChunkLengthZ]) {
+                    int blockIndex = x + z * ChunkWidthX + y * (ChunkWidthX * ChunkLengthZ);
+                    Block *block = &chunk->blocks[blockIndex];
 
-                chunkMeshQuads.amtQuads++;
-                if (DEBUG_MODE)
-                {
-                    printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                    if (chunkMeshQuads.amtQuads >= chunkMeshQuads.capacity)
+                    {
+                        chunkMeshQuads.capacity *= 2;
+                        chunkMeshQuads.quads = realloc(chunkMeshQuads.quads, sizeof(MeshQuad) * chunkMeshQuads.capacity);
+                    }
+
+                    MeshQuad *curQuad = &(chunkMeshQuads.quads[chunkMeshQuads.amtQuads]);
+                    curQuad->x = x + chunk->chunkStartX;
+                    curQuad->y = y;
+                    curQuad->z = z + chunk->chunkStartZ;
+                    curQuad->width = 1;
+                    curQuad->height = 1;
+                    curQuad->faceType = FACE_SLOPE;
+                    curQuad->blockType = block->blockType;
+                    curQuad->slopeDirection = block->isSlope; // isSlope carries the direction information
+
+                    chunkMeshQuads.amtQuads++;
+                    if (DEBUG_MODE)
+                    {
+                        printf("[CREATED QUAD] x %f, y %f, z %f, width %d, height %d, faceType %d, blockType %d\n", curQuad->x, curQuad->y, curQuad->z, width, height, curQuad->faceType, curQuad->blockType);
+                    }
                 }
             }
         }
