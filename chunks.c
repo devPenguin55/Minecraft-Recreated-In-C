@@ -293,41 +293,41 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 continue;
             }
 
-            if (shrubValid && !treeValid)
-            {
-                for (int yOff = 0; yOff < 2; yOff++)
-                {
-                    int layerY = surfaceY + yOff;
-                    if (layerY < 0 || layerY >= ChunkHeightY)
-                        continue;
+            // if (shrubValid && !treeValid)
+            // {
+            //     for (int yOff = 0; yOff < 2; yOff++)
+            //     {
+            //         int layerY = surfaceY + yOff;
+            //         if (layerY < 0 || layerY >= ChunkHeightY)
+            //             continue;
 
-                    for (int xOff = -1; xOff <= 1; xOff++)
-                    {
-                        for (int zOff = -1; zOff <= 1; zOff++)
-                        {
-                            if (xOff != 0 && zOff != 0 && yOff == 1)
-                                continue;
+            //         for (int xOff = -1; xOff <= 1; xOff++)
+            //         {
+            //             for (int zOff = -1; zOff <= 1; zOff++)
+            //             {
+            //                 if (xOff != 0 && zOff != 0 && yOff == 1)
+            //                     continue;
 
-                            int newX = x + xOff, newZ = z + zOff;
-                            if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
-                                continue;
+            //                 int newX = x + xOff, newZ = z + zOff;
+            //                 if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
+            //                     continue;
 
-                            Block *b = &(chunk->blocks[newX + ChunkWidthX * newZ + (ChunkWidthX * ChunkLengthZ) * layerY]);
-                            if (!b->isAir)
-                                continue;
+            //                 Block *b = &(chunk->blocks[newX + ChunkWidthX * newZ + (ChunkWidthX * ChunkLengthZ) * layerY]);
+            //                 if (!b->isAir)
+            //                     continue;
 
-                            b->blockType = BLOCK_TYPE_LEAVES;
-                            b->isAir = 0;
-                        }
-                    }
-                }
-                continue;
-            }
+            //                 b->blockType = BLOCK_TYPE_LEAVES;
+            //                 b->isAir = 0;
+            //             }
+            //         }
+            //     }
+            //     continue;
+            // }
 
             if (!treeValid)
-                continue;
+            continue;
 
-            int trunkHeight = 5 + (int)(fbm2D(worldX, worldZ, 1, 1, 1, 1) * 2);
+            int trunkHeight = 10 + (int)(fbm2D(worldX, worldZ, 1, 1, 1, 1) * 5); // 10-14 tall trunk
 
             for (int yAdd = 0; yAdd < trunkHeight; yAdd++)
             {
@@ -340,18 +340,36 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
                 b->isAir = 0;
             }
 
-            int topY = surfaceY + trunkHeight - 2;
+            // Christmas-tree canopy: stack of tapering rings from a wide base
+            // near the bottom of the trunk up to a single point at the top.
+            int canopyBaseY = surfaceY + 2;                 // leave a bit of bare trunk near the ground
+            int canopyTopY  = surfaceY + trunkHeight;        // point of the tree
+            int numLayers   = canopyTopY - canopyBaseY;
 
-            for (int yOff = 0; yOff <= 1; yOff++)
+            if (numLayers < 3)
+                numLayers = 3;
+
+            int maxRadius = 3;
+
+            for (int layer = 0; layer < numLayers; layer++)
             {
-                int layerY = topY + yOff;
+                int layerY = canopyBaseY + layer;
                 if (layerY < 0 || layerY >= ChunkHeightY)
                     continue;
 
-                for (int xOff = -2; xOff <= 2; xOff++)
+                // linear taper from maxRadius at the base to 0 at the very top
+                int radius = maxRadius - (int)((float)(maxRadius) * layer / (float)(numLayers - 1) + 0.5f);
+                if (radius < 0) radius = 0;
+
+                for (int xOff = -radius; xOff <= radius; xOff++)
                 {
-                    for (int zOff = -2; zOff <= 2; zOff++)
+                    for (int zOff = -radius; zOff <= radius; zOff++)
                     {
+                        // diamond taper so corners round off instead of staying square
+                        int manhattan = abs(xOff) + abs(zOff);
+                        if (manhattan > radius + 1)
+                            continue;
+
                         int newX = x + xOff, newZ = z + zOff;
                         if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
                             continue;
@@ -362,39 +380,19 @@ void createChunk(Chunk *chunk, GLfloat xAdd, GLfloat zAdd, int isFirstCreation, 
 
                         b->blockType = BLOCK_TYPE_LEAVES;
                         b->isAir = 0;
+
+                        int absX = abs(xOff), absZ = abs(zOff);
+                        int distFromEdge = radius - ((absX > absZ) ? absX : absZ);
+
+                        // slope any block on the outer rim, including the rounded diamond corners
+                        if (radius > 0 && (distFromEdge <= 0 || manhattan == radius + 1))
+                        {
+                            if (absX >= absZ)
+                                b->isSlope = (xOff > 0) ? 2 : 4; // east : west
+                            else
+                                b->isSlope = (zOff > 0) ? 1 : 3; // south : north
+                        }
                     }
-                }
-            }
-
-            int layerY2 = topY + 2;
-            if (layerY2 >= 0 && layerY2 < ChunkHeightY)
-            {
-                for (int xOff = -1; xOff <= 1; xOff++)
-                {
-                    for (int zOff = -1; zOff <= 1; zOff++)
-                    {
-                        int newX = x + xOff, newZ = z + zOff;
-                        if (newX < 0 || newX >= ChunkWidthX || newZ < 0 || newZ >= ChunkLengthZ)
-                            continue;
-
-                        Block *b = &(chunk->blocks[newX + ChunkWidthX * newZ + (ChunkWidthX * ChunkLengthZ) * layerY2]);
-                        if (b->blockType == BLOCK_TYPE_OAK)
-                            continue;
-
-                        b->blockType = BLOCK_TYPE_LEAVES;
-                        b->isAir = 0;
-                    }
-                }
-            }
-
-            int topLayerY = topY + 3;
-            if (topLayerY >= 0 && topLayerY < ChunkHeightY)
-            {
-                Block *b = &(chunk->blocks[x + ChunkWidthX * z + (ChunkWidthX * ChunkLengthZ) * topLayerY]);
-                if (b->blockType != BLOCK_TYPE_OAK)
-                {
-                    b->blockType = BLOCK_TYPE_LEAVES;
-                    b->isAir = 0;
                 }
             }
         }

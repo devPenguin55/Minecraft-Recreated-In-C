@@ -19,6 +19,27 @@ uniform usamplerBuffer lightBuffer; // for all render chunks in one
 #define FACE_CROSS 7 // use for things like flowers
 #define FACE_SLOPE 8 // use for slopes
 
+float getFaceShade(int face)
+{
+    switch (face)
+    {
+        case FACE_TOP:
+            return 1.0;
+        case FACE_BOTTOM:
+            return 0.9;
+        case FACE_FRONT:
+        case FACE_BACK:
+            return 0.9;
+        case FACE_LEFT:
+        case FACE_RIGHT:
+            return 0.9;
+        case FACE_CROSS:
+            return 1.0;  // billboards read as flat art, don't want them darkened
+        default:
+            return 0.9;
+    }
+}
+
 float getLight(int x, int y, int z)
 {
     int localX = ((x % 16) + 16) % 16;
@@ -135,9 +156,9 @@ void main()
         }
         if (fragFace != FACE_CROSS && fragFace != FACE_SLOPE) {
             
-            texColor.rgb *= getLight(int(floor(x)), int(floor(y)), int(floor(z)));
+            texColor.rgb *= getLight(int(floor(x)), int(floor(y)), int(floor(z))) * getFaceShade(fragFace);
         } else {
-            texColor.rgb *= getLight(int(round(worldPos.x)), int(round(worldPos.y)), int(round(worldPos.z)));
+            texColor.rgb *= getLight(int(round(worldPos.x)), int(round(worldPos.y)), int(round(worldPos.z))) * getFaceShade(fragFace);
         }
 
         

@@ -133,7 +133,9 @@ void blockPlacingOrBreakingLightingRecalculation(Chunk *chunk)
                             uint8_t originalLight = result->chunkEntry->lightData[index];
                             SET_SKYLIGHT(result->chunkEntry->lightData[index], (uint8_t)(currentLight));
                             if (!curBlock->isAir && currentLight && curBlock->blockType == BLOCK_TYPE_WATER) {
-                                currentLight-=3;
+                                currentLight = (currentLight > 3) ? currentLight - 3 : 0;
+                            } else if (!curBlock->isAir && currentLight && curBlock->isSlope) {
+                                currentLight = (currentLight > 2) ? currentLight - 2 : 0;
                             } else if (!curBlock->isAir && currentLight && !blockRegistry[curBlock->blockType].isRenderCross) {
                                 currentLight = 0;
                             }
